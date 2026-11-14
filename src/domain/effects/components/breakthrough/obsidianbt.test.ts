@@ -12,7 +12,6 @@ describe('breakthrough:obsidianbt The Reaping', () => {
     quote(pack, id, 'gain all trade goods on this card, then gain an equal number of trade goods from the supply');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat', 'status']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('breakthrough:obsidianbt the trade goods of the card are doubled in the status phase: combats won and puppeted players are not counted');

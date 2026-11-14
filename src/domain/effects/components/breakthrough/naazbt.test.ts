@@ -13,7 +13,6 @@ describe('breakthrough:naazbt Absolute Synergy', () => {
     quote(pack, id, 'return 3 of those mechs to your reinforcements to flip this card');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('breakthrough:naazbt 3 of 4 mechs in one system return to the reinforcements and the card flips: the plan has no flipped breakthrough and no system for a used component');

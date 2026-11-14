@@ -48,7 +48,6 @@ describe('technology:se2 Saturn Engine II', () => {
   test('technology:se2 is a passive unit upgrade with no waiver', () => {
     const { pack } = flight(NEAR, {});
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify?.capacity).toBeDefined();
   });
 });

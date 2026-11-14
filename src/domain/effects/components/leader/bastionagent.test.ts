@@ -16,7 +16,6 @@ describe('leader:bastionagent Dame Briar', () => {
     quote(pack, id, 'You may exhaust this card to galvanize another of that player\'s units');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat', 'invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 51.6 with the card's "exhaust this card": an agent is spent by its ability.

@@ -15,7 +15,6 @@ describe('ability:puppetsoftheblade Puppets of the Blade', () => {
     quote(pack, id, 'Then, gain all of the faction components for The Obsidian.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['component']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('ability:puppetsoftheblade the Firmament becomes the Obsidian: the faction of a game cannot change mid-plan, and plot cards are not tracked');

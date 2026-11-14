@@ -59,6 +59,5 @@ describe('agenda:conscription Regulated Conscription', () => {
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.unitCost?.(0.5, { faction: 'sol', unit: 'infantry' })).toBe(1);
     expect(effect(pack, id).modify?.unitCost?.(3, { faction: 'sol', unit: 'carrier' })).toBe(3);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

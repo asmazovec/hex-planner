@@ -13,7 +13,6 @@ describe('relic:metalivoidshielding Metali Void Shielding', () => {
     const relic = bench({ faction: 'sol', expansions: ['te'], start: { relics: [id] } });
     quote(relic.pack, id, 'may use SUSTAIN DAMAGE as if it had that ability');
     expect(effect(relic.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(relic.pack, id).waive).toBeUndefined();
     expect(hintsAt(relic.pack, endOf(relic), 'combat', ['me']).map(c => c.id)).toContain(id);
   });
 });

@@ -66,7 +66,6 @@ describe('technology:lw2 Letani Warrior II', () => {
     quote(pack, id, 'Cost 1(x2), Combat 7');
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.unitCost).toBeDefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('technology:lw2 a destroyed Letani Warrior II comes back on a 6 or more: the plan rolls no dice');

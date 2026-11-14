@@ -14,7 +14,6 @@ describe('actionCard:scramble Scramble Frequency', () => {
     quote(pack, id, 'That player rerolls all of their dice.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id });
     expect([...(effect(pack, id).hintAt ?? [])].sort()).toEqual(['combat', 'invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: held in hand, the card is reminded in both blocks; not held, in neither.

@@ -14,7 +14,6 @@ describe('leader:letnevagent Viscount Unlenn', () => {
     const { pack } = letnev([]);
     quote(pack, id, 'that ship rolls 1 additional die during this combat round');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "You may exhaust this card ..." with LRR 51.6 (an agent is exhausted when used and readied in the status phase).

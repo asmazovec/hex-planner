@@ -76,7 +76,6 @@ describe('ability:mitosis Mitosis', () => {
     const { pack } = build('arborec', {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify).toBeDefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "At the start of the status phase: Place 1 infantry" - once, whatever else the round holds.

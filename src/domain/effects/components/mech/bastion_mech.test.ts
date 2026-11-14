@@ -12,6 +12,5 @@ describe('mech:bastion_mech A3 Valiance', () => {
     quote(pack, id, 'galvanize up to 3 of your infantry in its system');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat', 'invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

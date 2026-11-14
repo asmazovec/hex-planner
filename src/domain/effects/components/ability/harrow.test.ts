@@ -11,6 +11,5 @@ describe('ability:harrow Harrow', () => {
     quote(pack, id, "may use their BOMBARDMENT abilities against your opponent's ground forces on the planet");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

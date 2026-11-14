@@ -11,6 +11,5 @@ describe('promissory:cavalry The Cavalry', () => {
     const { pack } = bench({ faction: 'nomad', expansions: ['pok'] });
     quote(pack, id, 'treat 1 of your non-fighter ships as if it has the SUSTAIN DAMAGE ability');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

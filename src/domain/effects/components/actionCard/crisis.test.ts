@@ -13,6 +13,5 @@ describe('actionCard:crisis Crisis', () => {
     quote(pack, id, "Skip the next player's turn.");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -15,7 +15,6 @@ describe('leader:arboreccommander Dirzuga Rophal', () => {
     quote(pack, id, 'You may produce 1 unit in that system');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['production']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: the unlocked commander is shown in the production block of its player.

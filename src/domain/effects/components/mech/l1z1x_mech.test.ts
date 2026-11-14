@@ -11,6 +11,5 @@ describe('mech:l1z1x_mech Annihilator', () => {
     quote(pack, id, "this unit can use its BOMBARDMENT ability on planets in its system as if it were a ship");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

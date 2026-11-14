@@ -51,6 +51,6 @@ describe('actionCard:strategize1 Strategize', () => {
   test.todo('actionCard:strategize1 the secondary is my action (a component action), so after my pass it should warn actionAfterPass: a secondary entry is no turn of the round yet');
 
   test('actionCard:strategize1 waives ownSecondary for its own entry only', () => {
-    expect(effect(table([]).pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['ownSecondary', undefined]]);
+    expect(effect(table([]).pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['ownSecondary', undefined]]);
   });
 });

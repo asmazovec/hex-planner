@@ -29,7 +29,6 @@ describe('technology:parasite-obs Neural Parasite (Obsidian)', () => {
     quote(pack, id, 'destroy 1 of another player\'s infantry in or adjacent to a system that contains your infantry');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['activation']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "This technology cannot be researched."

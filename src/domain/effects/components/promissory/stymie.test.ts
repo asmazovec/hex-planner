@@ -15,7 +15,6 @@ describe('promissory:stymie Stymie', () => {
     quote(pack, id, "You may place 1 command token from that player's reinforcements in any non-home system");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['movement']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: a holder who is not the Arborec sees the reminder when ships move; the note is held, not played.

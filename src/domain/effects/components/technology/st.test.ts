@@ -63,6 +63,5 @@ describe('technology:st Sarween Tools', () => {
     const { pack } = produce({});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify).toBeDefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -6,21 +6,21 @@
  * (67.1); Construction places a space dock (4.2/85.2) and produces nothing. With this law the owner's units in the
  * system of the dock just placed may produce, against their PRODUCTION value.
  */
-import { systemOfPlanet } from '../../../stacks';
 import productionNotAllowed from '../../../rules/codes/productionNotAllowed';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:minister_industry';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{
+  permit: [{
     code: productionNotAllowed.code,
     rule: 'their units in that system may use their PRODUCTION abilities',
     when: (warning, ctx) => {
       const docks = ctx.entry && 'effects' in ctx.entry ? ctx.entry.effects?.structures?.filter(s => s.kind === 'spacedock') ?? [] : [];
-      return docks.some(dock => systemOfPlanet(ctx.game, dock.planetId, ctx.pack) === warning.params.systemId);
+      return docks.some(dock => ctx.systemOf(dock.planetId) === warning.params.systemId);
     },
   }],
 };

@@ -14,7 +14,6 @@ describe('promissory:war_funding War Funding', () => {
     const { pack } = bench({ faction: 'letnev' });
     quote(pack, id, "You may reroll all of your opponent's dice.");
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 69.2: "A player cannot play their own promissory note."

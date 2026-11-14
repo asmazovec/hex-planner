@@ -58,6 +58,5 @@ describe('agenda:sanctions Executive Sanctions', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.handLimit?.(7, { faction: 'sol' })).toBe(3);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

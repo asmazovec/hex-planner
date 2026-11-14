@@ -33,6 +33,5 @@ describe('technology:linkship2 Linkship II', () => {
     const { pack } = table([id]);
     quote(pack, id, 'This unit can use the SPACE CANNON ability of one of your structures in its space area');
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

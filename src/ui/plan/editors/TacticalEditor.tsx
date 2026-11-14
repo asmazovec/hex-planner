@@ -100,7 +100,7 @@ export function TacticalEditor({
 
   const landedOn = (planetId: string, unit: UnitId): number => entry.landings.find(l => l.planetId === planetId && l.from === undefined)?.units[unit] ?? 0;
   /** The ability that frees the price of the custodians token (Blood Ties): the payment is then not seeded. */
-  const custodiansFree = inForceOf(pack, holderOf(game, before), effect => effect.waive?.some(w => w.code === 'custodians') ?? false).length > 0;
+  const custodiansFree = inForceOf(pack, holderOf(game, before), effect => effect.permit?.some(w => w.code === 'custodians') ?? false).length > 0;
   const custodiansAt = custodiansLanding(before, entry, pack);
   const [custodiansManual, setCustodiansManual] = useState(false);
   const setLanding = (planetId: string, unit: UnitId, count: number) => {

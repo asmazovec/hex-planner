@@ -13,7 +13,6 @@ describe('leader:jolnarcommander Agnlan Oln', () => {
     const { pack } = bench({ faction: 'jolnar', expansions: ['pok', 'te'] });
     quote(pack, id, 'After you roll dice for a unit ability: You may reroll any of those dice.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat', 'invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: unlocked, the commander stands among the reminders of the battle in space; locked, it does not.

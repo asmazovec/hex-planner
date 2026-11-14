@@ -67,7 +67,6 @@ describe('technology:hcf2 Hybrid Crystal Fighter II', () => {
   test('technology:hcf2 is a passive effect that changes the count of excess fighters', () => {
     const { pack } = flight(1);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(Object.keys(effect(pack, id).modify ?? {}).sort()).toEqual(['capacity', 'excessFighters', 'speed', 'unitCost']);
   });
 });

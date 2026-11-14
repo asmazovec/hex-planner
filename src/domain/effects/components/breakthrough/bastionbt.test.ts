@@ -100,6 +100,6 @@ describe('breakthrough:bastionbt The Icon', () => {
   test('breakthrough:bastionbt is a play effect that waives the placement of ships away from the active system', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

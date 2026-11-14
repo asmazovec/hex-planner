@@ -12,6 +12,5 @@ describe('leader:naazcommander Dart and Tai', () => {
     quote(pack, id, 'You may explore that planet.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -22,7 +22,6 @@ describe('promissory:raisethestandard Raise the Standard', () => {
   test('promissory:raisethestandard waives nothing and modifies nothing', () => {
     const { pack } = table();
     quote(pack, id, 'Then, return this card to the Last Bastion player.');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 });

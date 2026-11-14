@@ -12,7 +12,6 @@ describe('technology:pds2 PDS II', () => {
     quote(pack, id, 'SPACE CANNON against ships that are adjacent to this unit\'s system');
     const found = effect(pack, id);
     expect(found.tier).toBe('passive');
-    expect(found.waive).toBeUndefined();
     expect(Object.keys(found.modify ?? {})).toEqual([]);
   });
 });

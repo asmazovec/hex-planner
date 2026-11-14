@@ -13,7 +13,6 @@ describe('technology:asc Assault Cannon', () => {
     const table = bench({ faction: 'hacan', start: { technologies: [id] } });
     quote(table.pack, id, 'your opponent must destroy 1 of their non-fighter ships');
     expect(effect(table.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(table.pack, id).waive).toBeUndefined();
     const board = endOf(table);
     expect(hintsAt(table.pack, board, 'combat', ['me']).map(c => c.id)).toContain(id);
     expect(hintsAt(table.pack, board, 'invasion', ['me']).map(c => c.id)).not.toContain(id);

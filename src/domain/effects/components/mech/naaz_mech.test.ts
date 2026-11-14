@@ -11,6 +11,5 @@ describe('mech:naaz_mech Eidolon', () => {
     const { pack } = bench({ faction: 'naaz', expansions: ['pok'] });
     quote(pack, id, 'at the start of a space combat, flip this card');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

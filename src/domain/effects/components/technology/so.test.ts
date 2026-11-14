@@ -11,6 +11,5 @@ describe('technology:so Salvage Operations', () => {
     quote(pack, id, "After you win or lose a space combat, gain 1 trade good");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

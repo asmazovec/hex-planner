@@ -11,7 +11,6 @@ describe('leader:yssarilcommander So Ata', () => {
     const { pack } = bench({ faction: 'yssaril', expansions: ['pok'] });
     quote(pack, id, 'You may look at that player\'s action cards, promissory notes, or secret objectives.');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 });

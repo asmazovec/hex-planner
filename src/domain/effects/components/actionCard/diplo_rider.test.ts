@@ -14,7 +14,6 @@ describe('actionCard:diplo_rider Diplomacy Rider', () => {
     quote(pack, id, "Each other player places a command token from their reinforcements in that system.");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

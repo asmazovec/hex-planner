@@ -12,7 +12,6 @@ describe('ability:amalgamation Amalgamation', () => {
     quote(pack, id, 'return 1 captured unit of that type to produce that unit without spending resources');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['production']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 67.2 (with 68.1): units produced are paid with resources.

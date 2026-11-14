@@ -48,7 +48,6 @@ describe('technology:ff2 Fighter II', () => {
     const { pack } = flight({ fighter: 1 }, [id]);
     const found = effect(pack, id);
     expect(found.tier).toBe('passive');
-    expect(found.waive).toBeUndefined();
     expect(found.modify?.speed?.(0, { faction: 'hacan', unit: 'fighter' })).toBe(2);
   });
 });

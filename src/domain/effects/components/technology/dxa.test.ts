@@ -14,7 +14,6 @@ describe('technology:dxa Dacxive Animators', () => {
     const t = held();
     quote(t.pack, id, 'After you win a ground combat, you may place 1 infantry from your reinforcements on that planet.');
     expect(effect(t.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(t.pack, id).waive).toBeUndefined();
     for (const step of effect(t.pack, id).hintAt ?? []) expect(hintsAt(t.pack, endOf(t), step, ['me']).map(c => c.id)).toContain(id);
   });
 

@@ -84,6 +84,5 @@ describe('technology:helios2 4X41C "Helios" V2', () => {
     const { pack } = build('bastion', [id], {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(Object.keys(effect(pack, id).modify ?? {}).sort()).toEqual(['planetResources', 'productionValue']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

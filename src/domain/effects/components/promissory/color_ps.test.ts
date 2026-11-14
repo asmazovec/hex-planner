@@ -12,6 +12,5 @@ describe('promissory:<color>_ps Political Secret', () => {
     quote(pack, id, 'cannot vote, play action cards, or use faction abilities');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

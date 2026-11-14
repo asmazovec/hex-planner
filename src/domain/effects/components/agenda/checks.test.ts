@@ -14,7 +14,6 @@ describe('agenda:checks Checks and Balances', () => {
     const { pack } = bench({ faction: 'sol', expansions: ['pok'] });
     quote(pack, id, 'they give that strategy card to another player');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt ?? []).toEqual([]);
   });
 });

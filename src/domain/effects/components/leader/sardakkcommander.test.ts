@@ -113,6 +113,6 @@ describe('leader:sardakkcommander G\'hom Sek\'kus', () => {
   test('leader:sardakkcommander is a passive effect that waives committing from planets', () => {
     const { pack } = table(tactical(TARGET));
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

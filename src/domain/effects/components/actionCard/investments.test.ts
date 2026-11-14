@@ -17,7 +17,6 @@ describe('actionCard:investments Manipulate Investments', () => {
     const found = effect(pack, id);
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(undefined);
-    expect(found.waive).toBeUndefined();
     expect(found.modify).toBeUndefined();
   });
 });

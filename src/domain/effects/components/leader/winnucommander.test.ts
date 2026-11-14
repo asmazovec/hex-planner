@@ -13,6 +13,5 @@ describe('leader:winnucommander Rickar Rickani', () => {
     quote(pack, id, 'Apply +2 to the result of each of your unit\'s combat rolls');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

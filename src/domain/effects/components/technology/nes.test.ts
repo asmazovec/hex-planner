@@ -10,6 +10,5 @@ describe('technology:nes Non-Euclidean Shielding', () => {
     const { pack } = bench({ faction: 'letnev' });
     quote(pack, id, 'cancel 2 hits instead of 1');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

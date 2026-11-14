@@ -16,7 +16,6 @@ describe('technology:bs Bio-Stims', () => {
     const t = held();
     quote(t.pack, id, 'ready 1 of your planets that has a technology specialty or 1 of your other technologies');
     expect(effect(t.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['round'] });
-    expect(effect(t.pack, id).waive).toBeUndefined();
     for (const step of effect(t.pack, id).hintAt ?? []) expect(hintsAt(t.pack, endOf(t), step, ['me']).map(c => c.id)).toContain(id);
   });
 

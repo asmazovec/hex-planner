@@ -11,6 +11,5 @@ describe('leader:mentakagent Suffi An', () => {
     quote(pack, id, "you and that player each draw 1 action card");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['transaction']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

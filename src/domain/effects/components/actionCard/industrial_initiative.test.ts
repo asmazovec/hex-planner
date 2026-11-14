@@ -50,6 +50,5 @@ describe('actionCard:industrial_initiative Industrial Initiative', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).nativePlay).toBeTypeOf('function');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

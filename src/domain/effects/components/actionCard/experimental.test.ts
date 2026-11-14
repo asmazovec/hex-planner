@@ -18,7 +18,6 @@ describe('actionCard:experimental Experimental Battlestation', () => {
     const { pack } = table();
     quote(pack, id, "uses SPACE CANNON 5(x3) against the active player");
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['movement'] });
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

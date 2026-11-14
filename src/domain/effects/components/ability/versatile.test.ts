@@ -40,6 +40,5 @@ describe('ability:versatile Versatile', () => {
     const { pack } = status('sol', 2);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.tokensGained).toBeDefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

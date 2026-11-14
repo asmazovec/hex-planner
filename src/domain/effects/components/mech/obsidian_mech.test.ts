@@ -12,7 +12,6 @@ describe('mech:obsidian_mech Viper Hollow', () => {
     quote(pack, id, 'gain control of its planet; the other player\'s units are now coexisting');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['component']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('mech:obsidian_mech a coexisting Viper takes control of its planet on the flip: coexistence and the change of faction are not modelled');

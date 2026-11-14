@@ -74,7 +74,7 @@ describe('actionCard:blackmarketdealing Black Market Dealings', () => {
 
   test('actionCard:blackmarketdealing waives transactionKind for its own turn only', () => {
     const { pack } = table([]);
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['transactionKind', undefined]]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['transactionKind', undefined]]);
   });
 
   test('actionCard:blackmarketdealing keeps the reminder at the transaction', () => {

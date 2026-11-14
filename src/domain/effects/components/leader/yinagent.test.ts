@@ -17,7 +17,6 @@ describe('leader:yinagent Brother Milor', () => {
     quote(pack, id, 'You may exhaust this card to allow that player to place 2 fighters');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 51.4 with the card's "You may exhaust this card": an agent is spent by its use.

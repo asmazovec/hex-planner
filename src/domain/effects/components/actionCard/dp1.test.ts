@@ -12,7 +12,6 @@ describe('actionCard:dp1 Diplomatic Pressure', () => {
     quote(pack, id, 'That player must give you 1 promissory note from their hand.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id });
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Ruling 2: "Giving a promissory note because of Diplomatic Pressure is not resolving a transaction."

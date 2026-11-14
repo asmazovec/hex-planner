@@ -19,6 +19,5 @@ describe('agenda:minister_antiquities Minister of Antiquities', () => {
   test('agenda:minister_antiquities is a hint', () => {
     const { pack } = bench({ faction: 'sol', expansions: ['pok'] });
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

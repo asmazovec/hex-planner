@@ -13,7 +13,6 @@ describe('technology:md_c1 Magen Defense Grid Ω', () => {
     const table = bench({ faction: 'hacan', expansions: ['pok'], start: { technologies: [id] } });
     quote(table.pack, id, 'produce 1 hit and assign it to 1 of your opponent\'s ground forces');
     expect(effect(table.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(table.pack, id).waive).toBeUndefined();
     expect(hintsAt(table.pack, endOf(table), 'invasion', ['me']).map(c => c.id)).toContain(id);
   });
 });

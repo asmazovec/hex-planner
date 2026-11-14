@@ -12,7 +12,6 @@ describe('agenda:secret Archived Secret', () => {
     const table = bench({ faction: 'sol' });
     quote(table.pack, id, 'The elected player draws 1 secret objective.');
     expect(effect(table.pack, id).tier).toBe('hint');
-    expect(effect(table.pack, id).waive).toBeUndefined();
     const objective = componentsOf(table.pack).find(c => c.kind === 'secretObjective')!.id;
     const drawn = bench({ faction: 'sol', entries: [{ ...adjust({}, 'agenda'), gains: [id, objective] }] });
     expect(endOf(drawn).holdings.secrets).toEqual([objective]);

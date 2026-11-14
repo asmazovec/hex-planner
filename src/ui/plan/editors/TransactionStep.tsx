@@ -59,7 +59,7 @@ export function TransactionStep({ game, pack, act, owner, board, warnings, uses 
    * notes of the side that gets them stand first: a note goes back to its owner without a search.
    */
   // A used component that lifts the warning of the kind of a component lets relics and unscored secret objectives be offered as well.
-  const kinds: readonly ComponentKind[] = uses.some(id => effectOf(pack, id)?.waive?.some(w => w.code === 'transactionKind'))
+  const kinds: readonly ComponentKind[] = uses.some(id => effectOf(pack, id)?.permit?.some(w => w.code === 'transactionKind'))
     ? [...TRANSACTION_KINDS, 'relic', 'secretObjective'] : TRANSACTION_KINDS;
   const offer = (key: Side): string[] => {
     const held = giver(key) === 'me' ? board.holdings : board.rivals?.[giver(key)]?.holdings;

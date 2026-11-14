@@ -13,6 +13,5 @@ describe('agenda:committee Committee Formation', () => {
     quote(table.pack, id, 'may discard this card to choose a player to be elected');
     expect(effect(table.pack, id).tier).toBe('hint');
     expect(effect(table.pack, id).hintAt).toBeUndefined();
-    expect(effect(table.pack, id).waive).toBeUndefined();
   });
 });

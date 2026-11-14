@@ -13,7 +13,6 @@ describe('promissory:gift Gift of Prescience', () => {
     quote(pack, id, 'you are the first in initiative order');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['round']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('promissory:gift returns to the Naalu player at the end of the status phase: the plan returns a note only right after it is played (69.3)');

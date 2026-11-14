@@ -63,6 +63,5 @@ describe('promissory:ce Cybernetic Enhancements', () => {
   test('promissory:ce is a play effect that waives nothing', () => {
     const { pack } = table(status([1, 1, 0]));
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

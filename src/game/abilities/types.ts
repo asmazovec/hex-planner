@@ -60,6 +60,8 @@ export interface PermitContext extends AbilityContext {
   /** The board before the turn, and the holder read from it. */
   readonly before: Board;
   readonly had: Reader;
+  /** The same questions asked of the board before the turn (readers, `planetValue`, `capacityOf`, `adjacent`...): the context itself is the board after it. */
+  readonly prior: AbilityContext;
   /** The strategy cards whose primary the actor resolved earlier this round, when the round keeps them. */
   readonly primaries?: readonly number[];
   /** The components the actor played earlier in the round. */
@@ -84,6 +86,10 @@ export interface PermitContext extends AbilityContext {
   shipsOnly(warning: Warning): boolean;
   /** Whether another player (as the warning names them) is present in the system or next to it. */
   playerNear(player: string, slot: string): boolean;
+  /** The highest move value of any ship of any player on the board before the turn (Saar's agent). */
+  fastestOnBoard(): number;
+  /** The combined cost of units the turn produces, as the board stood before it (no PRODUCTION used, so Sarween Tools takes nothing off). */
+  productionCostOf(units: UnitCounts): number;
   /** The slot of Mecatol Rex on the map. */
   mecatolSlot(): string | undefined;
 }

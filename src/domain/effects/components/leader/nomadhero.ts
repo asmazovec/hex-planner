@@ -11,7 +11,8 @@
  *
  */
 import type { Move } from '../../../replay/state';
-import type { ComponentEffect, WaiverContext } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
+import type { PermitContext } from '../../../../game/abilities/types';
 
 export const id = 'leader:nomadhero';
 
@@ -20,13 +21,14 @@ const RULE = 'your flagship and units it transports can move out of systems that
 /** The flagship, and what it transports: ground forces and fighters. */
 const CARGO = new Set(['flagship', 'infantry', 'mech', 'fighter']);
 
-const moves = (ctx: WaiverContext): Move[] => (ctx.entry?.type === 'tactical' ? ctx.entry.moves : []);
-const hasFlagship = (ctx: WaiverContext): boolean => moves(ctx).some(move => (move.units.flagship ?? 0) > 0);
+const moves = (ctx: PermitContext): Move[] => (ctx.entry?.type === 'tactical' ? ctx.entry.moves : []);
+const hasFlagship = (ctx: PermitContext): boolean => moves(ctx).some(move => (move.units.flagship ?? 0) > 0);
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'play',
   rule: id,
-  waive: [
+  permit: [
     {
       code: 'sourceActivated',
       rule: RULE,

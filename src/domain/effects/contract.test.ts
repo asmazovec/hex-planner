@@ -74,7 +74,7 @@ describe('effects registry', () => {
     const codes = new Set<string>([...WARNING_CODES, ...EXTENSION_CODES.keys()]);
     for (const pack of packs) {
       for (const [id, effect] of effectsOf(pack)) {
-        for (const waiver of effect.waive ?? []) {
+        for (const waiver of effect.permit ?? []) {
           expect(codes, id).toContain(waiver.code);
           expect(waiver.rule.trim().length, id).toBeGreaterThan(0);
           if (waiver.lasts !== undefined) expect(effect.tier, id).not.toBe('passive');
@@ -109,7 +109,6 @@ describe('effect files', () => {
       // The registry holds what the file wrote; a hint keeps the steps of the data unless the file gives its own.
       const pack = packs.find(candidate => effectOf(candidate, file.id) !== undefined)!;
       expect(effectOf(pack, file.id)?.tier, path).toBe(effectOfFile(file).tier);
-      expect(effectOf(pack, file.id)?.waive, path).toBe(effectOfFile(file).waive);
     }
   });
 
@@ -127,7 +126,7 @@ describe('effect files', () => {
 
   test('every component that waives, changes a number or is played has a test of the interface beside it', () => {
     const missing = files
-      .filter(([, file]) => effectOfFile(file).waive || effectOfFile(file).modify || effectOfFile(file).nativePlay || effectOfFile(file).requirement || effectOfFile(file).on?.gained || effectOfFile(file).on?.lost || effectOfFile(file).on?.restrict || effectOfFile(file).suppresses)
+      .filter(([, file]) => effectOfFile(file).permit || effectOfFile(file).modify || effectOfFile(file).nativePlay || effectOfFile(file).requirement || effectOfFile(file).on?.gained || effectOfFile(file).on?.lost || effectOfFile(file).on?.restrict || effectOfFile(file).suppresses)
       .map(([path]) => path.replace(/\.ts$/, '.ui.test.tsx'))
       .filter(path => uiTests[path] === undefined);
     expect(missing).toEqual([]);

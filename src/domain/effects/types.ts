@@ -4,14 +4,14 @@
  */
 import type { Hooks, Permit, Play } from '../../game/abilities/types';
 import type { HolderRule } from './holder';
-import type { AnyWarningCode, DataPack, Entry, Game, GameState, RuleStep, StructureKind, TechType, UnitCounts, UnitId, Warning } from '../types';
+import type { DataPack, Entry, Game, GameState, RuleStep, StructureKind, TechType, UnitCounts, UnitId, Warning } from '../types';
 
 /**
  * `passive` applies by itself while the component is in force (`inForce`), exhausted or not (LRR 34.4.1); `play`
  * applies when an entry plays the component with its choices; `hint` computes nothing: the app shows the component's
  * text in the block of its step.
  *
- * The tier also says when the component's waivers (`waive`) hold: those of a `passive` effect for every entry of the
+ * The tier also says when the component's permits (`permit`) hold: those of a `passive` effect for every entry of the
  * player while the component is in force; those of a `play` or `hint` effect for the entry that names the component
  * (its component action, its `spends`, its `uses`), and with `lasts: 'round'` for the player's later entries of that round.
  */
@@ -57,40 +57,6 @@ export interface ModifierContext {
 
 /** The named points the count passes through: each takes the value so far and gives the value after this component. */
 export type Modifiers = { [K in keyof ModifierContext]: (value: number, ctx: ModifierContext[K]) => number };
-
-/** What a waiver is asked with: the entry whose warning it is, and the board of its owner around it. */
-export interface WaiverContext {
-  pack: DataPack;
-  /** The game as the owner of the entry sees it: `game.faction` is theirs. */
-  game: Game;
-  /** The entry the warning belongs to; none for a check of the board itself (units placed by hand). */
-  entry?: Entry;
-  /** The owner's state just before the entry, and after it. */
-  before: GameState;
-  after: GameState;
-  /** My state, which holds what belongs to the whole game: laws, revealed objectives, attachments. */
-  shared: GameState;
-  /** The strategy cards whose primary the owner resolved earlier this round, when the caller keeps them (the kernel's round track); absent, the active plan says. */
-  primaries?: readonly number[];
-}
-
-/**
- * A check a component lifts. The warning is still made and still listed; it is marked with the component
- * (`Warning.waivedBy`) and no longer counts as a breach. A waiver never changes a number: a component that changes
- * the limit itself (two more ships, one more place on board) is a `modify`.
- */
-export interface Waiver {
-  /** The code of the warning lifted. */
-  code: AnyWarningCode;
-  /** What lifts it: the sentence of the component's own text, or the LRR point. */
-  rule: string;
-  /** Narrows the waiver to the warnings the component's text covers; without it every warning of the code is lifted. */
-  when?: (warning: Warning, ctx: WaiverContext) => boolean;
-  /** `play` and `hint` only: the waiver holds from the entry that names the component to the end of that round, for the same player. */
-  lasts?: 'round';
-  /** `passive` only: it also lifts the checks of a transaction whose other side holds the component, not only those of its holder. */
-  partner?: boolean;
-}
 
 /** One component being played by an entry, with what the player chose for it. */
 export interface EffectTurn {
@@ -220,12 +186,10 @@ export interface ComponentEffect {
   produces?: boolean;
   /** hint: the steps in whose block the reminder stands; none where the data names no step. */
   hintAt?: RuleStep[];
-  /** Any tier: the checks the component lifts (see `EffectTier` for when they hold). */
-  waive?: Waiver[];
   /** The hooks written for the kernel (`game/abilities/types.ts`): they read the board and return events; the others of this interface run on the old state. */
   on?: Hooks;
   /** The play of the component (`Hooked.play`): what an entry that plays the component does. Any tier may have it (a passive ability with an action part). */
   nativePlay?: Play;
-  /** The checks the component lifts, written for the kernel (`game/abilities/types.ts`): the native form of `waive`, run by `game/resolve/waive.ts`. */
+  /** Any tier: the checks the component lifts (see `EffectTier` for when they hold), in the words of the kernel (`game/abilities/types.ts`); run by `game/resolve/waive.ts`. */
   permit?: Permit[];
 }

@@ -16,7 +16,6 @@ describe('actionCard:plague Plague', () => {
     const { pack } = table();
     quote(pack, id, 'Roll 1 die for each infantry on that planet');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toEqual(['component']);
   });
 

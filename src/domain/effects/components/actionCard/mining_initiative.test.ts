@@ -74,6 +74,5 @@ describe('actionCard:mining_initiative Mining Initiative', () => {
   test('actionCard:mining_initiative is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

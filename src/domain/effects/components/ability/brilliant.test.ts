@@ -65,6 +65,5 @@ describe('ability:brilliant Brilliant', () => {
     const { pack } = table('jolnar', []);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify).toBeDefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

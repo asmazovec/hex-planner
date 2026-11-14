@@ -9,7 +9,6 @@ import { playedBy } from '../../domain/effects/waivers';
 import { placeIn } from '../../domain/rules/registry';
 import type { Warning } from '../../domain/types';
 import type { Turn } from '../actions';
-import { legacyViews } from '../legacyViews';
 import { blockersOf } from '../space';
 import type { Board, DataPack, Table } from '../types';
 import { activation } from './activation';
@@ -23,7 +22,7 @@ import { claimStations, gainControl, landUnits, placeCarried, type Lost } from '
 import { turnActs } from './acts';
 import { playerOfKey } from '../keys';
 import { hook } from './hooks';
-import { legacyWaiverContext, playNamed } from './legacyEffects';
+import { playNamed } from './legacyEffects';
 import { waive } from './waive';
 import { turnTail } from './tail';
 import { movement } from './movement';
@@ -98,7 +97,6 @@ export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPa
   const action = turn.action;
   const track = cloneTrack(options.track ?? newTrack());
   if (options.earlier) track.plays[turn.player] = [...(track.plays[turn.player] ?? []), ...options.earlier];
-  const before = legacyViews(table, board, pack);
   const ctx = newCtx(table, board, turn, action.kind === 'tactical' ? action : NO_TACTICAL, pack, blockersOf(table, board, turn.player, pack), track);
   if ((options.moments?.length ?? 0) > 0) {
     begin(ctx, 'round');
@@ -145,9 +143,8 @@ export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPa
     begin(ctx, 'round');
     warn(ctx, [...closed.violations]);
   }
-  const after = legacyViews(table, ctx.board, pack);
   placeIn(ctx.warnings, turn.id);
-  waive(ctx, ctx.warnings, board, ctx.track.plays[turn.player] ?? [], () => legacyWaiverContext(ctx, before, after));
+  waive(ctx, ctx.warnings, board, ctx.track.plays[turn.player] ?? []);
   const played = playedBy(ctx.entry);
   if (played.length > 0) ctx.track.plays[turn.player] = [...(ctx.track.plays[turn.player] ?? []), ...played];
   const hints = hintsAtSteps(table, ctx.board, pack, turn.player, ctx.steps.map(s => s.step));

@@ -13,7 +13,6 @@ describe('technology:proxima Proxima Targeting VI', () => {
     quote(pack, id, 'you may resolve BOMBARDMENT 8 (x3) against your opponent\'s ground forces');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "Cancel 1 hit produced by BOMBARDMENT rolls made against your ground forces for each of your galvanized units

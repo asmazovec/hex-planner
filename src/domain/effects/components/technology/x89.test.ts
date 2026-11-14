@@ -14,7 +14,6 @@ describe('technology:x89 X-89 Bacterial Weapon Ω', () => {
     const t = held();
     quote(t.pack, id, 'if at least 1 of your opponent\'s infantry was destroyed');
     expect(effect(t.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(t.pack, id).waive).toBeUndefined();
     for (const step of effect(t.pack, id).hintAt ?? []) expect(hintsAt(t.pack, endOf(t), step, ['me']).map(c => c.id)).toContain(id);
   });
 

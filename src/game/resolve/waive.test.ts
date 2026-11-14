@@ -1,18 +1,10 @@
 /**
- * The waiver pass on the kernel: one real component of each class is waived by the native pass, with the old
- * functions of `domain/effects/waivers` made to throw so none of them is on the path. A component that waives is
- * written for the kernel (`permit` on its ability), not as `waive` on the old state.
+ * The waiver pass on the kernel: one real component of each class is waived by the native pass. A component that waives
+ * is written for the kernel (`permit` on its ability); the questions of the map are on the permit's context.
  */
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
-vi.mock('../../domain/effects/waivers', async importOriginal => {
-  const real = await importOriginal<typeof import('../../domain/effects/waivers')>();
-  const bridge = (): never => { throw new Error('the old waiver pass is on the path'); };
-  return { ...real, waive: bridge, marked: bridge, askedFor: bridge };
-});
-
-const kit = await import('../../domain/effects/components/kit');
-const { adjust, bench, componentAction, effect, expectStanding, expectWaived, FAR, HOME, NEAR, planned, tactical, using, warningsOf } = kit;
+import { adjust, bench, componentAction, effect, expectStanding, expectWaived, FAR, HOME, NEAR, planned, tactical, using, warningsOf } from '../../domain/effects/components/kit';
 
 const RIVAL = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 
@@ -23,7 +15,6 @@ describe('the native waiver pass', () => {
     const table = bench({ faction: 'yssaril', start: { hand }, entries: [entry] });
     expectWaived(warningsOf(table, entry), 'handOverLimit' as never, 'ability:crafty');
     expect(effect(table.pack, 'ability:crafty').permit?.map(p => p.code)).toEqual(['handOverLimit']);
-    expect(effect(table.pack, 'ability:crafty').waive).toBeUndefined();
   });
 
   test('a played component waives in the turn that names it (Puppets on a String)', () => {
@@ -56,19 +47,10 @@ describe('the native waiver pass', () => {
   });
 });
 
-/** The files whose `when` still reads the old per-player state: they are asked through the bridge until they are moved. The list only shrinks. */
-const OLD_SHAPE = [
-  'ability/aetherpassage', 'ability/imperia', 'actionCard/blackmarketdealing', 'actionCard/strategize1', 'agenda/minister_industry', 'agenda/schematics', 'breakthrough/bastionbt',
-  'breakthrough/solbt', 'breakthrough/winnubt', 'breakthrough/xxchabt', 'breakthrough/yssarilbt', 'exploration/frln1', 'leader/arborechero', 'leader/argentagent', 'leader/keleresagent',
-  'leader/nomadhero', 'leader/saaragent', 'leader/saarcommander', 'leader/sardakkcommander', 'leader/winnuagent', 'leader/winnuhero', 'leader/yincommander', 'mech/argent_mech',
-  'mech/naaz_voltron', 'promissory/nanolink', 'publicObjective/vast_reserves', 'technology/htp', 'technology/ie',
-];
-
 describe('the files that waive', () => {
-  test('no component file keeps a waiver on the old state except the ones listed, which the bridge still serves', async () => {
+  test('no component file keeps a waiver on the old state: every waiver is a permit on its ability', async () => {
     const { COMPONENT_FILES } = await import('../../domain/effects/registry');
-    const old = Object.entries(COMPONENT_FILES).filter(([, file]) => (file.effect?.waive?.length ?? 0) > 0).map(([path]) => path.replace(/^.*components\//, '').replace(/\.ts$/, '')).sort();
-    expect(old).toEqual([...OLD_SHAPE].sort().filter(name => old.includes(name)));
-    expect(old.filter(name => !OLD_SHAPE.includes(name))).toEqual([]);
+    const old = Object.entries(COMPONENT_FILES).filter(([, file]) => 'waive' in ((file as { effect?: object }).effect ?? {})).map(([path]) => path);
+    expect(old).toEqual([]);
   });
 });

@@ -14,7 +14,6 @@ describe('technology:ps Plasma Scoring', () => {
     const table = held();
     quote(table.pack, id, '1 of those units may roll 1 additional die');
     expect(effect(table.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat', 'invasion'] });
-    expect(effect(table.pack, id).waive).toBeUndefined();
   });
 
   // Checks: held, it is shown among the reminders of both steps, and not in the production block.

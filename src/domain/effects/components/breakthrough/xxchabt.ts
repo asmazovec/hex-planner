@@ -7,32 +7,31 @@
  * so it is worth the greater of its two values. Nothing else changes (ruling 3): a dock's Production value still counts
  * the resources only.
  */
-import { planetValue } from '../../../payment';
-import type { Entry, Warning } from '../../../types';
-import type { WaiverContext } from '../../types';
-import type { ComponentEffect } from '../../types';
+import type { Warning } from '../../../types';
+import type { Ability } from '../../../../game/abilities/types';
+import type { PermitContext } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:xxchabt';
 
 /** The planets an entry pays with, whichever kind of entry it is. */
-const paidWith = (entry: Entry | undefined): string[] =>
+const paidWith = (entry: PermitContext['entry']): string[] =>
   (entry && 'payment' in entry ? entry.payment : entry && 'effects' in entry ? entry.effects?.payment : undefined)?.planets ?? [];
 
 /** What spending each paying planet for its other value adds: a planet is spent for one value or the other, never both (ruling 1). */
-const swapped = (warning: Warning, { entry, pack, game, before, shared }: WaiverContext, to: 'resources' | 'influence'): boolean => {
-  const gain = paidWith(entry).reduce((sum, planetId) => {
-    const view = { faction: game.faction, shared };
-    const resources = planetValue(pack, before, planetId, 'resources', view);
-    const influence = planetValue(pack, before, planetId, 'influence', view);
+const swapped = (warning: Warning, ctx: PermitContext, to: 'resources' | 'influence'): boolean => {
+  const gain = paidWith(ctx.entry).reduce((sum, planetId) => {
+    const resources = ctx.prior.planetValue(planetId, 'resources');
+    const influence = ctx.prior.planetValue(planetId, 'influence');
     return sum + Math.max(0, to === 'resources' ? influence - resources : resources - influence);
   }, 0);
   return Number(warning.params.needed) - Number(warning.params.paid) <= gain;
 };
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [
+  permit: [
     { code: 'shortResources', rule: 'You can spend influence as if it were resources.', when: (warning, ctx) => swapped(warning, ctx, 'resources') },
     { code: 'shortInfluence', rule: 'You can spend resources as if it were influence.', when: (warning, ctx) => swapped(warning, ctx, 'influence') },
   ],

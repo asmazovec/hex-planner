@@ -70,6 +70,6 @@ describe('leader:nomadhero Ahk-Syl Siven — Probability Matrix', () => {
   test('leader:nomadhero is a play effect that waives the move out of a system with my token for the round', () => {
     const { pack } = nomad([[]]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['sourceActivated', 'round']]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['sourceActivated', 'round']]);
   });
 });

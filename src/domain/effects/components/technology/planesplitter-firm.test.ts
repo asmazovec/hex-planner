@@ -12,7 +12,6 @@ describe('technology:planesplitter-firm Planesplitter (Firmament)', () => {
     quote(pack, id, 'When you gain this card, put The Fracture into play.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['card']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('technology:planesplitter-firm gaining it opens the Fracture: the Fracture is opened on the board of the game, not by the replay of a plan');

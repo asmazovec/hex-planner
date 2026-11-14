@@ -48,6 +48,6 @@ describe('technology:htp Hegemonic Trade Policy', () => {
   test('technology:htp is a play effect that waives the shortfall a swapped planet covers', () => {
     const { pack } = table('winnu', []);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['shortResources']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['shortResources']);
   });
 });

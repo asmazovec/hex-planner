@@ -12,7 +12,6 @@
  * Nel player after it is played (69.3), which the replay already does for every note that says so.
  *
  */
-import { joined } from '../../../movement';
 import structureAboard from '../../../rules/codes/structureAboard';
 import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
@@ -24,19 +23,19 @@ const RULE = 'You may move your structures from adjacent systems that do not con
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  waive: [{
-    code: structureAboard.code,
-    rule: RULE,
-    when: (warning, ctx) => {
-      const from = String(warning.params.from);
-      const { entry, game, pack, before } = ctx;
-      return entry?.type === 'tactical' && entry.systemId !== null && from !== entry.systemId && joined(game, from, entry.systemId, pack) && !before.tokensOnMap.includes(from);
-    },
-  }],
 };
 
 /** Playing the note changes nothing on the board: what it lifts is the waiver above. */
 export const ability: Hooked = {
   holder: 'self',
+  permit: [{
+    code: structureAboard.code,
+    rule: RULE,
+    when: (warning, ctx) => {
+      const from = String(warning.params.from);
+      const { entry } = ctx;
+      return entry?.type === 'tactical' && entry.systemId !== null && from !== entry.systemId && ctx.adjacent(entry.systemId).includes(from) && !ctx.before.systems[from]?.tokens.includes(ctx.holder);
+    },
+  }],
   play: () => [],
 };

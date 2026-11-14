@@ -88,6 +88,5 @@ describe('actionCard:plagiarize Plagiarize', () => {
   test('actionCard:plagiarize is a play effect that lifts no check', () => {
     const { pack } = table(play('technology:gd'), []);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

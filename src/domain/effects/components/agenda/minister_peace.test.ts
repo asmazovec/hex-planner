@@ -14,7 +14,6 @@ describe('agenda:minister_peace Minister of Peace', () => {
     quote(pack, id, "immediately end the active player's turn");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['activation']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 8.20: "If an 'Elect' or 'For' outcome of a law was resolved, that card remains in play and permanently

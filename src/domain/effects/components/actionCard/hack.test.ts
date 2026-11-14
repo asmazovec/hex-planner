@@ -12,6 +12,5 @@ describe('actionCard:hack Hack Election', () => {
     quote(pack, id, 'During this agenda, you vote last.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id });
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

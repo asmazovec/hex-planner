@@ -11,6 +11,5 @@ describe('leader:mentakhero Ipswitch, Loose Cannon', () => {
     quote(pack, id, "for each other player's ship that is destroyed during this combat, place 1 ship of that type");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

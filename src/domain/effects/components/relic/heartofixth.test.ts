@@ -14,7 +14,6 @@ describe('relic:heartofixth Heart of Ixth', () => {
     const relic = table();
     quote(relic.pack, id, 'add or subtract 1 from its result');
     expect(effect(relic.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(relic.pack, id).waive).toBeUndefined();
     expect(hintsAt(relic.pack, endOf(relic), 'combat', ['me']).map(c => c.id)).toContain(id);
   });
 

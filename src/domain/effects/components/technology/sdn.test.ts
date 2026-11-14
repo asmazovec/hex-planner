@@ -14,7 +14,6 @@ describe('technology:sdn Scanlink Drone Network', () => {
     const t = held();
     quote(t.pack, id, 'you may explore 1 planet in that system which contains 1 or more of your units');
     expect(effect(t.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['activation'] });
-    expect(effect(t.pack, id).waive).toBeUndefined();
     for (const step of effect(t.pack, id).hintAt ?? []) expect(hintsAt(t.pack, endOf(t), step, ['me']).map(c => c.id)).toContain(id);
   });
 

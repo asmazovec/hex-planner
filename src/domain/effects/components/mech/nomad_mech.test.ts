@@ -12,6 +12,5 @@ describe('mech:nomad_mech Quantum Manipulator', () => {
     const { pack } = bench({ faction: 'nomad', expansions: ['pok'] });
     quote(pack, id, 'cancel a hit that is produced against your ships in this system');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

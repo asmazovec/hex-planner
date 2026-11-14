@@ -63,6 +63,6 @@ describe('leader:saaragent Captain Mendosa', () => {
   test('leader:saaragent is a play effect that waives the route check of its entry', () => {
     const { pack } = flight(1, {}, false);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['speedShort', undefined]]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['speedShort', undefined]]);
   });
 });

@@ -14,7 +14,6 @@ describe('agenda:minister_policy Minister of Policy', () => {
     quote(pack, id, "At the end of the status phase, the owner of this card draws 1 action card.");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['status']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 8.20: "If an 'Elect' or 'For' outcome of a law was resolved, that card remains in play and permanently

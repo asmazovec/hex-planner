@@ -12,7 +12,6 @@ describe('leader:bastionhero Lyra Keen', () => {
     quote(pack, id, 'You may purge this card to roll 1 die for each unit in its system that belongs to another player');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat', 'invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 51.12 with the card's "purge this card": a hero is spent by its ability.

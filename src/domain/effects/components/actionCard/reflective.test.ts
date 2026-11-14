@@ -14,7 +14,6 @@ describe('actionCard:reflective Reflective Shielding', () => {
     const { pack } = holding([]);
     quote(pack, id, "Produce 2 hits against your opponent's ships in the active system.");
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id, hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: held in hand, the card is reminded in the combat block; not held, it is not.

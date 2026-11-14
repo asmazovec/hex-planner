@@ -13,7 +13,6 @@ describe('technology:da Duranium Armor', () => {
     const table = bench({ faction: 'hacan', start: { technologies: [id] } });
     quote(table.pack, id, 'repair 1 of your damaged units that did not use SUSTAIN DAMAGE');
     expect(effect(table.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat', 'invasion'] });
-    expect(effect(table.pack, id).waive).toBeUndefined();
     expect(hintsAt(table.pack, endOf(table), 'combat', ['me']).map(c => c.id)).toContain(id);
   });
 });

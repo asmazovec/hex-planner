@@ -10,6 +10,5 @@ describe('technology:l4 L4 Disruptors', () => {
     const { pack } = bench({ faction: 'letnev' });
     quote(pack, id, 'During an invasion, units cannot use SPACE CANNON against your units.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

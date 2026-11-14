@@ -11,24 +11,21 @@
  * is printed on the Mahact sheet: another faction's warning stands, since a passive effect holds for the faction sheet.
  */
 import { componentById } from '../../../components';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:imperia';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'componentNotHeld',
     rule: "you can use the ability of that player's commander, if it is unlocked.",
     when: (warning, ctx) => {
       const def = componentById(ctx.pack, String(warning.params.id));
       if (def?.kind !== 'leader' || def.detail?.type !== 'commander') return false;
-      return ctx.game.opponents.some(player => {
-        if (player.faction !== def.faction) return false;
-        const held = player.id === 'me' ? ctx.shared : ctx.shared.rivals?.[player.id];
-        return held?.holdings.leaders[def.id] === 'unlocked';
-      });
+      return ctx.table.players.some(player => player.id !== ctx.actor && player.faction === def.faction && ctx.prior.of(player.id).card(def.id) === 'ready');
     },
   }],
 };

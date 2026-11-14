@@ -67,6 +67,6 @@ describe('leader:saarcommander Rowl Sarrig', () => {
   test('leader:saarcommander is a passive effect that waives the placement of produced units', () => {
     const { pack } = produce({ infantry: 1 }, 'h1');
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['productionPlace']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['productionPlace']);
   });
 });

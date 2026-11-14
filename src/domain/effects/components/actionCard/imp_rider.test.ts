@@ -14,7 +14,6 @@ describe('actionCard:imp_rider Imperial Rider', () => {
     quote(pack, id, "If your prediction is correct, gain 1 victory point.");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

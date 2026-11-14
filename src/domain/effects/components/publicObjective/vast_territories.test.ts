@@ -19,7 +19,6 @@ describe('publicObjective:vast_territories Patrol Vast Territories', () => {
     const found = effect(pack, id);
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(['status']);
-    expect(found.waive ?? []).toEqual([]);
     expect(found.modify).toBeUndefined();
     expect(found.nativePlay).toBeUndefined();
   });

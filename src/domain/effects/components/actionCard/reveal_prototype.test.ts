@@ -17,7 +17,6 @@ describe('actionCard:reveal_prototype Reveal Prototype', () => {
     const found = effect(pack, id);
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(['combat']);
-    expect(found.waive).toBeUndefined();
     expect(found.modify).toBeUndefined();
   });
 

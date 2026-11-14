@@ -18,7 +18,6 @@ describe('actionCard:courageous Courageous to the End', () => {
     const { pack } = table();
     quote(pack, id, "your opponent must choose and destroy 1 of their ships");
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

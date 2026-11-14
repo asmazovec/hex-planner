@@ -11,6 +11,5 @@ describe('leader:letnevcommander Rear Admiral Farran', () => {
     const { pack } = bench({ faction: 'letnev', expansions: ['pok'] });
     quote(pack, id, 'After 1 of your units uses SUSTAIN DAMAGE: You may gain 1 trade good.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

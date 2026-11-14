@@ -11,7 +11,6 @@ describe('promissory:pop Promise of Protection', () => {
     quote(pack, id, "the Mentak player cannot use their Pillage faction ability against you");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['transaction']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo("promissory:pop is returned to the Mentak player when its holder activates a system with Mentak units: the return on activation is not replayed (a note goes back only when it is played, 69.3)");

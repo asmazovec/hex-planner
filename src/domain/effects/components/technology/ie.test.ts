@@ -84,6 +84,6 @@ describe('technology:ie Integrated Economy', () => {
   test('technology:ie is a passive effect that waives the need of a unit with PRODUCTION', () => {
     const { pack } = invade({});
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['noProduction']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['noProduction']);
   });
 });

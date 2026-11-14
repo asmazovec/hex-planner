@@ -41,7 +41,7 @@ test('a deal offers no relic nor secret objective by default', async () => {
 });
 
 test('a used component that lifts the check of the kind opens relics and unscored secret objectives to the deal', async () => {
-  throwaway[MARKET] = { tier: 'play', rule: 'x', waive: [{ code: 'transactionKind', rule: 'x' }] };
+  throwaway[MARKET] = { tier: 'play', rule: 'x', permit: [{ code: 'transactionKind', rule: 'x' }] };
   await openGive([MARKET]);
   expect(await screen.findByRole('button', { name: 'Choose Dynamis Core' })).toBeEnabled();
 });

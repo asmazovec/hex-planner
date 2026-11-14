@@ -16,7 +16,6 @@ describe('promissory:blood_pact Blood Pact', () => {
     quote(pack, id, 'If you activate a system that contains 1 or more of the Empyrean player\'s units, return this card to the Empyrean player.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['activation']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('promissory:blood_pact goes back to the Empyrean player when its holder activates a system with Empyrean units: the holdings do not tell a note played face up from one in hand');

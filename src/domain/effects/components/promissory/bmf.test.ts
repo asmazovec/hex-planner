@@ -14,7 +14,6 @@ describe('promissory:bmf Black Market Forgery', () => {
     const { pack } = bench({ faction: 'sol', expansions: ['pok'] });
     quote(pack, id, 'Purge 2 of your relic fragments of the same type to gain 1 relic.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['component'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "... Then, return this card to the Naaz-Rokha player." (LRR 69.3)

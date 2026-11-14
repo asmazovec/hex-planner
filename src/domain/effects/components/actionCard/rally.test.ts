@@ -70,6 +70,5 @@ describe('actionCard:rally Rally', () => {
   test('actionCard:rally is a play effect that lifts no check', () => {
     const { pack } = table(move(1), 1);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

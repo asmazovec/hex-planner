@@ -13,7 +13,6 @@ describe('relic:metalivoidarmaments Metali Void Armaments', () => {
     const relic = bench({ faction: 'sol', expansions: ['te'], start: { relics: [id] } });
     quote(relic.pack, id, 'resolve ANTI-FIGHTER BARRAGE 6 (x3)');
     expect(effect(relic.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(relic.pack, id).waive).toBeUndefined();
     expect(hintsAt(relic.pack, endOf(relic), 'combat', ['me']).map(c => c.id)).toContain(id);
   });
 

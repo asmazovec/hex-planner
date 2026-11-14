@@ -13,7 +13,6 @@ describe('leader:nomadagentmercer Field Marshal Mercer', () => {
     quote(pack, id, 'remove up to 2 of their ground forces from the game board');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('leader:nomadagentmercer up to 2 ground forces placed on planets of the active system: an entry that uses a component names no units or planets');

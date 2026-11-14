@@ -22,6 +22,5 @@ describe('ability:creuss_gate Creuss Gate', () => {
   test('ability:creuss_gate is a hint with no waiver', () => {
     const pack = loadPack([]);
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

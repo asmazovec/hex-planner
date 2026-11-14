@@ -11,6 +11,5 @@ describe('leader:l1z1xcommander 2RAM', () => {
     quote(pack, id, "Units that have PLANETARY SHIELD do not prevent you from using BOMBARDMENT");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -63,6 +63,6 @@ describe('leader:winnuhero Mathis Mathinus — Imperial Seal', () => {
   test('leader:winnuhero is a play effect that waives the primary of a card not held', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['foreignPrimary', 'primaryRepeated']);
+    expect(effect(pack, id).permit?.map(w => w.code).sort()).toEqual(['foreignPrimary', 'primaryRepeated']);
   });
 });

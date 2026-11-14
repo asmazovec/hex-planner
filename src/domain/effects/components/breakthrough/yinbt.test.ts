@@ -12,6 +12,5 @@ describe('breakthrough:yinbt Yin Ascendant', () => {
     quote(pack, id, 'gain the alliance ability of a random, unused faction');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['status']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

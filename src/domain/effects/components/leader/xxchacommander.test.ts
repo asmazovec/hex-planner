@@ -11,6 +11,5 @@ describe('leader:xxchacommander Elder Qanoj', () => {
     quote(pack, id, 'Each planet you exhaust to cast votes provides 1 additional vote');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

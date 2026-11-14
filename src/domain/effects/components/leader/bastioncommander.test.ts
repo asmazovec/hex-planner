@@ -21,7 +21,6 @@ describe('leader:bastioncommander Nip and Tuck', () => {
   test('leader:bastioncommander waives nothing and modifies nothing', () => {
     const { pack } = bench({ faction: 'bastion', expansions: ['pok', 'te'] });
     quote(pack, id, 'The Nekro Virus cannot place assimilator tokens on your components.');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 });

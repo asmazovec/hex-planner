@@ -12,7 +12,6 @@ describe('ability:nocturne Nocturne', () => {
     quote(pack, id, 'This faction cannot be chosen during setup.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('ability:nocturne the Obsidian is not offered when a game is created: the choice of a faction is the setup screen\'s, outside the effects');

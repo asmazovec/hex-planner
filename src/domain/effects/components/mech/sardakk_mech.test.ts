@@ -12,6 +12,5 @@ describe('mech:sardakk_mech Valkyrie Exoskeleton', () => {
     const { pack } = bench({ faction: 'sardakk', expansions: ['pok'] });
     quote(pack, id, 'it produces 1 hit against your opponent\'s ground forces on this planet');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -60,6 +60,6 @@ describe('mech:naaz_voltron Eidolon Maximum', () => {
   test('mech:naaz_voltron is a passive effect that waives both capacity checks', () => {
     const { pack } = flight({ mech: 1 });
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['capacityGroup', 'capacitySystem']);
+    expect(effect(pack, id).permit?.map(w => w.code).sort()).toEqual(['capacityGroup', 'capacitySystem']);
   });
 });

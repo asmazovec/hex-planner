@@ -9,22 +9,22 @@
  * nothing. A secret objective is scored when any player's holdings list it as scored.
  */
 import { componentById } from '../../../components';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:blackmarketdealing';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'transactionKind',
     rule: 'You and the other player may include relics, action cards, and unscored secret objectives as part of the transaction.',
-    when: (warning, { pack, before, shared }) => {
-      const kind = componentById(pack, String(warning.params.id))?.kind;
+    when: (warning, ctx) => {
+      const kind = componentById(ctx.pack, String(warning.params.id))?.kind;
       if (kind === 'relic' || kind === 'actionCard') return true;
       if (kind !== 'secretObjective') return false;
-      const scored = [before, shared, ...Object.values(shared.rivals ?? {})].flatMap(state => state.holdings.scored);
-      return !scored.includes(String(warning.params.id));
+      return !ctx.table.players.some(player => ctx.before.players[player.id]?.cards[String(warning.params.id)]?.state === 'inPlay');
     },
   }],
 };

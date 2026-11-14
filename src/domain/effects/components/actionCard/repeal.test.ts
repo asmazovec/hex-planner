@@ -49,6 +49,5 @@ describe('actionCard:repeal Repeal Law', () => {
   test('actionCard:repeal is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

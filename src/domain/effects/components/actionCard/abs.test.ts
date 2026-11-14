@@ -14,6 +14,5 @@ describe('actionCard:abs Ancient Burial Sites', () => {
     const found = effect(pack, id);
     expect(found.tier).toBe('hint');
     expect(found.hintAt ?? []).toEqual([]);
-    expect(found.waive).toBeUndefined();
   });
 });

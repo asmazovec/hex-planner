@@ -13,7 +13,6 @@ describe('technology:parasite-firm Neural Parasite (Firmament)', () => {
     quote(pack, id, 'you may place 1 infantry from your reinforcements on a planet you control in your home system');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['status']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('technology:parasite-firm the infantry placed at the start of the status phase: the status entry has no choice of a unit to place');

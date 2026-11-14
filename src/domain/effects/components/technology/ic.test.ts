@@ -13,6 +13,5 @@ describe('technology:ic Impulse Core', () => {
     quote(pack, id, 'you may destroy 1 of your cruisers or destroyers in the active system to produce 1 hit');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

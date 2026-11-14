@@ -100,7 +100,7 @@ describe('handLimit and secretLimit: the checks after an entry that draws', () =
 
   test('2.4.1: a waiver lifts the warning and keeps it listed', () => {
     const own = rulesPack();
-    withEffect(own, TECH, { tier: 'passive', rule: TECH, waive: [{ code: 'handOverLimit' as never, rule: 'test' }] });
+    withEffect(own, TECH, { tier: 'passive', rule: TECH, permit: [{ code: 'handOverLimit' as never, rule: 'test' }] });
     const draw: Entry = { ...adjust({}), gains: cards(own, 8) };
     const found = forecast(rulesGame({ entries: [draw], game: start({ technologies: [TECH] }) }), own).warnings[draw.id].find(w => w.code === 'handOverLimit');
     expect(found?.waivedBy).toEqual([TECH]);

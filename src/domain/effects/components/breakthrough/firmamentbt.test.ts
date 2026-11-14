@@ -13,7 +13,6 @@ describe('breakthrough:firmamentbt The Sowing', () => {
     quote(pack, id, 'you may place up to 3 of your trade goods on this card');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['status']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('breakthrough:firmamentbt the trade goods on the card leave the player\'s trade goods: a store of trade goods on a card is not modelled');

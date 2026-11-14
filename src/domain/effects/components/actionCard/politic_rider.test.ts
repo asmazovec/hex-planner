@@ -15,7 +15,6 @@ describe('actionCard:politic_rider Politics Rider', () => {
     const { pack } = table();
     quote(pack, id, 'draw 3 action cards and gain the speaker token');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toBeUndefined();
   });
 });

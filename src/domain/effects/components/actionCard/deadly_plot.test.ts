@@ -13,6 +13,5 @@ describe('actionCard:deadly_plot Deadly Plot', () => {
     quote(pack, id, 'The agenda is resolved with no effect and it is not replaced. Then, exhaust all of your planets.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id });
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

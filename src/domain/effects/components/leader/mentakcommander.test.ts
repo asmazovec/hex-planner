@@ -11,6 +11,5 @@ describe('leader:mentakcommander S\'ula Mentarion', () => {
     quote(pack, id, "After you win a space combat");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

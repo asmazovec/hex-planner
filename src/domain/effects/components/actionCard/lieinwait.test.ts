@@ -16,7 +16,6 @@ describe('actionCard:lieinwait Lie in Wait', () => {
     const found = effect(pack, id);
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(['transaction']);
-    expect(found.waive).toBeUndefined();
     expect(found.modify).toBeUndefined();
   });
 });

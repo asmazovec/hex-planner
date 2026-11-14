@@ -18,7 +18,6 @@ describe('actionCard:exchangeprogram Exchange Program', () => {
     const found = effect(pack, id);
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(['component']);
-    expect(found.waive).toBeUndefined();
     expect(found.modify).toBeUndefined();
   });
 

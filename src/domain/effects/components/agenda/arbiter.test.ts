@@ -15,7 +15,6 @@ describe('agenda:arbiter Imperial Arbiter', () => {
     quote(pack, id, "may discard this card to swap 1 of their strategy cards with 1 of another player's strategy cards");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 8.20: "If an 'Elect' or 'For' outcome of a law was resolved, that card remains in play and permanently

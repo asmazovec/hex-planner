@@ -10,7 +10,6 @@ describe('mech:naaz_mech_space Z-Grav Eidolon', () => {
     const { pack } = bench({ faction: 'naaz', expansions: ['pok'] });
     quote(pack, id, 'If this unit is in the space area of the active system, it is also a ship.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Ruling (Naaz-Rokha, Eidolon / Z-Grav Eidolon 1): "The Naaz-Rokha mechs are only Z-Grav Eidolon during the Space

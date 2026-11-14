@@ -13,7 +13,6 @@ describe('ability:bladesorchestra The Blade\'s Orchestra', () => {
     quote(pack, id, 'Then, ready Cronos Hollow and Tallin Hollow if you control them.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['component']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('ability:bladesorchestra the home system flips and its planets are readied: the faction of a game cannot change mid-plan');

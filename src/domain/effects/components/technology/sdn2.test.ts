@@ -46,7 +46,6 @@ describe('technology:sdn2 Super Dreadnought II', () => {
     quote(pack, id, 'This unit cannot be destroyed by "Direct Hit" action cards.');
     expect(effect(pack, id)).toMatchObject({ tier: 'passive', rule: '97.4' });
     expect(effect(pack, id).modify?.speed).toBeDefined();
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toBeUndefined();
   });
 });

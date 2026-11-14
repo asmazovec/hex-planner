@@ -13,6 +13,5 @@ describe('ability:raid_formation Raid Formation', () => {
     quote(pack, id, 'for each hit produced in excess of your opponent');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

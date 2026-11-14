@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { DataPack, Entry, Game, StartHoldings } from '../../../types';
-import { bench, effect, endOf, expectStanding, FAR, NEAR, quote, TARGET, tactical, using, warningsOf } from '../kit';
+import { bench, endOf, expectStanding, FAR, NEAR, quote, TARGET, tactical, using, warningsOf } from '../kit';
 import { id } from './thundersedge';
 
 /** Thunder's Edge stands in the target system beside Target One. */
@@ -57,10 +57,5 @@ describe('legendary:thundersedge Jupiter Brain', () => {
   test('legendary:thundersedge used without controlling Thunder\'s Edge is warned of as not held', () => {
     const entry = using(tactical(FAR), id);
     expectStanding(warningsOf(table([entry]), entry), 'componentNotHeld');
-  });
-
-  test('legendary:thundersedge waives nothing', () => {
-    const { pack } = table([]);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

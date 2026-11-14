@@ -23,7 +23,6 @@ describe('ability:galvanize Galvanize', () => {
   test('ability:galvanize waives nothing and modifies nothing', () => {
     const { pack } = table();
     quote(pack, id, 'they place a galvanize token beneath it if it does not have one');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 });

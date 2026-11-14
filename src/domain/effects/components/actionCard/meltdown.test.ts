@@ -56,6 +56,5 @@ describe('actionCard:meltdown Reactor Meltdown', () => {
   test('actionCard:meltdown is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

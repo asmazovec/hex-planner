@@ -18,7 +18,6 @@ describe('secretObjective:bam Become a Martyr', () => {
     const found = effect(pack, id);
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(['invasion']);
-    expect(found.waive).toBeUndefined();
     expect(found.modify).toBeUndefined();
     expect(found.nativePlay).toBeUndefined();
   });

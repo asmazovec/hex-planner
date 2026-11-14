@@ -11,6 +11,5 @@ describe('actionCard:insider Insider Information', () => {
     quote(pack, id, 'Look at the top 3 cards of the agenda deck.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id });
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

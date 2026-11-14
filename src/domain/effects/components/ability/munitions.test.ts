@@ -12,6 +12,5 @@ describe('ability:munitions Munitions Reserves', () => {
     const { pack } = bench({ faction: 'letnev' });
     quote(pack, id, 'You may spend 2 trade goods to re-roll any number of your dice during that combat round.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -11,7 +11,6 @@ describe('agenda:conventions Conventions of War', () => {
     const table = bench({ faction: 'sol' });
     quote(table.pack, id, 'Players cannot use BOMBARDMENT against units that are on cultural planets.');
     expect(effect(table.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(table.pack, id).waive).toBeUndefined();
   });
 
   test.todo('agenda:conventions "Against" discards the action cards of those who voted against: the plan does not count votes');

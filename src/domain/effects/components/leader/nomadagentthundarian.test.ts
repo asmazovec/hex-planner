@@ -11,6 +11,5 @@ describe('leader:nomadagentthundarian The Thundarian', () => {
     const { pack } = bench({ faction: 'nomad', expansions: ['pok'] });
     quote(pack, id, 'hits are not assigned to either player\'s units');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

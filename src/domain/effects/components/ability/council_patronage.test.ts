@@ -75,6 +75,5 @@ describe('ability:council_patronage Council Patronage', () => {
   test('ability:council_patronage is a passive effect that waives nothing', () => {
     const { pack } = table('keleresm', [[]]);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

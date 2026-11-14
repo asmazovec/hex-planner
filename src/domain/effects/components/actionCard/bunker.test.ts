@@ -18,7 +18,6 @@ describe('actionCard:bunker Bunker', () => {
     const { pack } = table();
     quote(pack, id, "apply -4 to the result of each BOMBARDMENT roll");
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

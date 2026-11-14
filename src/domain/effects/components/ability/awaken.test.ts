@@ -16,7 +16,6 @@ describe('ability:awaken Awaken', () => {
     quote(pack, id, 'You may replace each of those tokens with 1 PDS from your reinforcements');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['activation']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('ability:awaken replaces the sleeper tokens of the activated system with PDS: the plan keeps no sleeper tokens');

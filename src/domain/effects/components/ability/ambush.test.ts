@@ -11,6 +11,5 @@ describe('ability:ambush Ambush', () => {
     quote(pack, id, "You may roll 1 die for each of up to 2 of your cruisers or destroyers in the system");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

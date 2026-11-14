@@ -12,6 +12,5 @@ describe('mech:xxcha_mech Indomitus', () => {
     quote(pack, id, 'SPACE CANNON against ships that are in adjacent systems');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

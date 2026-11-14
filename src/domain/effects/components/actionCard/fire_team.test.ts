@@ -18,7 +18,6 @@ describe('actionCard:fire_team Fire Team', () => {
     const { pack } = table();
     quote(pack, id, "Reroll any number of your dice.");
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

@@ -15,7 +15,6 @@ describe('agenda:minister_war Minister of War', () => {
     quote(pack, id, "then they may perform 1 additional action");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['round']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 8.20: "If an 'Elect' or 'For' outcome of a law was resolved, that card remains in play and permanently

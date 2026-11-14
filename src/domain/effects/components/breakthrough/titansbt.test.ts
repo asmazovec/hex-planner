@@ -14,7 +14,6 @@ describe('breakthrough:titansbt Slumberstate Computing', () => {
     quote(pack, id, 'you may choose for your units to coexist instead');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion', 'status']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('breakthrough:titansbt the units coexist on a planet with another player\'s ground forces: coexistence is not modelled');

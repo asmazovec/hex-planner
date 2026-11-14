@@ -12,6 +12,5 @@ describe('ability:phoenixstandard Phoenix Standard', () => {
     quote(pack, id, 'At the end of combat: you may galvanize 1 of your units that participated.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat', 'invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

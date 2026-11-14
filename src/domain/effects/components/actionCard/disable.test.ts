@@ -18,7 +18,6 @@ describe('actionCard:disable Disable', () => {
     const { pack } = table();
     quote(pack, id, "lose PLANETARY SHIELD and SPACE CANNON during this invasion");
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

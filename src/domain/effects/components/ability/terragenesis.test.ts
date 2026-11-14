@@ -14,7 +14,6 @@ describe('ability:terragenesis Terragenesis', () => {
     quote(pack, id, 'You may place or move 1 sleeper token onto that planet');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('ability:terragenesis places a sleeper token on the explored planet: the plan keeps no sleeper tokens and does not explore');

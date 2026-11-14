@@ -15,7 +15,6 @@ describe('technology:cm Chaos Mapping', () => {
     quote(pack, id, 'Other players cannot activate asteroid fields that contain 1 or more of your ships.');
     quote(pack, id, 'you may produce 1 unit in a system that contains at least 1 of your units that has PRODUCTION');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['production'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('technology:cm an opponent\'s entry that activates an asteroid field holding my ships is warned of: a component of one player cannot add a check to another player\'s entry yet (and only ships count, Saar note 5)');

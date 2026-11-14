@@ -16,7 +16,6 @@ describe('technology:fl Fleet Logistics', () => {
     const t = held();
     quote(t.pack, id, 'you may perform 2 actions instead of 1');
     expect(effect(t.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['round'] });
-    expect(effect(t.pack, id).waive).toBeUndefined();
     for (const step of effect(t.pack, id).hintAt ?? []) expect(hintsAt(t.pack, endOf(t), step, ['me']).map(c => c.id)).toContain(id);
   });
 

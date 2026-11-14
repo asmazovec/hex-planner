@@ -68,6 +68,6 @@ describe('agenda:minister_industry Minister of Industry', () => {
   test('agenda:minister_industry is a passive effect that waives the production of a card that produces nothing', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

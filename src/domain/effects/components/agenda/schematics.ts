@@ -9,22 +9,21 @@
  */
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import { techOf } from '../../../replay/research';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:schematics';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{
+  permit: [{
     code: prerequisitesMissing.code,
     rule: 'If any player owns a war sun technology, all players may ignore all prerequisites on war sun technologies.',
     when: (warning, ctx) => {
       if (techOf(ctx.pack, String(warning.params.id))?.upgrade !== 'warsun') return false;
-      const owner = ctx.entry?.owner;
-      // The owner's holdings before the entry: researching War Sun itself does not make the prerequisites ignored ("from then on").
-      const all = [ctx.before.holdings, ...(owner === undefined ? [] : [ctx.shared.holdings]), ...Object.entries(ctx.shared.rivals ?? {}).filter(([who]) => who !== owner).map(([, rival]) => rival.holdings)];
-      return all.some(holdings => holdings.technologies.some(tech => techOf(ctx.pack, tech)?.upgrade === 'warsun'));
+      // The holdings before the turn: researching War Sun itself does not make the prerequisites ignored ("from then on").
+      return ctx.table.players.some(player => ctx.prior.of(player.id).cards('technology').some(card => techOf(ctx.pack, card.id)?.upgrade === 'warsun'));
     },
   }],
 };

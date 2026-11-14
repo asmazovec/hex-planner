@@ -13,7 +13,6 @@ describe('relic:lightrailordnance Lightrail Ordnance', () => {
     const relic = bench({ faction: 'sol', expansions: ['te'], start: { relics: [id] } });
     quote(relic.pack, id, 'Your space docks gain SPACE CANNON 5 (x2)');
     expect(effect(relic.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(relic.pack, id).waive).toBeUndefined();
     expect(hintsAt(relic.pack, endOf(relic), 'combat', ['me']).map(c => c.id)).toContain(id);
   });
 

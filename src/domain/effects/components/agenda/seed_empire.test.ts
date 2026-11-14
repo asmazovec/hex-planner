@@ -12,7 +12,6 @@ describe('agenda:seed_empire Seed of an Empire', () => {
     quote(pack, id, "The player with the most victory points gains 1 victory point.");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 7.8: "When resolving a directive, players resolve the outcome that received the most votes and discard the agenda card."

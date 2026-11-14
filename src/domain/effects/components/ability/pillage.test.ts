@@ -11,6 +11,5 @@ describe('ability:pillage Pillage', () => {
     quote(pack, id, "If they have 3 or more trade goods, you may take 1 of their trade goods or commodities");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['transaction']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

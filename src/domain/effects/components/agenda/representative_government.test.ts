@@ -13,7 +13,6 @@ describe('agenda:representative_government Representative Government', () => {
     const { pack } = bench({ faction: 'sol' });
     quote(pack, id, 'Players cannot exhaust planets to cast votes during the agenda phase.');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt ?? []).toEqual([]);
   });
 });

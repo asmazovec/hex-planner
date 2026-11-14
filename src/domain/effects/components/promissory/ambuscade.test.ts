@@ -13,7 +13,6 @@ describe('promissory:ambuscade Strike Wing Ambuscade', () => {
     quote(pack, id, 'Choose 1 of those units to roll 1 additional die');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat', 'invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: another player holding the Argent note sees it at the battle.

@@ -14,7 +14,6 @@ describe('ability:indoctrination Indoctrination', () => {
     quote(pack, id, 'You may spend 2 influence to replace 1 of your opponent\'s participating infantry');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 });

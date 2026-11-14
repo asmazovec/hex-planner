@@ -74,6 +74,5 @@ describe('actionCard:fs1 Flank Speed', () => {
   test('actionCard:fs1 changes the move value: a modifyWhenNamed of speed, no waiver', () => {
     const { pack } = table([]);
     expect(effect(pack, id).modifyWhenNamed?.speed).toBeTypeOf('function');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

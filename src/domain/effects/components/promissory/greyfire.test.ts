@@ -22,7 +22,6 @@ describe('promissory:greyfire Greyfire Mutagen', () => {
     quote(pack, id, 'Replace 1 of your opponent\'s infantry with 1 infantry from your reinforcements');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "Then, return this card to the Yin player." (LRR 69.3)

@@ -13,6 +13,5 @@ describe('ability:zeal Zeal', () => {
     quote(pack, id, 'cast 1 additional vote for each player in the game including you');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

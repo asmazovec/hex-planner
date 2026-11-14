@@ -58,6 +58,6 @@ describe('leader:winnuagent Berekar Berekon', () => {
   test('leader:winnuagent is a play effect that waives a shortfall of resources', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['shortResources']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['shortResources']);
   });
 });

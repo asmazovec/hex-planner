@@ -11,6 +11,5 @@ describe('leader:yssarilagent Ssruu', () => {
     const { pack } = bench({ faction: 'yssaril', expansions: ['pok'] });
     quote(pack, id, 'This card has the text ability of each other player\'s agent');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

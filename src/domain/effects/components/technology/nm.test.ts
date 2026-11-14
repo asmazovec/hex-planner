@@ -15,7 +15,6 @@ describe('technology:nm Neural Motivator', () => {
     const t = held();
     quote(t.pack, id, 'During the status phase, draw 2 action cards instead of 1.');
     expect(effect(t.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['status'] });
-    expect(effect(t.pack, id).waive).toBeUndefined();
     for (const step of effect(t.pack, id).hintAt ?? []) expect(hintsAt(t.pack, endOf(t), step, ['me']).map(c => c.id)).toContain(id);
   });
 

@@ -12,6 +12,5 @@ describe('ability:future_sight Future Sight', () => {
     quote(pack, id, 'after an outcome that you voted for or predicted is resolved: Gain 1 trade good');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

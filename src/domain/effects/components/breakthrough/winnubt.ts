@@ -8,21 +8,20 @@
  * one ship only: the +1 is given to 1 ship, so a group of two short ships, or a shortfall of two, still stands. The
  * move value point (`speed`) does not know the active system, hence a waiver narrowed with `when`.
  */
-import { systemPlanets } from '../../../replay/board';
-import { oneShipShort } from '../../helpers/movement';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:winnubt';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'speedShort',
     rule: 'After you activate a system that contains a legendary planet, apply +1 to the move value of 1 of your ships during this tactical action',
     when: (warning, ctx) => {
-      const { entry, game, pack } = ctx;
-      return entry?.type === 'tactical' && entry.systemId !== null && systemPlanets(game, entry.systemId, pack).some(planet => planet.legendary !== undefined) && oneShipShort(warning, ctx);
+      const { entry } = ctx;
+      return entry?.type === 'tactical' && entry.systemId !== null && ctx.planetsIn(entry.systemId).some(planetId => ctx.pack.planets[planetId]?.legendary !== undefined) && ctx.oneShipShort(warning);
     },
   }],
 };

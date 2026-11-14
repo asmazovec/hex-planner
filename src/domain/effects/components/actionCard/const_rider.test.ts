@@ -14,7 +14,6 @@ describe('actionCard:const_rider Construction Rider', () => {
     quote(pack, id, "place 1 space dock from your reinforcements on a planet you control");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

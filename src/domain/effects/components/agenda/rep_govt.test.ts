@@ -14,6 +14,5 @@ describe('agenda:rep_govt Representative Government', () => {
     quote(pack, id, 'Players cannot exhaust planets to cast votes during the agenda phase.');
     quote(pack, id, 'each player that voted "Against" exhausts all of their cultural planets');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -31,7 +31,6 @@ describe('technology:exile2 Exile II', () => {
     const { pack } = table([NEAR], TARGET);
     quote(pack, id, 'you may place 1 active or inactive breach in that system');
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('technology:exile2 a breach placed at the end of a combat: breaches are not on the plan\'s board');

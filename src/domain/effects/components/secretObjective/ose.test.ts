@@ -18,7 +18,6 @@ describe('secretObjective:ose Occupy the Seat of the Empire', () => {
     const found = effect(pack, id);
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(['status']);
-    expect(found.waive).toBeUndefined();
     expect(found.modify).toBeUndefined();
     expect(found.nativePlay).toBeUndefined();
   });

@@ -67,7 +67,7 @@ describe('leader:argentagent Trilossa Aun Mirik', () => {
   test('leader:argentagent is a play effect that waives the placement of produced ground forces', () => {
     const { pack } = produce({ t1: { infantry: 1 } });
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['productionPlace']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['productionPlace']);
   });
 
   test.todo('leader:argentagent used on another player\'s production: a waiver is asked of the owner of the entry, so my agent would have to be named in the rival\'s entry');

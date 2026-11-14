@@ -15,7 +15,6 @@ describe('agenda:revolution Anti-Intellectual Revolution', () => {
     const table = bench({ faction: 'sol' });
     quote(table.pack, id, 'that player must destroy 1 of their non-fighter ships');
     expect(effect(table.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['card'] });
-    expect(effect(table.pack, id).waive).toBeUndefined();
   });
 
   // LRR 7.3 with the card: a law passed "For" stays in play.

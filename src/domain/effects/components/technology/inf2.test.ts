@@ -11,7 +11,6 @@ describe('technology:inf2 Infantry II', () => {
     quote(pack, id, 'Cost 1(x2), Combat 7');
     const found = effect(pack, id);
     expect(found.tier).toBe('passive');
-    expect(found.waive).toBeUndefined();
     expect(found.modify?.unitCost?.(0.5, { faction: 'hacan', unit: 'infantry' })).toBe(0.5);
   });
 

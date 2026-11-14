@@ -9,7 +9,6 @@
  * replay as any agent named in «Used». Played on another player's ship it would be that player's entry naming a
  * component it does not hold: a known limit of the foundation.
  */
-import { fastestOnBoard, oneShipShort } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
 import type { Hooked } from '../../../../game/abilities/types';
 
@@ -18,16 +17,16 @@ export const id = 'leader:saaragent';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  waive: [{
-    code: 'speedShort',
-    rule: "increase the move value of 1 of that player's ships to match the move value of the ship on the game board that has the highest move value",
-    // One ship, short by no more than the highest move value on the board gives it.
-    when: (warning, ctx) => oneShipShort(warning, ctx, fastestOnBoard(ctx) - Number(warning.params.move)),
-  }],
 };
 
 export const ability: Hooked = {
   holder: 'self',
+  permit: [{
+    code: 'speedShort',
+    rule: "increase the move value of 1 of that player's ships to match the move value of the ship on the game board that has the highest move value",
+    // One ship, short by no more than the highest move value on the board gives it.
+    when: (warning, ctx) => ctx.oneShipShort(warning, ctx.fastestOnBoard() - Number(warning.params.move)),
+  }],
   // Nothing to change on the board: the agent is exhausted by the replay, the waiver is its whole effect.
   play: () => [],
 };

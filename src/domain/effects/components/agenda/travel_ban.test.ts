@@ -13,7 +13,6 @@ describe('agenda:travel_ban Enforced Travel Ban', () => {
     const table = bench({ faction: 'sol' });
     quote(table.pack, id, 'Alpha and beta wormholes have no effect during movement.');
     expect(effect(table.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['movement'] });
-    expect(effect(table.pack, id).waive).toBeUndefined();
   });
 
   // LRR Wormholes: systems that contain matching wormholes are adjacent.

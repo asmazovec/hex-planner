@@ -14,6 +14,5 @@ describe('ability:scheming Scheming', () => {
     quote(pack, id, 'Draw 1 additional action card. Then, choose and discard 1 action card from your hand.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['status', 'card']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

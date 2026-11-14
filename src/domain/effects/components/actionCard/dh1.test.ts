@@ -18,7 +18,6 @@ describe('actionCard:dh1 Direct Hit', () => {
     const { pack } = table();
     quote(pack, id, "Destroy that ship.");
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

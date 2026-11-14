@@ -13,7 +13,6 @@ describe('leader:nomadagentartuno Artuno the Betrayer', () => {
     quote(pack, id, 'place an equal number of trade goods on this card');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('leader:nomadagentartuno the trade goods put on the card and gained when it readies: the plan keeps no trade goods on a card');

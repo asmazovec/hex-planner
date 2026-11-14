@@ -11,25 +11,18 @@
  * Not modelled: the secondary performed this way is the player's action (a component action), so it should also be a
  * turn of the round (actionAfterPass); a secondary entry is not a turn today.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:strategize1';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'ownSecondary',
     rule: 'Perform the secondary ability of any readied or unchosen strategy card.',
     // Readied: the primary of this card has not been resolved by the player earlier in the round.
-    when: (_warning, { game, entry, primaries }) => {
-      if (entry?.type === 'secondary' && primaries) return entry.card === undefined || !primaries.includes(entry.card);
-      if (entry?.type !== 'secondary') return true;
-      const plan = game.plans.find(candidate => candidate.id === game.activePlanId);
-      const round = plan?.rounds.find(candidate => candidate.entries.some(other => other.id === entry.id));
-      if (!round) return true;
-      const earlier = round.entries.slice(0, round.entries.findIndex(other => other.id === entry.id));
-      return !earlier.some(other => other.type === 'strategic' && other.card === entry.card && (other.owner ?? 'me') === (entry.owner ?? 'me'));
-    },
+    when: (_warning, { entry, primaries }) => entry?.type !== 'secondary' || entry.card === undefined || !(primaries ?? []).includes(entry.card),
   }],
 };

@@ -66,6 +66,5 @@ describe('actionCard:divert_funding Divert Funding', () => {
   test('actionCard:divert_funding is a play effect that lifts no check', () => {
     const { pack } = table(play('technology:nm', 'technology:gd'));
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

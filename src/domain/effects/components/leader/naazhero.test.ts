@@ -14,7 +14,6 @@ describe('leader:naazhero Hesh and Prit — Perfect Synthesis', () => {
     const { pack } = hero([]);
     quote(pack, id, 'perform the secondary ability of up to 2 readied or unchosen strategy cards');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['component'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "Gain 1 relic ... Then, purge this card."

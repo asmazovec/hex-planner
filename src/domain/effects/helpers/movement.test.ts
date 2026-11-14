@@ -4,14 +4,12 @@
  */
 import { describe, expect, test } from 'vitest';
 import { adjacentTo } from '../../movement';
-import type { Entry, GameState } from '../../types';
+import type { Entry } from '../../types';
 import { bench, endOf, FAR, FARTHER, HOME, NEAR, TARGET, tactical, warningsOf, type Bench } from '../components/kit';
 import { effectsOf } from '../registry';
-import type { ComponentEffect, WaiverContext } from '../types';
-import {
-  activeNextToAnomaly, crossesRift, fastestOfGroup, fastestOnBoard, mecatolSlot, oneShipShort, onlyUnits, othersShipsIn, ownDockIn, playerHolds, playerNear, plusSpeed,
-  routeBlockKind, routeOf, shipSlots, shipsOnly, shortfall, speedWithoutAnomalies, startWormholes, startsAtHome, startsInFracture,
-} from './movement';
+import type { PermitContext } from '../../../game/abilities/types';
+import type { ComponentEffect } from '../types';
+import { activeNextToAnomaly, fastestOfGroup, ownDockIn, playerHolds, plusSpeed, shipSlots, shortfall, startWormholes, startsAtHome, startsInFracture } from './movement';
 
 const TECH = 'technology:gd';
 const give = (table: Bench, effect: Partial<ComponentEffect>): void => {
@@ -24,8 +22,8 @@ const O1 = { id: 'o1', faction: 'naalu', vp: 0, seat: 2, color: 2 };
 const flight = (units: Record<string, number>, via: string[], target: string, from = HOME): Entry =>
   tactical(target, { moves: [{ from, units, via }] });
 const waived = (table: Bench, entry: Entry, code: string): boolean[] => warningsOf(table, entry).filter(w => w.code === code).map(w => (w.waivedBy?.length ?? 0) > 0);
-const lifting = (code: string, when: (w: import('../../types').Warning, ctx: WaiverContext) => boolean): Partial<ComponentEffect> =>
-  ({ waive: [{ code: code as never, rule: 'test', when }] });
+const lifting = (code: string, when: (w: import('../../types').Warning, ctx: PermitContext) => boolean): Partial<ComponentEffect> =>
+  ({ permit: [{ code: code as never, rule: 'test', when }] });
 
 describe('plusSpeed', () => {
   test('adds to a ship and leaves a unit that does not move as it is', () => {
@@ -74,7 +72,7 @@ describe('what a route warning is about', () => {
     const move = flight({ cruiser: 1 }, [NEAR], TARGET);
     const table = sol({ units: { [HOME]: { cruiser: 1 } }, entries: [move], game: { map, ...game } });
     const found: (string | undefined)[] = [];
-    give(table, lifting('routeBlocked', (w, ctx) => { found.push(routeBlockKind(w, ctx)); return false; }));
+    give(table, lifting('routeBlocked', (w, ctx) => { found.push(ctx.routeBlockKind(w)); return false; }));
     warningsOf(table, move);
     return found;
   };
@@ -95,7 +93,7 @@ describe('what a route warning is about', () => {
     const move = flight({ cruiser: 1 }, [], NEAR);
     const table = sol({ units: { [HOME]: { cruiser: 1 } }, entries: [move], game: { map: { ...MAP, [NEAR]: 'r-lane' } } });
     const found: (string | undefined)[] = [];
-    give(table, lifting('routeBlocked', (w, ctx) => { found.push(routeBlockKind(w, ctx)); return true; }));
+    give(table, lifting('routeBlocked', (w, ctx) => { found.push(ctx.routeBlockKind(w)); return true; }));
     expect(waived(table, move, 'routeBlocked')).toEqual([true]);
     expect(found).toEqual(['hyperlane']);
   });
@@ -105,7 +103,7 @@ describe('oneShipShort', () => {
   const table = (units: Record<string, number>) => {
     const move = flight(units, [NEAR], TARGET);
     const t = sol({ units: { [HOME]: units }, entries: [move] });
-    give(t, lifting('speedShort', (w, ctx) => oneShipShort(w, ctx)));
+    give(t, lifting('speedShort', (w, ctx) => ctx.oneShipShort(w)));
     return { t, move };
   };
 
@@ -123,13 +121,13 @@ describe('oneShipShort', () => {
   test('a shortfall of two steps is more than the component covers', () => {
     const move = flight({ carrier: 1 }, [NEAR, TARGET], FAR);
     const t = sol({ units: { [HOME]: { carrier: 1 } }, entries: [move] });
-    give(t, lifting('speedShort', (w, ctx) => oneShipShort(w, ctx)));
+    give(t, lifting('speedShort', (w, ctx) => ctx.oneShipShort(w)));
     expect(waived(t, move, 'speedShort')).toEqual([false]);
   });
 });
 
 describe('the route of a warning', () => {
-  const asked = (map: Record<string, string>, units: Record<string, number>, ask: (w: import('../../types').Warning, ctx: WaiverContext) => unknown, game: Parameters<typeof bench>[0]['game'] = {}, via = [NEAR], target = TARGET) => {
+  const asked = (map: Record<string, string>, units: Record<string, number>, ask: (w: import('../../types').Warning, ctx: PermitContext) => unknown, game: Parameters<typeof bench>[0]['game'] = {}, via = [NEAR], target = TARGET) => {
     const move = flight(units, via, target);
     const t = sol({ units: { [HOME]: units }, entries: [move], game: { map, ...game } });
     const seen: unknown[] = [];
@@ -138,26 +136,25 @@ describe('the route of a warning', () => {
     return seen;
   };
 
-  test('routeOf and crossesRift: the systems entered, and whether a gravity rift is left on the way', () => {
+  test('crossesRift: whether a gravity rift is left on the way', () => {
     const rift = { ...MAP, [NEAR]: 'r-rift' };
-    expect(asked(rift, { carrier: 1 }, (w, ctx) => routeOf(w, ctx), {}, [NEAR, TARGET], FAR)).toEqual([[HOME, NEAR, TARGET, FAR]]);
-    expect(asked(rift, { carrier: 1 }, (w, ctx) => crossesRift(w, ctx), {}, [NEAR, TARGET], FAR)).toEqual([true]);
-    expect(asked(MAP, { carrier: 1 }, (w, ctx) => crossesRift(w, ctx), {}, [NEAR, TARGET], FAR)).toEqual([false]);
+    expect(asked(rift, { carrier: 1 }, (w, ctx) => ctx.crossesRift(w), {}, [NEAR, TARGET], FAR)).toEqual([true]);
+    expect(asked(MAP, { carrier: 1 }, (w, ctx) => ctx.crossesRift(w), {}, [NEAR, TARGET], FAR)).toEqual([false]);
   });
 
   test('speedWithoutAnomalies is the printed value, apart from a nebula start or a rift', () => {
-    expect(asked({ ...MAP, [HOME]: 'r-nebula' }, { cruiser: 1 }, (w, ctx) => speedWithoutAnomalies(w, ctx), {}, [NEAR, TARGET], FAR)).toEqual([2]);
+    expect(asked({ ...MAP, [HOME]: 'r-nebula' }, { cruiser: 1 }, (w, ctx) => ctx.speedWithoutAnomalies(w), {}, [NEAR, TARGET], FAR)).toEqual([2]);
   });
 
   test('onlyUnits and shipsOnly: what the move carried', () => {
-    expect(asked(MAP, { carrier: 1, cruiser: 1 }, (w, ctx) => [onlyUnits(w, ctx, ['carrier']), onlyUnits(w, ctx, ['carrier', 'cruiser']), shipsOnly(w, ctx)])[0]).toEqual([false, true, true]);
-    expect(asked(MAP, { carrier: 1, infantry: 2, fighter: 1 }, (w, ctx) => shipsOnly(w, ctx))[0]).toBe(false);
+    expect(asked(MAP, { carrier: 1, cruiser: 1 }, (w, ctx) => [ctx.onlyUnits(w, ['carrier']), ctx.onlyUnits(w, ['carrier', 'cruiser']), ctx.shipsOnly(w)])[0]).toEqual([false, true, true]);
+    expect(asked(MAP, { carrier: 1, infantry: 2, fighter: 1 }, (w, ctx) => ctx.shipsOnly(w))[0]).toBe(false);
   });
 
   test('othersShipsIn: other players\' ships, fighters and ground forces left out', () => {
     const rival = { opponents: [O1], enemyUnits: { [NEAR]: { o1: { cruiser: 2, fighter: 3, infantry: 1 } } } };
-    expect(asked(MAP, { carrier: 1 }, (_w, ctx) => othersShipsIn(ctx, NEAR), rival)[0]).toEqual({ cruiser: 2 });
-    expect(asked(MAP, { carrier: 1 }, (_w, ctx) => othersShipsIn(ctx, TARGET), rival)[0]).toEqual({});
+    expect(asked(MAP, { carrier: 1 }, (_w, ctx) => ctx.othersShipsIn(NEAR), rival)[0]).toEqual({ cruiser: 2 });
+    expect(asked(MAP, { carrier: 1 }, (_w, ctx) => ctx.othersShipsIn(TARGET), rival)[0]).toEqual({});
   });
 
   test('ownDockIn: a dock on a planet of the system', () => {
@@ -172,7 +169,7 @@ describe('the board of the others', () => {
     const seen: number[] = [];
     const move = flight({ carrier: 2 }, [NEAR], TARGET);
     const t = sol({ units: { [HOME]: { carrier: 2 } }, entries: [move], game: { opponents: [O1], enemyUnits: { [FARTHER]: { o1: { dreadnought: 1, cruiser: 1 } } } } });
-    give(t, lifting('speedShort', (_w, ctx) => { seen.push(fastestOnBoard(ctx)); return false; }));
+    give(t, lifting('speedShort', (_w, ctx) => { seen.push(ctx.fastestOnBoard()); return false; }));
     warningsOf(t, move);
     expect(seen[0]).toBeGreaterThanOrEqual(2);
   });
@@ -188,13 +185,21 @@ describe('the board of the others', () => {
     expect(shipSlots(state, t.pack)).toEqual([HOME]);
   });
 
-  test('mecatolSlot finds tile 18 or 112, and playerNear asks the other player\'s presence in or next to it', () => {
-    const t = sol({ units: { [HOME]: { carrier: 1 } }, game: { opponents: [O1], map: { ...MAP, [NEAR]: '18' } } });
-    expect(mecatolSlot(t.game)).toBe(NEAR);
-    const shared: GameState = endOf(t);
-    const ctx = { pack: t.pack, game: t.game, before: shared, after: shared, shared } satisfies WaiverContext;
-    expect(playerNear(ctx, 'me', NEAR)).toBe(true);
-    expect(playerNear(ctx, 'me', FARTHER)).toBe(false);
+  test('mecatolSlot finds tile 18 or 112, and playerNear asks the presence of another player in or next to it', () => {
+    const game = { opponents: [O1], map: { ...MAP, [NEAR]: '18' } };
+    const units = { carrier: 1 };
+    const near = (ask: (ctx: PermitContext) => unknown): unknown => {
+      const move = flight(units, [NEAR], TARGET);
+      const t = sol({ units: { [HOME]: units }, entries: [move], game });
+      const seen: unknown[] = [];
+      give(t, lifting('speedShort', (_w, ctx) => { seen.push(ask(ctx)); return false; }));
+      warningsOf(t, move);
+      return seen[0];
+    };
+    expect(near(ctx => ctx.mecatolSlot())).toBe(NEAR);
+    expect(near(ctx => ctx.playerNear('me', NEAR))).toBe(true);
+    expect(near(ctx => ctx.playerNear('me', FARTHER))).toBe(false);
+    const t = sol({ game });
     expect(adjacentTo(t.game, NEAR, t.pack).sort()).toEqual([HOME, TARGET].sort());
   });
 });

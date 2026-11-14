@@ -14,7 +14,6 @@ describe('leader:firmamenthero Sharsiss', () => {
     quote(pack, id, 'one plot cannot have two of the same player\'s tokens');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['component']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "Then, purge this card."

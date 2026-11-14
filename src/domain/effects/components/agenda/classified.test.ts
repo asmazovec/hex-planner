@@ -13,6 +13,5 @@ describe('agenda:classified Classified Document Leaks', () => {
     quote(table.pack, id, 'The elected secret objective becomes a public objective');
     expect(effect(table.pack, id).tier).toBe('hint');
     expect(effect(table.pack, id).hintAt).toBeUndefined();
-    expect(effect(table.pack, id).waive).toBeUndefined();
   });
 });

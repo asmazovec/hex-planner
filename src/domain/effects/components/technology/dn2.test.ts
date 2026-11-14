@@ -31,7 +31,6 @@ describe('technology:dn2 Dreadnought II', () => {
     const { pack } = flight([id]);
     const found = effect(pack, id);
     expect(found.tier).toBe('passive');
-    expect(found.waive).toBeUndefined();
     expect(found.modify?.speed?.(1, { faction: 'hacan', unit: 'dreadnought' })).toBe(2);
     expect(found.modify?.capacity?.(1, { faction: 'hacan', unit: 'dreadnought' })).toBe(1);
     expect(found.modify?.unitCost?.(4, { faction: 'hacan', unit: 'dreadnought' })).toBe(4);

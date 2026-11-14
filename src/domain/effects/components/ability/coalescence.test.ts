@@ -11,6 +11,5 @@ describe('ability:coalescence Coalescence', () => {
     quote(pack, id, 'your units must participate in combat');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat', 'invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

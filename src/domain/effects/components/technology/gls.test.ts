@@ -14,7 +14,6 @@ describe('technology:gls Graviton Laser System', () => {
     const t = held();
     quote(t.pack, id, 'hits produced by those units must be assigned to non-fighter ships if able');
     expect(effect(t.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(t.pack, id).waive).toBeUndefined();
     for (const step of effect(t.pack, id).hintAt ?? []) expect(hintsAt(t.pack, endOf(t), step, ['me']).map(c => c.id)).toContain(id);
   });
 

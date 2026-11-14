@@ -7,21 +7,20 @@
  * (its influence less its resources, for the best planet of the payment). Ruling 1 (it changes the Production value
  * of a dock on that planet) is not modelled.
  */
-import { readyToPlay } from '../../../replay/holdings';
 import { coverOf } from '../../shortfall';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:htp';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'play',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'shortResources',
     rule: 'swap the resource and influence values of 1 planet you control during that use of Production',
     // The swap of the one best paying planet (its influence less its resources) must cover what is short.
-    // Together with the other components that cover a shortfall (`coverOf`): the swap of the best paying planet is one part.
-    when: ({ params }, ctx) => readyToPlay(ctx.pack, ctx.before.holdings, ctx.game.faction, ctx.before.control).has(id)
-      && Number(params.needed) - Number(params.paid) <= coverOf(ctx),
+    // Together with the other components that cover a shortfall (coverOf): the swap of the best paying planet is one part.
+    when: ({ params }, ctx) => ctx.had.card(id) === 'ready' && Number(params.needed) - Number(params.paid) <= coverOf(ctx),
   }],
 };

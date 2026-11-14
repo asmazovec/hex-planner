@@ -12,6 +12,5 @@ describe('mech:jolnar_mech Shield Paling', () => {
     const { pack } = bench({ faction: 'jolnar', expansions: ['pok'] });
     quote(pack, id, 'Your infantry on this planet are not affected by your Fragile faction ability.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

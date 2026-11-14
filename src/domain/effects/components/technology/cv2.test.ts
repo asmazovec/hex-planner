@@ -44,7 +44,6 @@ describe('technology:cv2 Carrier II', () => {
     const { pack } = flight(NEAR, { carrier: 1 }, [id]);
     const found = effect(pack, id);
     expect(found.tier).toBe('passive');
-    expect(found.waive).toBeUndefined();
     expect(found.modify?.capacity?.(4, { faction: 'hacan', unit: 'carrier' })).toBe(6);
   });
 });

@@ -83,6 +83,6 @@ describe('leader:yincommander Brother Omar', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.prerequisites).toBeTypeOf('function');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([PREREQUISITES]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([PREREQUISITES]);
   });
 });

@@ -16,7 +16,6 @@ describe('actionCard:piratefleet Pirate Fleet', () => {
     const found = effect(pack, id);
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(['component']);
-    expect(found.waive).toBeUndefined();
     expect(found.modify).toBeUndefined();
   });
 

@@ -63,6 +63,6 @@ describe('agenda:schematics Publicize Weapon Schematics', () => {
   test('agenda:schematics is a passive effect that waives the prerequisites of war suns', () => {
     const { table } = research(WAR_SUN, true, true);
     expect(effect(table.pack, id).tier).toBe('passive');
-    expect(effect(table.pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(table.pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

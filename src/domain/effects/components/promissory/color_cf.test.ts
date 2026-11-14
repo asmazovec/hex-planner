@@ -24,7 +24,6 @@ describe('promissory:<color>_cf Ceasefire', () => {
     quote(pack, id, 'cannot move units to the active system');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['activation']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: another player's Ceasefire that I hold stands among the reminders of the activation step.

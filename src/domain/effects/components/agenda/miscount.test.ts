@@ -12,7 +12,6 @@ describe('agenda:miscount Miscount Disclosed', () => {
     quote(pack, id, "Vote on the elected law as if it were just revealed from the top of the deck.");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 7.8: "When resolving a directive, players resolve the outcome that received the most votes and discard the agenda card."

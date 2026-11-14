@@ -8,22 +8,22 @@
  * one more primary of the round (`primaryRepeated`), and it spends no strategy token. The other players' secondaries
  * are theirs (ruling 1: they still spend a token) and are not planned.
  */
-import { readyToPlay } from '../../../replay/holdings';
-import type { ComponentEffect, WaiverContext } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
+import type { PermitContext } from '../../../../game/abilities/types';
 
 export const id = 'leader:winnuhero';
 
 const RULE = 'Perform the primary ability of any strategy card';
 /** The hero is ready and the entry is a primary performed through it. */
-const performed = ({ entry, game, pack, before }: WaiverContext): boolean =>
-  entry?.type === 'strategic' && readyToPlay(pack, before.holdings, game.faction, before.control).has(id);
+const performed = (ctx: PermitContext): boolean => ctx.entry?.type === 'strategic' && ctx.had.card(id) === 'ready';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'play',
   rule: id,
   // The hero's ACTION is the cost: the primary performed through it spends no strategy token.
   modify: { strategyCost: () => 0 },
-  waive: [
+  permit: [
     { code: 'foreignPrimary', rule: RULE, when: (_warning, ctx) => performed(ctx) },
     { code: 'primaryRepeated', rule: RULE, when: (_warning, ctx) => performed(ctx) },
   ],

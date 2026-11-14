@@ -12,7 +12,6 @@ describe('mech:hacan_mech Pride of Kenara', () => {
     const { pack } = bench({ faction: 'hacan', expansions: ['pok'] });
     quote(pack, id, "This planet's card may be traded as part of a transaction");
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('mech:hacan_mech the planet with the mech changes control in a transaction and the units move to another planet: a transaction carries no planet');

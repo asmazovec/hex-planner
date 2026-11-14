@@ -13,7 +13,6 @@ describe('technology:so2 Spec Ops II', () => {
     const { pack } = bench({ faction: 'sol', start: { technologies: [id] } });
     quote(pack, id, 'If the result is 5 or greater, place the unit on this card.');
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "Cost 1(x2)"

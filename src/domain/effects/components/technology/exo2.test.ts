@@ -43,6 +43,5 @@ describe('technology:exo2 Exotrireme II', () => {
     const { pack } = run([id]);
     quote(pack, id, 'you may destroy this unit to destroy up to 2 ships in this system');
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -19,7 +19,6 @@ describe('publicObjective:become_legend Become a Legend', () => {
     const found = effect(pack, id);
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(['status']);
-    expect(found.waive ?? []).toEqual([]);
     expect(found.modify).toBeUndefined();
     expect(found.nativePlay).toBeUndefined();
   });

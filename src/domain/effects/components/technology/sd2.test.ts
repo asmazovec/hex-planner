@@ -32,7 +32,6 @@ describe('technology:sd2 Space Dock II', () => {
     const { pack } = build(1, [id]);
     const found = effect(pack, id);
     expect(found.tier).toBe('passive');
-    expect(found.waive).toBeUndefined();
     expect(found.modify?.productionValue?.(5, { structure: 'spacedock', planetId: 'h1' })).toBe(7);
   });
 });

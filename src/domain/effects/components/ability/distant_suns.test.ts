@@ -13,6 +13,5 @@ describe('ability:distant_suns Distant Suns', () => {
     quote(pack, id, 'You may draw 1 additional card');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

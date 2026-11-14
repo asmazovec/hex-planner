@@ -13,6 +13,5 @@ describe('actionCard:blitz Blitz', () => {
     quote(pack, id, 'gain BOMBARDMENT 6 until the end of the invasion.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

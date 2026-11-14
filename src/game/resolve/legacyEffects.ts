@@ -6,8 +6,6 @@
 import { noteBase } from '../../domain/components';
 import { effectOf } from '../../domain/effects/registry';
 import { playedBy } from '../../domain/effects/waivers';
-import type { WaiverContext } from '../../domain/effects/types';
-import { viewFor, type LegacyViews } from '../legacyViews';
 import { ACQUIESCENCE } from './natives';
 import type { Ctx } from './context';
 import { hook } from './hooks';
@@ -35,11 +33,4 @@ export function playHooks(ctx: Ctx): void {
   // A play that spends strategy tokens tells the components in force.
   for (const id of ids) for (const event of playOne(ctx, id)) if (event.type === 'TokensChanged' && (event.delta.strategy ?? 0) < 0) spent.push({ count: -(event.delta.strategy ?? 0), secondary: false });
   for (const each of spent) hook(ctx, 'onTokenSpent', [ctx.player], each);
-}
-
-/** The turn's waiver context on the old state, for the components still written for it (`waive`) and the map questions of the native permits; built only when asked. */
-export function legacyWaiverContext(ctx: Ctx, before: LegacyViews, after: LegacyViews): WaiverContext {
-  const now = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player, after);
-  const prior = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player, before);
-  return { pack: ctx.pack, game: now.game, entry: ctx.entry, before: prior.state, after: now.state, shared: before.states.me, primaries: ctx.track.primaries[ctx.player] ?? [] };
 }

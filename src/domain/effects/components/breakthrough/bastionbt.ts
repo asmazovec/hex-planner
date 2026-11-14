@@ -11,27 +11,29 @@
  * The field is `shipsTo` of the tactical entry; the editor offers the systems with my command token while the card is in
  * force (`landingOffer.shipsAway`).
  */
-import { planetsOf } from '../../../replay/board';
-import { othersIn } from '../../../replay/production';
+import { holdsShips } from '../../../movement';
+import { unitIds } from '../../../replay/state';
 import productionShipsAway from '../../../rules/codes/productionShipsAway';
-import type { UnitId } from '../../../types';
-import type { ComponentEffect } from '../../types';
+import type { UnitCounts } from '../../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:bastionbt';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'play',
   rule: id,
   landingOffer: { shipsAway: true },
-  waive: [{
+  permit: [{
     code: productionShipsAway.code,
     rule: 'you may exhaust this card to place those ships in a system that contains 1 of your command tokens, at least 1 of your ground forces, and no other player\'s ships',
     // The three conditions of the system the ships were placed in, as the action leaves it.
-    when: ({ params }, { game, pack, after }) => {
+    when: ({ params }, ctx) => {
       const to = String(params.to);
-      const isGround = (counts: Record<string, number | undefined> | undefined) => Object.entries(counts ?? {}).some(([unit, count]) => (count ?? 0) > 0 && pack.units[unit as UnitId]?.ground);
-      const ground = planetsOf(game, to, pack).some(planetId => isGround(after.ground[planetId])) || isGround(after.systems[to]);
-      return after.tokensOnMap.includes(to) && ground && !othersIn(game, after, to, pack);
+      const isGround = (counts: UnitCounts): boolean => unitIds(counts).some(unit => ctx.pack.units[unit]?.ground);
+      const ground = ctx.planetsIn(to).some(planetId => isGround(ctx.my.unitsOn(planetId))) || isGround(ctx.my.unitsIn(to));
+      const tokens = ctx.board.systems[to]?.tokens.includes(ctx.holder) ?? false;
+      return tokens && ground && !ctx.table.players.some(player => player.id !== ctx.holder && holdsShips(ctx.of(player.id).unitsIn(to), ctx.pack));
     },
   }],
 };

@@ -13,6 +13,5 @@ describe('technology:pfa Pre-Fab Arcologies', () => {
     quote(pack, id, 'After you explore a planet, ready that planet.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

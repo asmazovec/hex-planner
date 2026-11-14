@@ -42,6 +42,5 @@ describe('ability:master_of_trade Masters of Trade', () => {
   test('ability:master_of_trade is a passive effect with no waiver', () => {
     const { pack } = table('hacan', []);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

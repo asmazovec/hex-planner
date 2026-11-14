@@ -80,6 +80,5 @@ describe('breakthrough:ghostbt Particle Synthesis', () => {
     const { pack } = build(NEAR, {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(Object.keys(effect(pack, id).modify ?? {}).sort()).toEqual(['productionCost', 'spaceProduction']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

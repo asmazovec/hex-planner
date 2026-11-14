@@ -11,7 +11,6 @@ describe('technology:dd2 Destroyer II', () => {
     quote(pack, id, 'ANTI-FIGHTER BARRAGE 6(x3)');
     const found = effect(pack, id);
     expect(found.tier).toBe('passive');
-    expect(found.waive).toBeUndefined();
     expect(found.modify?.speed?.(2, { faction: 'hacan', unit: 'destroyer' })).toBe(2);
     expect(found.modify?.unitCost?.(1, { faction: 'hacan', unit: 'destroyer' })).toBe(1);
     expect(found.modify?.capacity?.(0, { faction: 'hacan', unit: 'destroyer' })).toBe(0);

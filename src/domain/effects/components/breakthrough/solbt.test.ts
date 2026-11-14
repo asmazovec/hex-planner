@@ -61,6 +61,6 @@ describe('breakthrough:solbt Bellum Gloriosum', () => {
   test('breakthrough:solbt is a passive effect that waives the PRODUCTION limit', () => {
     const { pack } = build('sol', {});
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['productionOver']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['productionOver']);
   });
 });

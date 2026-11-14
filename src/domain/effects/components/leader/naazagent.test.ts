@@ -11,7 +11,6 @@ describe('leader:naazagent Garv and Gunn', () => {
     quote(pack, id, 'allow that player to explore 1 of their planets');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "You may exhaust this card ..." with LRR 51.4: an agent is readied in the status phase.

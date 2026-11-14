@@ -58,6 +58,6 @@ describe('breakthrough:yssarilbt Deepgloom Executable', () => {
   test('breakthrough:yssarilbt waives the transaction limit and the neighbours for the entry that names it', () => {
     const { pack } = table(theirs([], []));
     expect(effect(pack, id).tier).not.toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['notNeighbor', 'transactionRepeated']);
+    expect(effect(pack, id).permit?.map(w => w.code).sort()).toEqual(['notNeighbor', 'transactionRepeated']);
   });
 });

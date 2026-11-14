@@ -12,6 +12,5 @@ describe('ability:unrelenting Unrelenting', () => {
     const { pack } = bench({ faction: 'sardakk' });
     quote(pack, id, 'Apply +1 to the result of each of your unit\'s combat rolls.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat', 'invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -12,6 +12,5 @@ describe('leader:obsidianagent Vos Hollow', () => {
     quote(pack, id, 'must destroy 1 of their ships of the same type in the active system');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

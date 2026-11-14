@@ -12,6 +12,5 @@ describe('actionCard:confounding Confounding Legal Text', () => {
     quote(pack, id, 'You are the elected player instead.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id });
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

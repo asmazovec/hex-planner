@@ -2,7 +2,6 @@
 import { applied } from '../effects/apply';
 import '../effects/points/production';
 import { holderFor, holderOf, type Who } from '../effects/registry';
-import { waive } from '../effects/waivers';
 import { blockersOf, fullPath, shipSpeed, type Blockers } from '../movement';
 import { violation } from '../rules/registry';
 import { unitStats } from '../unitStats';
@@ -165,8 +164,7 @@ export function removeFleetExcess(state: GameState, target: string, removals: Un
  */
 export function boardSystemWarnings(game: Game, state: GameState, slot: string, pack: DataPack): Warning[] {
   const players: [Game, GameState][] = [[game, state], ...Object.entries(state.rivals ?? {}).map(([id, held]): [Game, GameState] => [gameAs(game, id), held])];
-  // What a player's components in force lift of it is marked, as for an entry.
-  return players.flatMap(([view, held]) => waive(checkSystem(view, held, slot, pack), { pack, game: view, before: held, after: held, shared: state }));
+  return players.flatMap(([view, held]) => checkSystem(view, held, slot, pack));
 }
 
 /** Check: the capacity and the fleet pool of a system after units arrived or were built there. */

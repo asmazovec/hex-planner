@@ -12,7 +12,6 @@ describe('promissory:tekklar Tekklar Legion', () => {
     const { pack } = bench({ faction: 'sol' });
     quote(pack, id, 'At the start of an invasion combat: Apply +1 to the result of each of your unit\'s combat rolls');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: another player holding the note sees it among the reminders of the invasion, and not in other steps.

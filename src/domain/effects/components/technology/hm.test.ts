@@ -53,6 +53,5 @@ describe('technology:hm Hyper Metabolism', () => {
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.tokensGained?.(2, { step: 'status' })).toBe(3);
     expect(effect(pack, id).modify?.tokensGained?.(3, { step: 'card' })).toBe(3);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

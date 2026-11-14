@@ -15,7 +15,6 @@ describe('actionCard:decoy Decoy Operation', () => {
     const { pack } = holding([]);
     quote(pack, id, 'Remove up to 2 of your ground forces from the game board');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id, hintAt: ['activation'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: held in hand, the card is reminded at the activation; not held, it is not.

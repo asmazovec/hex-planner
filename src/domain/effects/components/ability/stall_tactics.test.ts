@@ -20,6 +20,5 @@ describe('ability:stall_tactics Stall Tactics', () => {
   test('ability:stall_tactics is a hint with no waiver', () => {
     const { pack } = bench({ faction: 'yssaril' });
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -56,6 +56,6 @@ describe('breakthrough:xxchabt Archon\'s Gift', () => {
   test('breakthrough:xxchabt is a passive effect that waives a payment short of either value', () => {
     const { pack } = table('xxcha', []);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['shortInfluence', 'shortResources']);
+    expect(effect(pack, id).permit?.map(w => w.code).sort()).toEqual(['shortInfluence', 'shortResources']);
   });
 });

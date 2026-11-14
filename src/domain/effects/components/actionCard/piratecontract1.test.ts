@@ -15,6 +15,5 @@ describe('actionCard:piratecontract1 Pirate Contract', () => {
     quote(pack, id, 'Place 1 neutral destroyer in a non-home system');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['component']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

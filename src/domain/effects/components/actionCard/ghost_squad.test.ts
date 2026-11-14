@@ -15,7 +15,6 @@ describe('actionCard:ghost_squad Ghost Squad', () => {
     const { pack } = holding([]);
     quote(pack, id, 'Move any number of your ground forces from any planet you control in the active system');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id, hintAt: ['invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: held in hand, the card stands among the reminders of the invasion; not held, it does not.

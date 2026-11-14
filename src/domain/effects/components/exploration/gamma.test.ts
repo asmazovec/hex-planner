@@ -12,7 +12,6 @@ describe('exploration:gamma Gamma Relay', () => {
     quote(pack, id, 'Place a gamma wormhole token in this system.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['movement']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 101: "Systems that contain identical wormholes are adjacent."

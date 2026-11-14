@@ -19,6 +19,5 @@ describe('agenda:warrant Search Warrant', () => {
   test('agenda:warrant is a hint', () => {
     const { pack } = bench({ faction: 'sol', expansions: ['pok'] });
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

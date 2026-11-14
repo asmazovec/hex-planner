@@ -12,6 +12,5 @@ describe('actionCard:sh1 Shields Holding', () => {
     quote(pack, id, 'Cancel up to 2 hits.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

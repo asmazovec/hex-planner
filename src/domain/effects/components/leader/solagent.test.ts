@@ -13,6 +13,5 @@ describe('leader:solagent Evelyn DeLouis', () => {
     quote(pack, id, 'that ground force rolls 1 additional die during this combat round');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

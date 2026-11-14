@@ -16,7 +16,6 @@ describe('actionCard:lead_rider Leadership Rider', () => {
     const { pack } = table();
     quote(pack, id, 'If your prediction is correct, gain 3 command tokens');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toBeUndefined();
   });
 });

@@ -12,28 +12,28 @@
  */
 import landingFromPlanet from '../../../rules/codes/landingFromPlanet';
 import type { UnitId } from '../../../types';
-import { adjacentTo } from '../../../movement';
-import { systemOfPlanet } from '../../../stacks';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:sardakkcommander';
 
 const RULE = 'You can commit (move) up to 1 ground force from each planet in the active system and each planet in adjacent systems that do not contain 1 of your command tokens.';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   // The landing block offers the ground forces of the planets around the active system.
   landingOffer: { fromPlanets: true },
-  waive: [{
+  permit: [{
     code: landingFromPlanet.code,
     rule: RULE,
-    when: (warning, { entry, game, pack, before }) => {
+    when: (warning, ctx) => {
+      const { entry, pack } = ctx;
       if (entry?.type !== 'tactical' || entry.systemId === null) return false;
       const from = String(warning.params.from);
-      const slot = systemOfPlanet(game, from, pack);
+      const slot = ctx.systemOf(from);
       if (slot === undefined) return false;
-      if (slot !== entry.systemId && (before.tokensOnMap.includes(slot) || !adjacentTo(game, entry.systemId, pack).includes(slot))) return false;
+      if (slot !== entry.systemId && (ctx.before.systems[slot]?.tokens.includes(ctx.holder) || !ctx.adjacent(entry.systemId).includes(slot))) return false;
       // One ground force from each planet in all: the entry's landings from this planet together.
       const committed = entry.landings.filter(landing => landing.from === from)
         .reduce((sum, landing) => sum + Object.entries(landing.units).reduce((n, [unit, count]) => n + (pack.units[unit as UnitId]?.ground ? (count ?? 0) : 0), 0), 0);

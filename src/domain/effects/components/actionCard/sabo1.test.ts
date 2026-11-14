@@ -14,7 +14,6 @@ describe('actionCard:sabo1 Sabotage', () => {
     const { pack } = table();
     quote(pack, id, 'Cancel that action card');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toBeUndefined();
   });
 });

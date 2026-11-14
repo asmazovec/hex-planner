@@ -15,7 +15,6 @@ describe('actionCard:parley Parley', () => {
     const { pack } = table();
     quote(pack, id, 'Return the committed units to the space area');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
   });
 

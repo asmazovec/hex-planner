@@ -57,6 +57,5 @@ describe('leader:nomadcommander Navarch Feng', () => {
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.unitCost?.(8, { faction: 'nomad', unit: 'flagship' })).toBe(0);
     expect(effect(pack, id).modify?.unitCost?.(3, { faction: 'nomad', unit: 'carrier' })).toBe(3);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

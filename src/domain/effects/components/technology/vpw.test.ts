@@ -13,7 +13,6 @@ describe('technology:vpw Valkyrie Particle Weave', () => {
     const { pack } = bench({ faction: 'sardakk' });
     quote(pack, id, 'if your opponent produced 1 or more hits, you produce 1 additional hit');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: researched, the technology stands among the reminders of the invasion, and not of the production.

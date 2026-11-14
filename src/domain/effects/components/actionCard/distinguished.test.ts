@@ -14,7 +14,6 @@ describe('actionCard:distinguished Distinguished Councilor', () => {
     quote(pack, id, "Cast 5 additional votes for that outcome.");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

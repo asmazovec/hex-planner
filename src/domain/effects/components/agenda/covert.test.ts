@@ -12,6 +12,5 @@ describe('agenda:covert Covert Legislation', () => {
     quote(pack, id, 'the speaker draws the next card in the agenda deck but does not reveal it to the other players');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt ?? []).toEqual([]);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

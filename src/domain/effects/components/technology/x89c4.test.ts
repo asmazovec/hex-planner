@@ -14,7 +14,6 @@ describe('technology:x89c4 X-89 Bacterial Weapon ΩΩ', () => {
     const t = held();
     quote(t.pack, id, 'Double the hits produced by your units\' BOMBARDMENT and ground combat rolls.');
     expect(effect(t.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(t.pack, id).waive).toBeUndefined();
     for (const step of effect(t.pack, id).hintAt ?? []) expect(hintsAt(t.pack, endOf(t), step, ['me']).map(c => c.id)).toContain(id);
   });
 

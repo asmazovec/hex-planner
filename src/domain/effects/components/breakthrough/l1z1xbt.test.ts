@@ -45,6 +45,5 @@ describe('breakthrough:l1z1xbt Fealty Uplink', () => {
   test('breakthrough:l1z1xbt is a passive effect that places units and waives nothing', () => {
     const { pack } = invade('l1z1x');
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

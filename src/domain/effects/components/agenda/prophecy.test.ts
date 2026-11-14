@@ -14,7 +14,6 @@ describe('agenda:prophecy Prophecy of Ixth', () => {
     quote(pack, id, "applies +1 to the result of their fighter's combat rolls");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat', 'production']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 8.20: "If an 'Elect' or 'For' outcome of a law was resolved, that card remains in play and permanently

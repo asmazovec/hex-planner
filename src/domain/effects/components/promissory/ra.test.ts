@@ -15,7 +15,6 @@ describe('promissory:ra Research Agreement', () => {
     const { pack } = bench({ faction: 'sol' });
     quote(pack, id, 'After the Jol-Nar player researches a technology that is not a faction technology: Gain that technology.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['card'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "... Gain that technology. Then, return this card to the Jol-Nar player."

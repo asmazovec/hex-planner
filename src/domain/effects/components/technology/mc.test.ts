@@ -58,6 +58,5 @@ describe('technology:mc Mirror Computing', () => {
     const { pack } = research('mentak', 2);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify).toBeDefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -13,6 +13,5 @@ describe('actionCard:sanction Sanction', () => {
     quote(pack, id, 'each player that voted for that outcome returns 1 command token from their fleet supply');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id });
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

@@ -51,6 +51,5 @@ describe('agenda:cladenstine Clandestine Operations', () => {
   test('agenda:cladenstine is a play effect with no waiver', () => {
     const { pack } = table(resolved({ outcome: 'against' }));
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

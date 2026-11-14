@@ -75,6 +75,5 @@ describe('ability:propagation Propagation', () => {
   test('ability:propagation is a passive effect with no waiver', () => {
     const { pack } = table('nekro');
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

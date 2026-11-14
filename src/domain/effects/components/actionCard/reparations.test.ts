@@ -16,7 +16,6 @@ describe('actionCard:reparations Reparations', () => {
     const { pack } = table();
     quote(pack, id, 'Exhaust 1 planet that player controls and ready 1 planet you control');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
   });
 

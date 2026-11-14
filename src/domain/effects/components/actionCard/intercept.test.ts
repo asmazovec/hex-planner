@@ -16,7 +16,6 @@ describe('actionCard:intercept Intercept', () => {
     const { pack } = table();
     quote(pack, id, 'cannot retreat during this round of space combat');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toEqual(['combat']);
   });
 

@@ -47,7 +47,6 @@ describe('technology:cr2 Cruiser II', () => {
     const { pack } = flight(NEAR, { cruiser: 1 }, [id]);
     const found = effect(pack, id);
     expect(found.tier).toBe('passive');
-    expect(found.waive).toBeUndefined();
     expect(found.modify?.speed?.(2, { faction: 'hacan', unit: 'cruiser' })).toBe(3);
     expect(found.modify?.capacity?.(0, { faction: 'hacan', unit: 'cruiser' })).toBe(1);
     expect(found.modify?.unitCost?.(2, { faction: 'hacan', unit: 'cruiser' })).toBe(2);

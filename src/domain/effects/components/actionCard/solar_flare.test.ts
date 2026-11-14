@@ -14,7 +14,6 @@ describe('actionCard:solar_flare Solar Flare', () => {
     const { pack } = holding([]);
     quote(pack, id, 'other players cannot use SPACE CANNON against your ships');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id, hintAt: ['activation'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Checks: held in hand, the card is reminded at the activation; not held, it is not.

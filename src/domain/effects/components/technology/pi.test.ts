@@ -16,7 +16,6 @@ describe('technology:pi Predictive Intelligence', () => {
     const t = held();
     quote(t.pack, id, 'you may exhaust this card to redistribute your command tokens');
     expect(effect(t.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['round'] });
-    expect(effect(t.pack, id).waive).toBeUndefined();
     for (const step of effect(t.pack, id).hintAt ?? []) expect(hintsAt(t.pack, endOf(t), step, ['me']).map(c => c.id)).toContain(id);
   });
 

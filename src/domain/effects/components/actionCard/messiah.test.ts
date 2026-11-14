@@ -34,6 +34,5 @@ describe('actionCard:messiah Rise of a Messiah', () => {
   test('actionCard:messiah is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

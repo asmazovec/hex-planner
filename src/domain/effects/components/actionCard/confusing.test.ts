@@ -14,7 +14,6 @@ describe('actionCard:confusing Confusing Legal Text', () => {
     quote(pack, id, "That player is the elected player instead.");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

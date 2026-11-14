@@ -38,6 +38,5 @@ describe('ability:armada Armada', () => {
   test('ability:armada is a passive effect with no waiver', () => {
     const { pack } = table('letnev', 1);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

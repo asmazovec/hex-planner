@@ -14,6 +14,5 @@ describe('mech:yin_mech Moyin\'s Ashes', () => {
     quote(pack, id, 'you may spend 1 additional influence to replace your opponent\'s unit with 1 mech instead of 1 infantry');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

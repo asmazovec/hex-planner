@@ -71,6 +71,6 @@ describe('leader:keleresagent Xander Alexin Victori III', () => {
   test('leader:keleresagent is a play effect that waives the trade goods missing and the resources they cover', () => {
     const { pack } = keleres();
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['shortTradeGoods', 'shortResources']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['shortTradeGoods', 'shortResources']);
   });
 });

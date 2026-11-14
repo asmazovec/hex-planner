@@ -12,7 +12,6 @@ describe('agenda:artifact Ixthian Artifact', () => {
     quote(pack, id, "The speaker rolls 1 die.");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 7.8: "When resolving a directive, players resolve the outcome that received the most votes and discard the agenda card."

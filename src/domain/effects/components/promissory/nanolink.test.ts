@@ -109,6 +109,6 @@ describe('promissory:nanolink Nano-Link Permit', () => {
   test('promissory:nanolink is a play effect that waives the moving of structures for its entry only', () => {
     const { pack } = table('sol', []);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([[CODE, undefined]]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([[CODE, undefined]]);
   });
 });

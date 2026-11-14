@@ -13,6 +13,5 @@ describe('legendary:garbozia Dok \'N Pic\'s Salvage Yard', () => {
     quote(pack, id, 'place 1 action card from the discard pile faceup on this card');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

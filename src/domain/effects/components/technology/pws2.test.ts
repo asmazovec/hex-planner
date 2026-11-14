@@ -32,6 +32,5 @@ describe('technology:pws2 Prototype War Sun II', () => {
     const { pack } = flight([]);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).rule).toBe('97.4');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

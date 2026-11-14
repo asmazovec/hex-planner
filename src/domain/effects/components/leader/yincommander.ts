@@ -9,22 +9,19 @@
  * returned is the player's own choice and is not tracked.
  */
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:yincommander';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { prerequisites: (value, ctx) => (ctx.missing?.biotic ? value - 1 : value) },
-  waive: [{
+  permit: [{
     code: prerequisitesMissing.code,
     rule: 'When you research a tech owned by another player, you may return 1 of your infantry to reinforcements to ignore its prerequisites.',
-    // Another player owns it: any state of the game but the owner of the entry.
-    when: (warning, ctx) => {
-      const owner = ctx.entry?.owner ?? 'me';
-      const states = { me: ctx.shared, ...ctx.shared.rivals };
-      return Object.entries(states).some(([player, state]) => player !== owner && state.holdings.technologies.includes(String(warning.params.id)));
-    },
+    // Another player owns it: any player of the game but the one whose turn it is.
+    when: (warning, ctx) => ctx.table.players.some(player => player.id !== ctx.actor && ctx.prior.of(player.id).holds(String(warning.params.id))),
   }],
 };

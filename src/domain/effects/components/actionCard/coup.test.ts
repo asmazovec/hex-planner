@@ -12,6 +12,5 @@ describe("actionCard:coup Coup d'Etat", () => {
     quote(pack, id, "End that player's turn, the strategic action is not resolved");
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id });
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

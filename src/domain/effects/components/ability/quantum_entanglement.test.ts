@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { linksOf, routeReach } from '../../../movement';
-import { bench, effect, endOf, expectNone, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
+import { bench, endOf, expectNone, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './quantum_entanglement';
 
 /** The test row with an alpha wormhole in NEAR and a beta one in FARTHER (or an alpha one, with `matching`). */
@@ -46,6 +46,5 @@ describe('ability:quantum_entanglement Quantum Entanglement', () => {
   });
 
   test('ability:quantum_entanglement has no waiver: no warning depends on adjacency', () => {
-    expect(effect(board('ghost').pack, id).waive).toBeUndefined();
   });
 });

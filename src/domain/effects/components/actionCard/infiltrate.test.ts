@@ -58,6 +58,5 @@ describe('actionCard:infiltrate Infiltrate', () => {
   test('actionCard:infiltrate is a play effect that waives nothing', () => {
     const { pack } = table(invade());
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

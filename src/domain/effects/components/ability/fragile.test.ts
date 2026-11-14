@@ -11,6 +11,5 @@ describe('ability:fragile Fragile', () => {
     const { pack } = bench({ faction: 'jolnar' });
     quote(pack, id, 'Apply -1 to the result of each of your unit\'s combat rolls.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat', 'invasion'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

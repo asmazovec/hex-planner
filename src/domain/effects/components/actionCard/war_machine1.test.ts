@@ -78,6 +78,5 @@ describe('actionCard:war_machine1 War Machine', () => {
   test('actionCard:war_machine1 is a play effect that lifts no check', () => {
     const { pack } = table(produce({}));
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

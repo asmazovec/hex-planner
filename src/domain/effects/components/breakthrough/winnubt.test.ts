@@ -61,6 +61,6 @@ describe('breakthrough:winnubt Imperator', () => {
   test('breakthrough:winnubt is a passive effect that waives a ship one system short', () => {
     const { pack } = table(fly());
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['speedShort']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['speedShort']);
   });
 });

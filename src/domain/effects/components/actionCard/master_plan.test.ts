@@ -13,7 +13,6 @@ describe('actionCard:master_plan Master Plan', () => {
     quote(pack, id, 'Perform an additional action.');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id });
     expect(effect(pack, id).hintAt).toBeUndefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // Action Phase: "During a player's turn, they perform a single action."

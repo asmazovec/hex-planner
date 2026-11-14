@@ -43,6 +43,5 @@ describe('technology:swa2 Strike Wing Alpha II', () => {
     quote(pack, id, 'each result of 9 or 10 also destroys 1 of your opponents infantry');
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.capacity).toBeDefined();
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

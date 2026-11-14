@@ -63,6 +63,5 @@ describe('breakthrough:letnevbt Gravleash Maneuvers', () => {
     const { pack } = table(together(), {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.speed).toBeTypeOf('function');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

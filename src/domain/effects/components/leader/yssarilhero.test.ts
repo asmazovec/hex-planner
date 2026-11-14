@@ -15,7 +15,6 @@ describe('leader:yssarilhero Kyver, Blade and Key', () => {
     const { pack } = table([]);
     quote(pack, id, 'force that player to discard 3 random action cards from their hand');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "Then, purge this card." (LRR 51.12)

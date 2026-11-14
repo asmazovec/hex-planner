@@ -15,7 +15,6 @@ describe('actionCard:mb1 Morale Boost', () => {
     const { pack } = table();
     quote(pack, id, 'Apply +1 to the result of each of your unit\'s combat rolls during this combat round');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toEqual(['combat']);
   });
 

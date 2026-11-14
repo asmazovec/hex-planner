@@ -17,7 +17,6 @@ describe('actionCard:rescue Rescue', () => {
     const found = effect(pack, id);
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(['movement']);
-    expect(found.waive).toBeUndefined();
     expect(found.modify).toBeUndefined();
   });
 

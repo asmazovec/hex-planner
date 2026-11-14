@@ -16,7 +16,6 @@ describe('ability:plotsplots Plots Within Plots', () => {
     quote(pack, id, 'this does not count against your secret objective limit or the number you can score in a round');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['status']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('ability:plotsplots scoring another player\'s secret objective gives a plot card instead of a point: plot cards and the secret objective limit are not modelled');

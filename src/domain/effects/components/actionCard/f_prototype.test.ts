@@ -18,7 +18,6 @@ describe('actionCard:f_prototype Fighter Prototype', () => {
     const { pack } = table();
     quote(pack, id, "Apply +2 to the result of each of your fighters' combat rolls");
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

@@ -13,7 +13,6 @@ describe('technology:md_base Magen Defense Grid', () => {
     const table = bench({ faction: 'hacan', start: { technologies: [id] } });
     quote(table.pack, id, 'your opponent cannot make combat rolls this combat round');
     expect(effect(table.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['invasion'] });
-    expect(effect(table.pack, id).waive).toBeUndefined();
     expect(hintsAt(table.pack, endOf(table), 'invasion', ['me']).map(c => c.id)).toContain(id);
   });
 

@@ -18,7 +18,6 @@ describe('actionCard:emergency Emergency Repairs', () => {
     const { pack } = table();
     quote(pack, id, "Repair all of your units that have SUSTAIN DAMAGE");
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', hintAt: ['combat'] });
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).modify).toBeUndefined();
   });
 

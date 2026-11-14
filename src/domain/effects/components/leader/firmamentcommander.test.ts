@@ -12,7 +12,6 @@ describe('leader:firmamentcommander Captain Aroz', () => {
     quote(pack, id, 'as if they were controlled by you for the purpose of scoring secret objectives');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['status']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "... for the purpose of scoring secret objectives."

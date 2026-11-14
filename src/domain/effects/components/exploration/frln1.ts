@@ -8,15 +8,15 @@
  * active system, and the second where the influence of the planets spent, with the trade goods, covers the cost (a
  * planet gives its influence or its resources, not both: exploration notes, Freelancers 1). Pass 2: written.
  */
-import { planetValue } from '../../../payment';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:frln1';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'play',
   rule: id,
-  waive: [
+  permit: [
     {
       code: 'noProduction',
       rule: 'You may produce 1 unit in this system.',
@@ -27,10 +27,9 @@ export const effect: ComponentEffect = {
       code: 'shortResources',
       rule: 'You may spend influence as if it were resources to produce this unit.',
       // The influence of the planets paid, with the trade goods, covers the cost (a planet gives one value, not both).
-      when: (warning, { entry, before, pack, game, shared }) => {
+      when: (warning, { entry, prior }) => {
         if (entry?.type !== 'tactical') return false;
-        const view = { faction: game.faction, shared };
-        const influence = entry.payment.planets.reduce((sum, planetId) => sum + planetValue(pack, before, planetId, 'influence', view), 0);
+        const influence = entry.payment.planets.reduce((sum, planetId) => sum + prior.planetValue(planetId, 'influence'), 0);
         return influence + entry.payment.tradeGoods >= Number(warning.params.needed);
       },
     },

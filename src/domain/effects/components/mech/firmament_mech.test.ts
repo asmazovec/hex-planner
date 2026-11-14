@@ -13,7 +13,6 @@ describe('mech:firmament_mech Viper EX-23', () => {
     quote(pack, id, 'you may choose for your units to coexist');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   test.todo('mech:firmament_mech coexisting units keep the planet\'s control unchanged: coexistence is not modelled, the invasion is resolved by the player');

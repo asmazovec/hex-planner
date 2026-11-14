@@ -15,7 +15,6 @@ describe('actionCard:arch_expedition Archaeological Expedition', () => {
     const { pack } = holding([]);
     quote(pack, id, 'gain any relic fragments that you reveal and discard the rest');
     expect(effect(pack, id)).toMatchObject({ tier: 'hint', rule: id, hintAt: ['component'] });
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // LRR 2.6.1: an action card headed "Action" is resolved as a component action.

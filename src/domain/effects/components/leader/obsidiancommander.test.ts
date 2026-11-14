@@ -11,6 +11,5 @@ describe('leader:obsidiancommander Aroz Hollow', () => {
     quote(pack, id, 'Apply +1 to the result of each of your units\' combat rolls in The Fracture.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

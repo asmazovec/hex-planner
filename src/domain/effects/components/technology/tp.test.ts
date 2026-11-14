@@ -11,6 +11,5 @@ describe('technology:tp Transparasteel Plating', () => {
     const { pack } = bench({ faction: 'yssaril', start: { technologies: [id] } });
     quote(pack, id, 'players that have passed cannot play action cards');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

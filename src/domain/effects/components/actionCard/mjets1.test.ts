@@ -15,7 +15,6 @@ describe('actionCard:mjets1 Maneuvering Jets', () => {
     const { pack } = table();
     quote(pack, id, 'Cancel 1 hit');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toEqual(['combat']);
   });
 

@@ -28,7 +28,6 @@ describe('technology:planesplitter-obs Planesplitter (Obsidian)', () => {
     quote(pack, id, 'you may move an ingress token into a system that contains or is adjacent to your units');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['card']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 
   // "This technology cannot be researched." LRR 90.9: "A player can research technology by resolving either the

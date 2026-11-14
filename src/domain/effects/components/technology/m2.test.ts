@@ -48,6 +48,5 @@ describe('technology:m2 Memoria II', () => {
   test('technology:m2 is a passive effect with the generated numbers and no waiver', () => {
     const { pack } = flight(NEAR, [], [id]);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

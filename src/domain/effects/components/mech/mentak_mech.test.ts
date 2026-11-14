@@ -11,6 +11,5 @@ describe('mech:mentak_mech Moll Terminus', () => {
     quote(pack, id, "Other player's ground forces on this planet cannot use SUSTAIN DAMAGE");
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['invasion']);
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

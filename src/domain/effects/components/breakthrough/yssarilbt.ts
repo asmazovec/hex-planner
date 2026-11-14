@@ -8,19 +8,20 @@
  * with Stall Tactics or Scheming ("when you do" ties the transaction to their use). The warnings are still made and
  * listed, lifted by the card. The Yssaril's own turn is not covered: the card speaks of other players.
  */
-import type { ComponentEffect, Waiver } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
+import type { Permit } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:yssarilbt';
 
 /** The entry is another player's and uses one of the two abilities the card lends. */
-const lent: Waiver['when'] = (_warning, ctx) =>
-  ctx.entry?.owner !== undefined && ctx.entry.owner !== 'me'
-  && (ctx.entry.uses ?? []).some(used => used === 'ability:stall_tactics' || used === 'ability:scheming');
+const lent: Permit['when'] = (_warning, ctx) =>
+  ctx.actor !== ctx.table.viewer && (ctx.entry?.uses ?? []).some(used => used === 'ability:stall_tactics' || used === 'ability:scheming');
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
-  waive: [
+  permit: [
     { code: 'transactionRepeated', rule: 'During the action phase, that transaction does not count against the once-per-player transaction limit for that turn.', when: lent },
     { code: 'notNeighbor', rule: 'The Yssaril player may perform a transaction with another player without being neighbors with that player.', when: lent },
   ],

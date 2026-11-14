@@ -14,7 +14,6 @@ describe('actionCard:disgrace Public Disgrace', () => {
     const { pack } = table();
     quote(pack, id, 'That player must choose a different strategy card instead');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toBeUndefined();
   });
 });

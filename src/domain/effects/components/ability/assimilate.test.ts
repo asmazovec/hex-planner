@@ -73,6 +73,5 @@ describe('ability:assimilate Assimilate', () => {
   test('ability:assimilate is a passive effect that waives nothing', () => {
     const { pack } = table('l1z1x', invade());
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

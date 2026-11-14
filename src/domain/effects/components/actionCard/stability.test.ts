@@ -16,7 +16,6 @@ describe('actionCard:stability Political Stability', () => {
     const { pack } = table();
     quote(pack, id, 'Do not return your strategy card(s)');
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive).toBeUndefined();
     expect(effect(pack, id).hintAt).toEqual(['status']);
   });
 
