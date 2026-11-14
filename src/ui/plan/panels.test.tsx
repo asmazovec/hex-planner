@@ -3,6 +3,7 @@ import { kernelEndOf, kernelViewOf, listOf } from '../testing/view';
 import { viewOf } from '../testing/legacyMap';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import * as edits from '../../testing/entries';
 
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -36,9 +37,8 @@ const game = () => useGame.getState().game!;
 const plan = () => game().plans.find(p => p.id === game().activePlanId)!;
 
 test('the summary shows now and forecast for every value', () => {
-  const store = useGame.getState();
-  store.addEntry(1, { type: 'adjustment', label: 'x', delta: { tradeGoods: 2, tactic: 1, fleet: -1, strategy: 2, vp: 1 } }, 'action');
-  store.addEntry(1, {
+  edits.addEntry(1, { type: 'adjustment', label: 'x', delta: { tradeGoods: 2, tactic: 1, fleet: -1, strategy: 2, vp: 1 } }, 'action');
+  edits.addEntry(1, {
     type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {},
     payment: { planets: ['nestphar'], tradeGoods: 0 },
   }, 'action');
@@ -54,8 +54,7 @@ test('the summary shows now and forecast for every value', () => {
 });
 
 test('the fact shows what is, without the arrows of the plan', () => {
-  const store = useGame.getState();
-  store.addEntry(1, { type: 'adjustment', label: 'x', delta: { tradeGoods: 2, fleet: -1 } }, 'action');
+  edits.addEntry(1, { type: 'adjustment', label: 'x', delta: { tradeGoods: 2, fleet: -1 } }, 'action');
   render(<SummaryBar table={kernelEndOf(game(), pack, 'now').table} now={kernelEndOf(game(), pack, 'now').board} forecast={kernelEndOf(game(), pack, 'forecast').board} pack={pack} factOnly />);
   const cell = (name: string) => screen.getByRole('group', { name });
   expect(cell('Trade goods')).toHaveTextContent(/^Trade goods0$/);
@@ -369,7 +368,7 @@ test('a plan and a round can be deleted, the last of each stays, and undo brings
   expect(game().plans).toHaveLength(2);
   await userEvent.click(screen.getByRole('button', { name: 'Add round' }).parentElement!.querySelector('button')!);
   act(() => { useGame.getState().addRound(); useGame.getState().addRound(); });
-  useGame.getState().addEntry(3, { type: 'pass' }, 'action');
+  edits.addEntry(3, { type: 'pass' }, 'action');
   await userEvent.click(screen.getByRole('button', { name: 'Delete round 1' }));
   const { rounds } = game().plans.find(p => p.id === game().activePlanId)!;
   expect(rounds.map(r => r.number)).toEqual([1, 2]);
@@ -405,7 +404,7 @@ test('a plan tab is dragged along the row to change the order; a short press sta
 });
 
 test('the Copy tab makes a new plan with its own entries', async () => {
-  useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+  edits.addEntry(1, { type: 'pass' }, 'action');
   render(<PlanTabsLive />);
   await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
   const { plans, activePlanId } = game();
@@ -434,11 +433,10 @@ function EntryListLive({ warnings = {} }: { warnings?: Record<string, Warning[]>
 }
 
 function threeEntries(): string[] {
-  const store = useGame.getState();
   return [
-    store.addEntry(1, { type: 'pass' }, 'action'),
-    store.addEntry(1, { type: 'strategic' }, 'action'),
-    store.addEntry(1, { type: 'secondary' }, 'action'),
+    edits.addEntry(1, { type: 'pass' }, 'action'),
+    edits.addEntry(1, { type: 'strategic' }, 'action'),
+    edits.addEntry(1, { type: 'secondary' }, 'action'),
   ];
 }
 
@@ -470,7 +468,7 @@ test('a drag does not wedge when its entry disappears meanwhile', () => {
   render(<EntryListLive />);
   const handle = within(screen.getAllByRole('listitem')[0]).getByRole('button', { name: 'Drag to move' });
   fireEvent.pointerDown(handle, { pointerId: 1, clientY: 10 });
-  act(() => useGame.getState().removeEntry(pass));
+  act(() => edits.removeEntry(pass));
   const rows = screen.getAllByRole('listitem');
   rows.forEach((el, i) => {
     el.getBoundingClientRect = () => ({ top: i * 50, height: 50, bottom: i * 50 + 50, left: 0, right: 100, width: 100, x: 0, y: i * 50, toJSON: () => undefined });
@@ -483,8 +481,8 @@ test('a drag does not wedge when its entry disappears meanwhile', () => {
 });
 
 test('a warning about the tokens stands right below the tiles of the open status fields, so the tiles do not move', async () => {
-  const id = useGame.getState().addStatusEntry(1);
-  useGame.getState().updateEntry(id, { tactic: 4 });
+  const id = edits.addStatusEntry(1);
+  edits.updateEntry(id, { tactic: 4 });
   const state = project(game(), plan(), 'forecast', pack);
   render(<EntryList {...listOf(game(), pack, 0, state.warningsByEntry)} openId={id} onOpen={() => undefined} />);
   const details = document.querySelector('.entry-details')!;
@@ -497,8 +495,8 @@ test('a warning about the tokens stands right below the tiles of the open status
 });
 
 test('a closed entry shows its warnings on its row, above what it reads out', () => {
-  const id = useGame.getState().addStatusEntry(1);
-  useGame.getState().updateEntry(id, { tactic: 4 });
+  const id = edits.addStatusEntry(1);
+  edits.updateEntry(id, { tactic: 4 });
   const state = project(game(), plan(), 'forecast', pack);
   render(<EntryList {...listOf(game(), pack, 0, state.warningsByEntry)} openId={null} onOpen={() => undefined} />);
   expect(document.querySelector('.entry-main')!.nextElementSibling).toHaveClass('warning-list');

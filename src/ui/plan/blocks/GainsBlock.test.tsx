@@ -3,6 +3,7 @@ import { kernelViewOf } from '../../testing/view';
 import { viewOf } from '../../testing/legacyMap';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import * as edits from '../../../testing/entries';
 
 vi.mock('../../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -154,7 +155,7 @@ test('a card taken stands under the buttons, so adding one moves none; an agenda
 });
 
 test('on the plan screen a turn keeps what it gained and the component it plays', async () => {
-  useGame.getState().addEntry(1, { type: 'component', note: '' }, 'action');
+  edits.addEntry(1, { type: 'component', note: '' }, 'action');
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: /^Edit/ }));
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
@@ -226,7 +227,7 @@ test('on the plan screen an opponent\'s entry discards from what that opponent h
   const rival = game().opponents[0];
   useGame.getState().setStartHolding('me', 'relic:shard', true);
   useGame.getState().setStartHolding(rival.id, 'relic:stellarconverter', true);
-  useGame.getState().addEntry(1, { type: 'component', note: '' }, 'action', rival.id);
+  edits.addEntry(1, { type: 'component', note: '' }, 'action', rival.id);
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: /^Edit/ }));
   await userEvent.click(screen.getByRole('button', { name: '+ Discarded' }));

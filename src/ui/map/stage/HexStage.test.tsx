@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import * as edits from '../../../testing/entries';
 
 vi.mock('../../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -47,7 +48,7 @@ const tap = (name: string | RegExp) => userEvent.click(screen.getByRole('button'
 const mode = (name: 'Setup' | 'Battle' | 'Create' | 'Control') => tap(name);
 const side = (name: string | RegExp) => userEvent.click(within(screen.getByRole('group', { name: 'Whose units' })).getByRole('button', { name }));
 const addMine = (units: UnitCounts, ground?: Record<string, UnitCounts>) =>
-  store().addEntry(1, { type: 'adjustment', label: 'start', delta: { units: { systemId: SLOT, units }, ground } }, 'strategy');
+  edits.addEntry(1, { type: 'adjustment', label: 'start', delta: { units: { systemId: SLOT, units }, ground } }, 'strategy');
 const merged = (kind: string) => entries().find((e): e is Extract<Entry, { type: 'adjustment' }> => e.type === 'adjustment' && e.kind === kind);
 const quann = () => pack.tiles[ONE].planetIds[0];
 
@@ -63,7 +64,7 @@ describe('the stage as a window', () => {
 
   describe('the head names what the hex is opened for, not the tile number', () => {
     const heading = () => screen.getByRole('heading', { level: 2 });
-    const tactical = () => store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    const tactical = () => edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
 
     test('a tap on the map: a manual edit without an action; the tile number stays only on the hex and in the dialog name', () => {
       open();
@@ -97,7 +98,7 @@ describe('the stage as a window', () => {
       open({ initialMode: 'build', only: 'units', onPurchase: card });
       expect(heading()).toHaveTextContent('Production');
       cleanup();
-      const adjustment = store().addEntry(1, { type: 'adjustment', label: '', delta: {} }, 'action');
+      const adjustment = edits.addEntry(1, { type: 'adjustment', label: '', delta: {} }, 'action');
       open({ initialMode: 'setup', only: 'units', adjustmentId: adjustment });
       expect(heading()).toHaveTextContent('Manual adjustment');
     });
@@ -119,7 +120,7 @@ describe('the stage as a window', () => {
   });
 
   test('opened for a tactical action, it shows only Production: no other modes, no owner choice, no structures (#5)', () => {
-    const id = store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    const id = edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
     open({ initialMode: 'build', only: 'units', tacticalId: id });
     expect(screen.queryByRole('group', { name: 'Mode' })).toBeNull();
     expect(screen.queryByRole('group', { name: 'Whose units' })).toBeNull();
@@ -508,7 +509,7 @@ describe('battle', () => {
 
 describe('build', () => {
   const tactical = () => entries().find((e): e is Extract<Entry, { type: 'tactical' }> => e.type === 'tactical')!;
-  const addTactical = (slot = SLOT) => store().addEntry(1, {
+  const addTactical = (slot = SLOT) => edits.addEntry(1, {
     type: 'tactical', systemId: slot, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
   }, 'action');
   const ring = (container: HTMLElement, key: string) => container.querySelector(`[data-stack="${key}"] .token-ring`);
@@ -556,7 +557,7 @@ describe('build', () => {
   test('a payment chosen by hand stays', async () => {
     addTactical();
     const id = tactical().id;
-    store().updateEntry(id, { payment: { planets: ['chosen'], tradeGoods: 0 } });
+    edits.updateEntry(id, { payment: { planets: ['chosen'], tradeGoods: 0 } });
     open({ initialMode: 'build', manualPayments: [id] });
     await tap('Cruiser');
     expect(tactical().production).toEqual({ cruiser: 1 });
@@ -662,7 +663,7 @@ describe('build', () => {
     expect(game().docks).not.toContain(quann());
   });
 
-  const planPds = () => useGame.getState().addEntry(1, { type: 'strategic', card: 4, effects: { structures: [{ kind: 'pds', planetId: quann() }] } }, 'action');
+  const planPds = () => edits.addEntry(1, { type: 'strategic', card: 4, effects: { structures: [{ kind: 'pds', planetId: quann() }] } }, 'action');
   const plannedStructures = () => (entries().find(e => e.type === 'strategic') as Extract<Entry, { type: 'strategic' }>).effects?.structures;
   const pdsStack = () => document.querySelector('[data-stack="me|pds|0"] .token-hit');
 
@@ -711,11 +712,11 @@ describe('build', () => {
     const FROM = '2,0';
     store().setTile(FROM, '26');
     const noPay = { planets: [], tradeGoods: 0 };
-    store().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: FROM, units: { carrier: 1 } } } }, 'strategy');
-    store().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: SLOT, units: { fighter: 2 } } } }, 'strategy');
-    store().addEntry(1, { type: 'adjustment', label: '', kind: 'losses', delta: { units: { systemId: SLOT, units: { fighter: -1 } } } }, 'action');
-    store().addEntry(1, { type: 'tactical', systemId: FROM, moves: [{ from: SLOT, units: { fighter: 2 } }], landings: [], production: {}, payment: noPay }, 'action');
-    store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [{ from: FROM, units: { carrier: 1 } }], landings: [], production: {}, payment: noPay }, 'action');
+    edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: FROM, units: { carrier: 1 } } } }, 'strategy');
+    edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: SLOT, units: { fighter: 2 } } } }, 'strategy');
+    edits.addEntry(1, { type: 'adjustment', label: '', kind: 'losses', delta: { units: { systemId: SLOT, units: { fighter: -1 } } } }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: FROM, moves: [{ from: SLOT, units: { fighter: 2 } }], landings: [], production: {}, payment: noPay }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [{ from: FROM, units: { carrier: 1 } }], landings: [], production: {}, payment: noPay }, 'action');
     const before = game();
     open({ initialMode: 'battle' });
     await userEvent.click(document.querySelector('[data-stack="me|carrier|-"] .token-hit')!);
@@ -726,7 +727,7 @@ describe('build', () => {
   });
 
   test('in setup a planned dock takes no tap; a baseline one still comes off', async () => {
-    useGame.getState().addEntry(1, { type: 'strategic', card: 4, effects: { structures: [{ kind: 'spacedock', planetId: quann() }] } }, 'action');
+    edits.addEntry(1, { type: 'strategic', card: 4, effects: { structures: [{ kind: 'spacedock', planetId: quann() }] } }, 'action');
     const before = [...game().docks];
     open({});
     await userEvent.click(document.querySelector('[data-stack="me|spacedock|0"] .token-hit')!);
@@ -750,7 +751,7 @@ describe('build', () => {
 
 describe('fix round 1', () => {
   const tactical = () => entries().find((e): e is Extract<Entry, { type: 'tactical' }> => e.type === 'tactical')!;
-  const addTactical = (slot = SLOT) => store().addEntry(1, {
+  const addTactical = (slot = SLOT) => edits.addEntry(1, {
     type: 'tactical', systemId: slot, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
   }, 'action');
   const total = () => document.querySelector('.stage-total b')!.textContent;
@@ -759,9 +760,9 @@ describe('fix round 1', () => {
   const nameOf = (id: string) => pack.planets[id].name;
 
   test('a token that arrives by a later tactical entry really goes when tapped', async () => {
-    store().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: '0,1', units: { carrier: 1 } } } }, 'strategy');
+    edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: '0,1', units: { carrier: 1 } } } }, 'strategy');
     store().changeAdjustment(1, { kind: 'setup', systemId: SLOT, unit: 'cruiser', planetId: null, amount: 1 });
-    store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [{ from: '0,1', units: { carrier: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [{ from: '0,1', units: { carrier: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
     open();
     await tap('Carrier ×1');
     expect(forecast().systems[SLOT]).toEqual({ cruiser: 1 });
@@ -787,10 +788,10 @@ describe('fix round 1', () => {
   test('the ring reads the place at the entry, not the control at the end of the round', () => {
     store().setTile(SLOT, TWO);
     store().setPlanetControl(second, 'me');
-    store().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: SLOT, units: { infantry: 1 } } } }, 'strategy');
+    edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: SLOT, units: { infantry: 1 } } } }, 'strategy');
     const noPay = { planets: [], tradeGoods: 0 };
-    const id = store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: { infantry: 1 }, payment: noPay }, 'action');
-    store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [{ planetId: first, units: { infantry: 1 } }], production: {}, payment: noPay }, 'action');
+    const id = edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: { infantry: 1 }, payment: noPay }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [{ planetId: first, units: { infantry: 1 } }], production: {}, payment: noPay }, 'action');
     open({ initialMode: 'build', tacticalId: id });
     expect(hasRing('me|infantry|1')).toBe(true);
     expect(hasRing('me|infantry|0')).toBe(false);
@@ -835,7 +836,7 @@ describe('fix round 1', () => {
   test('the price follows the level at that entry', async () => {
     store().setFaction('muaat');
     const id = addTactical();
-    store().addEntry(1, { type: 'secondary', effects: { researched: ['technology:pws2'] } }, 'action');
+    edits.addEntry(1, { type: 'secondary', effects: { researched: ['technology:pws2'] } }, 'action');
     open({ initialMode: 'build', tacticalId: id });
     const warsun = within(screen.getByRole('button', { name: 'War Sun' }));
     expect(warsun.getByText('12')).toBeVisible();
@@ -850,7 +851,7 @@ describe('fix round 1', () => {
 
   test('without a tactical entry the price is that of the forecast', () => {
     store().setFaction('muaat');
-    store().addEntry(1, { type: 'secondary', effects: { researched: ['technology:pws2'] } }, 'action');
+    edits.addEntry(1, { type: 'secondary', effects: { researched: ['technology:pws2'] } }, 'action');
     open({ initialMode: 'build' });
     expect(within(screen.getByRole('button', { name: 'War Sun' })).getByText('10')).toBeVisible();
   });
@@ -935,7 +936,7 @@ describe('the shop is a draft from the reinforcements', () => {
 
   test('a unit produced beyond the reinforcements by a tactical action warns under the shop (reinforcementsOut)', async () => {
     store().setDock(quann(), true);
-    const id = store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    const id = edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
     open({ initialMode: 'build' });
     await tap('War Sun');
     await tap('War Sun');
@@ -1012,7 +1013,7 @@ describe('the shop counts along', () => {
   });
 
   test('a tactical action\'s warnings stand in the window', async () => {
-    const id = store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    const id = edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
     open({ initialMode: 'build', tacticalId: id });
     for (let i = 0; i < 4; i += 1) await tap('Dreadnought');
     expect(within(screen.getByRole('list', { name: 'Warnings' })).getByText(/fleet pool/)).toBeVisible();
@@ -1020,7 +1021,7 @@ describe('the shop counts along', () => {
   });
 
   test('the shop keeps to what it sets up: a landing warning stays in the editor', async () => {
-    const id = store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [{ planetId: 'nestphar', units: { mech: 5 } }], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    const id = edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [{ planetId: 'nestphar', units: { mech: 5 } }], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
     open({ initialMode: 'build', tacticalId: id });
     expect(screen.queryByText(/^Landing needs/)).toBeNull();
     for (let i = 0; i < 4; i += 1) await tap('Dreadnought');

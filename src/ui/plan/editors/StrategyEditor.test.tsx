@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import * as edits from '../../../testing/entries';
 
 vi.mock('../../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -105,7 +106,7 @@ describe('opening', () => {
   test('on my card the primary is free; playing it a second time warns and stays free', async () => {
     store().setStrategyCard(1, 5);
     store().setStrategyCard(1, 5);
-    store().addEntry(1, { type: 'strategic', card: 5 }, 'action');
+    edits.addEntry(1, { type: 'strategic', card: 5 }, 'action');
     await primary();
     await userEvent.click(cards().getByRole('button', { name: /Trade/ }));
     expect((entries()[1] as CardEntry)).toMatchObject({ type: 'secondary', card: 5 });
@@ -121,7 +122,7 @@ describe('opening', () => {
     store().setStrategyCard(1, 5);
     store().setStrategyCard(1, 5);
     store().setStrategyCard(1, 2);
-    store().addEntry(1, { type: 'strategic', card: 5 }, 'action');
+    edits.addEntry(1, { type: 'strategic', card: 5 }, 'action');
     await primary();
     await userEvent.click(cards().getByRole('button', { name: /Diplomacy/ }));
     expect(ability('Primary')).toHaveTextContent('−1 strategy token');
@@ -130,7 +131,7 @@ describe('opening', () => {
     store().setStrategyCard(1, 5);
     store().setStrategyCard(1, 5);
     store().setStrategyCard(1, 2);
-    store().addEntry(1, { type: 'strategic', card: 5 }, 'action');
+    edits.addEntry(1, { type: 'strategic', card: 5 }, 'action');
     await primary();
     expect(entries()[1]).toMatchObject({ type: 'strategic', card: 2 });
     expect(ability('Primary')).not.toHaveTextContent('strategy token');
@@ -149,7 +150,7 @@ describe('opening', () => {
   });
 
   test('an entry opens the editor again from the list', async () => {
-    const id = store().addEntry(1, { type: 'strategic', card: 8, effects: { mecatol: true } }, 'action');
+    const id = edits.addEntry(1, { type: 'strategic', card: 8, effects: { mecatol: true } }, 'action');
     render(<PlanScreen />);
     await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Edit: Strategy: Imperial' }));
     // The old flag gives no point: control of Mecatol Rex does (45.2).
@@ -172,7 +173,7 @@ describe('opening', () => {
     store().setStrategyCard(1, 5);
     store().setStrategyCard(1, 5);
     store().setStrategyCard(1, 2);
-    store().addEntry(1, { type: 'strategic', card: 5 }, 'action');
+    edits.addEntry(1, { type: 'strategic', card: 5 }, 'action');
     render(<PlanScreen />);
     await click('Add action');
     await click('Strategy');
@@ -218,7 +219,7 @@ describe('modes and the lock', () => {
     await userEvent.click(tile(OTHER));
     expect(entries().some(e => e.type === 'tactical')).toBe(true);
     const id = cardEntry().id;
-    act(() => store().updateEntry(id, { type: 'secondary' }));
+    act(() => edits.updateEntry(id, { type: 'secondary' }));
     expect(entries().some(e => e.type === 'tactical')).toBe(false);
   });
 
@@ -237,7 +238,7 @@ describe('modes and the lock', () => {
   });
 
   test('warnings never block: a short strategy token warns and everything stays open', async () => {
-    store().addEntry(1, { type: 'adjustment', label: '', delta: { strategy: -2 } }, 'action');
+    edits.addEntry(1, { type: 'adjustment', label: '', delta: { strategy: -2 } }, 'action');
     await secondary('Politics');
     expect(warningsShown().getByText(/Not enough strategy tokens/)).toBeVisible();
     expect(button('Done')).toBeEnabled();
@@ -307,7 +308,7 @@ describe('Diplomacy', () => {
     const home = data.tiles[data.factions.hacan.homeTile].planetIds;
     const far = data.tiles['25'].planetIds[0];
     store().setPlanetControl(far, 'me');
-    store().addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: null, payment: { planets: [...home, far], tradeGoods: 0 } }] }, 'action');
+    edits.addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: null, payment: { planets: [...home, far], tradeGoods: 0 } }] }, 'action');
     return { home, far, name: (id: string) => new RegExp(data.planets[id].name) };
   };
   const readyList = () => within(screen.getByRole('group', { name: 'Ready planets' }));
@@ -486,7 +487,7 @@ describe('Construction', () => {
 
   test('units a saved secondary already built stay in view with the warning, so they can be taken back', async () => {
     await secondary('Construction');
-    act(() => store().updateEntry(cardEntry().id, { effects: { production: { systemId: HOME, units: { cruiser: 1 } } } }));
+    act(() => edits.updateEntry(cardEntry().id, { effects: { production: { systemId: HOME, units: { cruiser: 1 } } } }));
     expect(screen.getByRole('button', { name: /^Production in a space dock.*· ./ })).toBeVisible();
     expect(screen.getByText(/gives the secondary a structure only/)).toBeVisible();
   });
@@ -570,7 +571,7 @@ describe('Warfare', () => {
   });
 
   test('taking from empty pools goes below zero and warns', async () => {
-    store().addEntry(1, { type: 'adjustment', label: '', delta: { tactic: -3, fleet: -3, strategy: -2 } }, 'action');
+    edits.addEntry(1, { type: 'adjustment', label: '', delta: { tactic: -3, fleet: -3, strategy: -2 } }, 'action');
     await primary('Warfare');
     await click(tileOf('Fleet'));
     expect(warningsShown().getByText(/below zero/)).toBeVisible();
@@ -578,7 +579,7 @@ describe('Warfare', () => {
 
   test('before Thunder\'s Edge there is no free tactical: a token comes off a chosen system and one is gained', async () => {
     start({ expansions: ['pok'] });
-    const token = store().addEntry(1, { type: 'tactical', systemId: OTHER, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    const token = edits.addEntry(1, { type: 'tactical', systemId: OTHER, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
     await primary('Warfare');
     expect(screen.queryByRole('button', { name: /tactical action without a token/ })).toBeNull();
     expect(screen.queryByText(/Opens the usual flight/)).toBeNull();
@@ -605,8 +606,8 @@ describe('Warfare', () => {
     const all = loadPack(['pok', 'te']);
     const cost = (upgraded: boolean) => unitStats('muaat', 'warsun', upgraded, all)?.cost;
     expect(cost(true)).not.toBe(cost(false));
-    const id = store().addEntry(1, { type: 'secondary', card: 6 }, 'action');
-    store().addEntry(1, { type: 'secondary', card: 7, effects: { researched: ['technology:pws2'] } }, 'action');
+    const id = edits.addEntry(1, { type: 'secondary', card: 6 }, 'action');
+    edits.addEntry(1, { type: 'secondary', card: 7, effects: { researched: ['technology:pws2'] } }, 'action');
     render(<PlanScreen />);
     await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Edit: Secondary: Warfare' }));
     await click('Production in the home system');
@@ -619,7 +620,7 @@ describe('Warfare', () => {
     start({ faction: 'hacan' });
     const hacan = loadPack(['pok', 'te']);
     const [first, second] = hacan.tiles[hacan.factions.hacan.homeTile].planetIds;
-    const later = store().addEntry(1, { type: 'secondary', card: 6 }, 'action');
+    const later = edits.addEntry(1, { type: 'secondary', card: 6 }, 'action');
     render(<PlanScreen />);
     await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${later}"]`)!).getByRole('button', { name: 'Edit: Secondary: Warfare' }));
     await click('Production in the home system');
@@ -691,7 +692,7 @@ describe('Technology', () => {
 
   test('a technology the row does not show stays researched when an upgrade is tapped', async () => {
     await primary('Technology');
-    act(() => store().updateEntry(cardEntry().id, { effects: { researched: ['technology:gd'] } }));
+    act(() => edits.updateEntry(cardEntry().id, { effects: { researched: ['technology:gd'] } }));
     await userEvent.click(within(screen.getByRole('group', { name: 'Upgrade' })).getByRole('button', { name: 'Carrier' }));
     expect(cardEntry().effects?.researched).toEqual(['technology:gd', 'technology:cv2']);
   });

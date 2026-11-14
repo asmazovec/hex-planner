@@ -4,7 +4,7 @@ import type { MergedChange } from '../domain/losses';
 import { changeOnBoard } from '../game/edit/merged';
 import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
 import type {
-  DataPack, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, LeaderState, Phase, UnitCounts,
+  DataPack, EntryStatus, ExpansionId, Game, MapLayout, LeaderState, Phase, UnitCounts,
 } from '../domain/types';
 import type { Turn } from '../game/actions';
 import {
@@ -27,7 +27,6 @@ import {
   withTile,
 } from '../game/edit/table';
 import { playerOfLegacy } from '../game/entry';
-import { patchedTurn, turnOfBody } from './legacyEdits';
 import { forgetTimelines, startOfGame } from './projection';
 
 export { flushSaves };
@@ -163,13 +162,6 @@ export interface GameStore {
   setFractureSeat(seat: number | null): void;
   toggleIngress(systemId: string): void;
   undo(): void;
-  // The writes of the old entries, for the tests of the screens that still make them; each is the turn edit above.
-  addEntry(roundNo: number, body: EntryBody, phase: Phase, owner?: string): string;
-  addStatusEntry(roundNo: number): string;
-  updateEntry(id: string, patch: Partial<EntryBody>): void;
-  moveEntry(id: string, toPhase: Phase, toIndex: number): void;
-  removeEntry(id: string): void;
-  setEntryStatus(id: string, status: EntryStatus): void;
 }
 
 const DRAFT_EXPANSIONS: ExpansionId[] = ['pok', 'te'];
@@ -410,22 +402,6 @@ export const useGame = create<GameStore>((set, get) => {
       const previous = history.pop();
       if (previous) replace(previous);
     },
-
-    addEntry: (roundNo, body, phase, owner) => {
-      const saved = get().saved;
-      if (!saved) return '';
-      const { turn, parentId } = turnOfBody(saved, '', body, phase, owner);
-      return get().addTurn(roundNo, turn, parentId);
-    },
-    addStatusEntry: roundNo => get().addStatusTurn(roundNo),
-    updateEntry: (id, patch) => {
-      const saved = get().saved;
-      const next = saved ? patchedTurn(saved, id, patch) : undefined;
-      if (next) get().updateTurn(id, next);
-    },
-    moveEntry: (id, toPhase, toIndex) => get().moveTurn(id, toPhase, toIndex),
-    removeEntry: id => get().removeTurn(id),
-    setEntryStatus: (id, status) => get().setStatus(id, status),
   };
   return store;
 });

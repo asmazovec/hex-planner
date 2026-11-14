@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import * as edits from '../testing/entries';
 
 vi.mock('../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -36,34 +37,34 @@ describe('gameStore', () => {
 
   test('запись статуса одна на раунд: повторный вызов возвращает её же', () => {
     act().addRound();
-    const id = act().addStatusEntry(1);
+    const id = edits.addStatusEntry(1);
     expect(round().entries).toEqual([expect.objectContaining({ id, type: 'statusTokens', phase: 'status', tactic: 0, fleet: 0, strategy: 0 })]);
     const before = game();
-    expect(act().addStatusEntry(1)).toBe(id);
+    expect(edits.addStatusEntry(1)).toBe(id);
     expect(game()).toBe(before);
-    expect(act().addStatusEntry(2)).not.toBe(id);
+    expect(edits.addStatusEntry(2)).not.toBe(id);
     expect(plan().rounds[1].entries).toHaveLength(1);
   });
 
   test('копия плана независима', () => {
     const originalId = plan().id;
-    act().addEntry(1, { type: 'pass' }, 'action');
+    edits.addEntry(1, { type: 'pass' }, 'action');
     act().copyPlan();
     expect(plans()).toHaveLength(2);
     expect(plan().id).not.toBe(originalId);
     expect(plan().rounds[0].entries[0].id).not.toBe(plans()[0].rounds[0].entries[0].id);
-    act().removeEntry(plan().rounds[0].entries[0].id);
+    edits.removeEntry(plan().rounds[0].entries[0].id);
     expect(plan().rounds[0].entries).toHaveLength(0);
     expect(plans()[0].rounds[0].entries).toHaveLength(1);
   });
 
   test('выполненная запись учитывается только в своём плане', () => {
     const first = plan().id;
-    const id = act().addEntry(1, { type: 'adjustment', label: 'x', delta: { tradeGoods: 2 } }, 'action');
-    act().setEntryStatus(id, 'done');
+    const id = edits.addEntry(1, { type: 'adjustment', label: 'x', delta: { tradeGoods: 2 } }, 'action');
+    edits.setEntryStatus(id, 'done');
     act().copyPlan();
     const copyId = plan().id;
-    act().setEntryStatus(plan().rounds[0].entries[0].id, 'planned');
+    edits.setEntryStatus(plan().rounds[0].entries[0].id, 'planned');
     const tg = (planId: string) => project(game(), plans().find(p => p.id === planId)!, 'now', pack).state.tradeGoods;
     expect(tg(first)).toBe(2);
     expect(tg(copyId)).toBe(0);
@@ -88,9 +89,9 @@ describe('gameStore', () => {
   });
 
   test('undo возвращает предыдущее состояние', () => {
-    const id = act().addEntry(1, { type: 'pass' }, 'action');
+    const id = edits.addEntry(1, { type: 'pass' }, 'action');
     expect(act().canUndo).toBe(true);
-    act().removeEntry(id);
+    edits.removeEntry(id);
     expect(round().entries).toHaveLength(0);
     act().undo();
     expect(round().entries.map(e => e.id)).toEqual([id]);
@@ -105,29 +106,29 @@ describe('gameStore', () => {
   });
 
   test('бесплатная тактика уходит вместе со своей картой за один шаг отмены и следует за ней в копию плана', () => {
-    const card = act().addEntry(1, { type: 'strategic', card: 6 }, 'action');
-    const free = act().addEntry(1, { type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 }, free: true, fromCard: card }, 'action');
-    const other = act().addEntry(1, { type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    const card = edits.addEntry(1, { type: 'strategic', card: 6 }, 'action');
+    const free = edits.addEntry(1, { type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 }, free: true, fromCard: card }, 'action');
+    const other = edits.addEntry(1, { type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
     act().copyPlan();
     const [copiedCard, copiedFree] = round().entries;
     expect(copiedCard.id).not.toBe(card);
     expect(copiedFree).toMatchObject({ fromCard: copiedCard.id });
     act().undo();
 
-    act().removeEntry(card);
+    edits.removeEntry(card);
     expect(round().entries.map(e => e.id)).toEqual([other]);
     act().undo();
     expect(round().entries.map(e => e.id)).toEqual([card, free, other]);
 
-    act().removeEntry(free);
+    edits.removeEntry(free);
     expect(round().entries.map(e => e.id)).toEqual([card, other]);
   });
 
   test('moveEntry переносит запись в другую фазу на позицию', () => {
-    const a = act().addEntry(1, { type: 'pass' }, 'action');
-    const b = act().addEntry(1, { type: 'secondary' }, 'action');
-    const c = act().addEntry(1, { type: 'strategic' }, 'strategy');
-    act().moveEntry(c, 'action', 1);
+    const a = edits.addEntry(1, { type: 'pass' }, 'action');
+    const b = edits.addEntry(1, { type: 'secondary' }, 'action');
+    const c = edits.addEntry(1, { type: 'strategic' }, 'strategy');
+    edits.moveEntry(c, 'action', 1);
     expect(round().entries.filter(e => e.phase === 'action').map(e => e.id)).toEqual([a, c, b]);
     expect(round().entries.find(e => e.id === c)!.phase).toBe('action');
   });
@@ -273,8 +274,8 @@ describe('the kept timelines', () => {
 
 describe('действия без изменений', () => {
   test('неизвестный id и то же значение не создают шаг отмены и не сохраняют', async () => {
-    const id = act().addEntry(1, { type: 'pass' }, 'action');
-    act().setEntryStatus(id, 'done');
+    const id = edits.addEntry(1, { type: 'pass' }, 'action');
+    edits.setEntryStatus(id, 'done');
     act().setOpponent(0, { faction: 'hacan' });
     const opponent = game().opponents[0].id;
     act().setEnemyUnits('1,0', opponent, { cruiser: 2 });
@@ -283,12 +284,12 @@ describe('действия без изменений', () => {
     await vi.waitFor(() => expect(saveGame).toHaveBeenLastCalledWith(act().saved));
     vi.mocked(saveGame).mockClear();
     const noops = [
-      () => act().removeEntry('nope'),
-      () => act().updateEntry('nope', { type: 'pass' }),
-      () => act().moveEntry('nope', 'status', 0),
-      () => act().setEntryStatus('nope', 'done'),
-      () => act().setEntryStatus(id, 'done'),
-      () => act().moveEntry(id, 'action', 0),
+      () => edits.removeEntry('nope'),
+      () => edits.updateEntry('nope', { type: 'pass' }),
+      () => edits.moveEntry('nope', 'status', 0),
+      () => edits.setEntryStatus('nope', 'done'),
+      () => edits.setEntryStatus(id, 'done'),
+      () => edits.moveEntry(id, 'action', 0),
       () => act().setStrategyCard(99, 3),
       () => act().renamePlan(plan().name),
       () => act().setFractureActive(false),
@@ -520,8 +521,8 @@ describe("Thunder's Edge turned on in a game in progress", () => {
     };
     act().setPlanetControl('mr', 'me');
     act().setDock('mr', true);
-    const id = act().addEntry(1, entry, 'action');
-    act().setEntryStatus(id, 'done');
+    const id = edits.addEntry(1, entry, 'action');
+    edits.setEntryStatus(id, 'done');
     const before = project(game(), plan(), 'forecast', pack).state;
     expect(before.exhausted).toContain('mr');
     const old = game();
@@ -583,11 +584,11 @@ describe("Thunder's Edge turned on in a game in progress", () => {
   });
 
   test('a copied plan has entry research of its own', () => {
-    const id = act().addEntry(1, { type: 'strategic', effects: { researched: ['technology:cv2'] } }, 'action');
+    const id = edits.addEntry(1, { type: 'strategic', effects: { researched: ['technology:cv2'] } }, 'action');
     act().copyPlan();
     const copy = round().entries[0];
     expect(copy).toMatchObject({ effects: { researched: ['technology:cv2'] } });
-    act().updateEntry(copy.id, { effects: {} });
+    edits.updateEntry(copy.id, { effects: {} });
     expect(plans()[0].rounds[0].entries.find(e => e.id === id)).toMatchObject({ effects: { researched: ['technology:cv2'] } });
   });
 });
@@ -665,7 +666,7 @@ describe('enemy ground units by planet', () => {
   test('on Mecatol Rex they follow the planet, and so does production on it', () => {
     const [{ id }] = game().opponents;
     act().setEnemyGround('mr', id, { mech: 1 });
-    act().addEntry(1, { type: 'tactical', systemId: '0,0', moves: [], landings: [], production: { infantry: 1 }, payment: { planets: [], tradeGoods: 0 }, productionGround: { mr: { infantry: 1 } } }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: '0,0', moves: [], landings: [], production: { infantry: 1 }, payment: { planets: [], tradeGoods: 0 }, productionGround: { mr: { infantry: 1 } } }, 'action');
     act().addExpansion('te');
     expect(game().enemyGround).toEqual({ mrte: { [id]: { mech: 1 } } });
     expect(round().entries[0]).toMatchObject({ productionGround: { mrte: { infantry: 1 } } });

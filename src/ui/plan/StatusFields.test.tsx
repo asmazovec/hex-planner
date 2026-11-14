@@ -1,6 +1,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { listOf } from '../testing/view';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import * as edits from '../../testing/entries';
 
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -28,7 +29,7 @@ function openStatus(faction: string, secrets: string[] = []): void {
   const store = useGame.getState();
   store.newGame({ expansions: ['pok'], playerCount: 6, faction }, pack);
   for (const id of secrets) store.setStartHolding('me', id, true);
-  const id = store.addStatusEntry(1);
+  const id = edits.addStatusEntry(1);
   function Live() {
     const live = useGame(s => s.game)!;
     return (

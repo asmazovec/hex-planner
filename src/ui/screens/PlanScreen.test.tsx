@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import * as edits from '../../testing/entries';
 
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -105,7 +106,7 @@ test('a tap on the last hex removes it, and on the source alone gives up', async
   await chooseSystem();
   await addRouteByTaps(HOME, WAY, WAY, TARGET);
   expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
-  useGame.getState().updateEntry(tactical().id, { moves: [] });
+  edits.updateEntry(tactical().id, { moves: [] });
   await addRouteByTaps(HOME, HOME);
   expect(choiceHint()).toBeNull();
   await addRouteByTaps(HOME);
@@ -152,7 +153,7 @@ describe('the system and the sources, chosen from the panel', () => {
 
   test('a production or a landing keeps the system too, and a tap on it does not take the action back', async () => {
     await chooseSystem();
-    act(() => useGame.getState().updateEntry(tactical().id, { production: { fighter: 1 } }));
+    act(() => edits.updateEntry(tactical().id, { production: { fighter: 1 } }));
     expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
     await userEvent.click(tile(TARGET));
     expect(entries()).toHaveLength(1);
@@ -185,7 +186,7 @@ describe('the system and the sources, chosen from the panel', () => {
   test('a source already there starts a new way, and its ships stay', async () => {
     await chooseSystem();
     await addRouteByTaps(HOME, WAY, TARGET);
-    act(() => useGame.getState().updateEntry(tactical().id, { moves: [{ from: HOME, units: { fighter: 1 }, via: [WAY] }] }));
+    act(() => edits.updateEntry(tactical().id, { moves: [{ from: HOME, units: { fighter: 1 }, via: [WAY] }] }));
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
     await userEvent.click(addSource());
     await userEvent.click(tile(HOME));
@@ -385,7 +386,7 @@ describe('an opponent in the plan', () => {
   });
 
   test('their row wears their colour and says whose it is', async () => {
-    useGame.getState().addEntry(1, { type: 'pass' }, 'action', rival().id);
+    edits.addEntry(1, { type: 'pass' }, 'action', rival().id);
     render(<PlanScreen />);
     const row = screen.getByRole('listitem', { name: /Sol/ });
     expect(row).toHaveClass('entry-rival');
@@ -393,7 +394,7 @@ describe('an opponent in the plan', () => {
   });
 
   test('my own rows stay as they were', async () => {
-    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    edits.addEntry(1, { type: 'pass' }, 'action');
     render(<PlanScreen />);
     expect(screen.getByRole('listitem', { name: 'Pass' })).not.toHaveClass('entry-rival');
   });
@@ -414,15 +415,15 @@ describe('an opponent in the plan', () => {
 
   test('their units move on the map, and their route wears their colour', () => {
     useGame.getState().setEnemyUnits(HOME, rival().id, { cruiser: 2 });
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { cruiser: 1 } }], landings: [], production: {}, payment: noPay }, 'action', rival().id);
+    edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { cruiser: 1 } }], landings: [], production: {}, payment: noPay }, 'action', rival().id);
     render(<PlanScreen />);
     expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: /Cruiser ×1/ })).toBeInTheDocument();
     expect((document.querySelector('.route') as SVGElement).style.getPropertyValue('--route')).toBe(`var(--player-${rival().color})`);
   });
 
   test('a warning does not repaint a route: mine keeps its colour, theirs keeps theirs', () => {
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { dreadnought: 9 } }], landings: [], production: {}, payment: noPay }, 'action');
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: WAY, moves: [{ from: HOME, units: { dreadnought: 9 } }], landings: [], production: {}, payment: noPay }, 'action', rival().id);
+    edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { dreadnought: 9 } }], landings: [], production: {}, payment: noPay }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: WAY, moves: [{ from: HOME, units: { dreadnought: 9 } }], landings: [], production: {}, payment: noPay }, 'action', rival().id);
     render(<PlanScreen />);
     const [mine, theirs] = [...document.querySelectorAll<SVGElement>('.route:not(.route-badge)')];
     expect(screen.getAllByText(/is missing/).length).toBeGreaterThan(0);
@@ -433,8 +434,8 @@ describe('an opponent in the plan', () => {
 
   test('the number of their action on the map wears their colour, and mine stays as it was', () => {
     useGame.getState().setEnemyUnits(HOME, rival().id, { cruiser: 1 });
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { cruiser: 1 } }], landings: [], production: {}, payment: noPay }, 'action', rival().id);
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: WAY, moves: [{ from: HOME, units: { carrier: 1 } }], landings: [], production: {}, payment: noPay }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { cruiser: 1 } }], landings: [], production: {}, payment: noPay }, 'action', rival().id);
+    edits.addEntry(1, { type: 'tactical', systemId: WAY, moves: [{ from: HOME, units: { carrier: 1 } }], landings: [], production: {}, payment: noPay }, 'action');
     render(<PlanScreen />);
     const [theirs, mine] = [...document.querySelectorAll<SVGElement>('.route-badge')];
     expect(theirs.style.getPropertyValue('--route')).toBe(`var(--player-${rival().color})`);
@@ -444,8 +445,8 @@ describe('an opponent in the plan', () => {
 
   test('in their battle a loss is theirs, mine stay out of reach', async () => {
     useGame.getState().setEnemyUnits(TARGET, rival().id, { cruiser: 2 });
-    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { fighter: 1 } } } }, 'strategy');
-    const id = useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: noPay }, 'action', rival().id);
+    edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { fighter: 1 } } } }, 'strategy');
+    const id = edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: noPay }, 'action', rival().id);
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit: Sol: Tactical action/ }));
     await userEvent.click(screen.getByRole('button', { name: /^Battle / }));
@@ -458,7 +459,7 @@ describe('an opponent in the plan', () => {
 
   test('their purchase is theirs and paid from their pool', async () => {
     useGame.getState().setTile(TARGET, pack.factions.sol.homeTile);
-    const id = useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: noPay }, 'action', rival().id);
+    const id = edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: noPay }, 'action', rival().id);
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit: Sol: Tactical action/ }));
     await userEvent.click(screen.getByRole('button', { name: /^Production / }));
@@ -468,7 +469,7 @@ describe('an opponent in the plan', () => {
   });
 
   test('a saved game keeps whose an entry is', () => {
-    useGame.getState().addEntry(1, { type: 'pass' }, 'action', rival().id);
+    edits.addEntry(1, { type: 'pass' }, 'action', rival().id);
     const saved = reloaded(game()) as unknown as ReturnType<typeof game>;
     expect(saved.plans[0].rounds[0].entries[0].owner).toBe(rival().id);
   });
@@ -551,7 +552,7 @@ test('a source with nothing chosen goes when the editor closes', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
   await userEvent.click(screen.getByRole('button', { name: 'Back' }));
   // An empty source that the editor still holds: one put there by hand, or brought back by undo.
-  act(() => useGame.getState().updateEntry(tactical().id, { moves: [...tactical().moves, { from: WAY, units: {} }] }));
+  act(() => edits.updateEntry(tactical().id, { moves: [...tactical().moves, { from: WAY, units: {} }] }));
   expect(screen.getAllByRole('button', { name: /^Remove source/ })).toHaveLength(2);
   await userEvent.click(screen.getByRole('button', { name: 'Done' }));
   expect(tactical().moves).toEqual([{ from: HOME, units: { carrier: 1 } }]);
@@ -603,7 +604,7 @@ test('an arrow drag opens the same picker, in both directions', async () => {
   expect(tactical().moves.map(m => m.from)).toEqual([HOME]);
   expect(screen.getByRole('button', { name: 'Back' })).toBeVisible();
 
-  useGame.getState().updateEntry(tactical().id, { moves: [] });
+  edits.updateEntry(tactical().id, { moves: [] });
   document.elementFromPoint = () => tile(HOME);
   fireEvent.pointerDown(tile(TARGET), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
   fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
@@ -636,7 +637,7 @@ test('landing puts ground units on a planet and changes its control', async () =
 });
 
 test('a planet of the landing shows its picture, name and state, and who stands there', async () => {
-  useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { ground: { quann: { mech: 1 } } } }, 'strategy');
+  edits.addEntry(1, { type: 'adjustment', label: '', delta: { ground: { quann: { mech: 1 } } } }, 'strategy');
   useGame.getState().setEnemyGround('quann', useGame.getState().game!.opponents[0].id, { infantry: 2 });
   await chooseSystem();
   await addRouteByTaps(HOME, TARGET);
@@ -656,8 +657,8 @@ test('a planet of the landing shows its picture, name and state, and who stands 
 test('with two planets each has its own buttons, and what they land is shared', async () => {
   useGame.getState().setTile(TARGET, '27');
   await chooseSystem();
-  act(() => useGame.getState().updateEntry(tactical().id, { moves: [{ from: TARGET, units: { infantry: 2 } }] }));
-  useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { infantry: 2 } } } }, 'strategy');
+  act(() => edits.updateEntry(tactical().id, { moves: [{ from: TARGET, units: { infantry: 2 } }] }));
+  edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { infantry: 2 } } } }, 'strategy');
   const groups = screen.getAllByRole('group', { name: /^Landing on / });
   expect(groups).toHaveLength(2);
   const [first, second] = groups.map(g => within(g));
@@ -696,8 +697,8 @@ describe('a system already activated', () => {
   });
 
   test('warns when ships are sent out of it, and only in a later action', async () => {
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: HOME, moves: [], landings: [], production: {}, payment: noPay }, 'action');
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: {} }], landings: [], production: {}, payment: noPay }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: HOME, moves: [], landings: [], production: {}, payment: noPay }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: {} }], landings: [], production: {}, payment: noPay }, 'action');
     const warnings = project(game(), plan(), 'forecast', pack).warningsByEntry;
     const [first, second] = entries();
     expect(warnings[first.id] ?? []).toEqual([]);
@@ -705,8 +706,8 @@ describe('a system already activated', () => {
   });
 
   test('flying through it is allowed', () => {
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: WAY, moves: [], landings: [], production: {}, payment: noPay }, 'action');
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: {}, via: [WAY] }], landings: [], production: {}, payment: noPay }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: WAY, moves: [], landings: [], production: {}, payment: noPay }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: {}, via: [WAY] }], landings: [], production: {}, payment: noPay }, 'action');
     const warnings = project(game(), plan(), 'forecast', pack).warningsByEntry[entries()[1].id] ?? [];
     expect(warnings.map(w => w.code)).not.toContain('sourceActivated');
   });
@@ -715,9 +716,9 @@ describe('a system already activated', () => {
 describe('the battle of a tactical action', () => {
   const action = () => entries().find((e): e is Extract<Entry, { type: 'tactical' }> => e.type === 'tactical')!;
   async function fourCruisersArrive() {
-    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: HOME, units: { cruiser: 4 } } } }, 'strategy');
+    edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: HOME, units: { cruiser: 4 } } } }, 'strategy');
     await chooseSystem();
-    act(() => useGame.getState().updateEntry(action().id, { moves: [{ from: HOME, units: { cruiser: 4 } }] }));
+    act(() => edits.updateEntry(action().id, { moves: [{ from: HOME, units: { cruiser: 4 } }] }));
   }
   const startBattle = () => userEvent.click(screen.getByRole('button', { name: /^Battle / }));
   const dialog = () => within(screen.getByRole('dialog'));
@@ -791,7 +792,7 @@ describe('the battle of a tactical action', () => {
   });
 
   test('a loss on a planet belongs to the action too', async () => {
-    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { ground: { quann: { infantry: 2 } } } }, 'strategy');
+    edits.addEntry(1, { type: 'adjustment', label: '', delta: { ground: { quann: { infantry: 2 } } } }, 'strategy');
     await chooseSystem();
     await startBattle();
     await userEvent.click(dialog().getByRole('button', { name: /^Infantry ×2/ }));
@@ -800,7 +801,7 @@ describe('the battle of a tactical action', () => {
   });
 
   test('a battle opened by a tap on the map still goes to the round', async () => {
-    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { cruiser: 2 } } } }, 'strategy');
+    edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { cruiser: 2 } } } }, 'strategy');
     render(<PlanScreen />);
     await userEvent.click(tile(TARGET));
     await userEvent.click(dialog().getByRole('button', { name: 'Battle' }));
@@ -810,9 +811,9 @@ describe('the battle of a tactical action', () => {
 
   test('a loss fills the action in: the active system can no longer change', async () => {
     await chooseSystem();
-    act(() => useGame.getState().updateEntry(action().id, { losses: { cruiser: 1 } }));
+    act(() => edits.updateEntry(action().id, { losses: { cruiser: 1 } }));
     expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
-    act(() => useGame.getState().updateEntry(action().id, { losses: undefined, groundLosses: { quann: { infantry: 1 } } }));
+    act(() => edits.updateEntry(action().id, { losses: undefined, groundLosses: { quann: { infantry: 1 } } }));
     expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
   });
 
@@ -823,7 +824,7 @@ describe('the battle of a tactical action', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('2');
-    act(() => useGame.getState().updateEntry(action().id, { losses: { infantry: 1 } }));
+    act(() => edits.updateEntry(action().id, { losses: { infantry: 1 } }));
     expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('1');
   });
 
@@ -868,7 +869,7 @@ describe('the battle of a tactical action', () => {
   });
 
   test('those who stood on the planet before are lost apart from the landing, and the landing block shows who is left', async () => {
-    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { ground: { quann: { mech: 2 } } } }, 'strategy');
+    edits.addEntry(1, { type: 'adjustment', label: '', delta: { ground: { quann: { mech: 2 } } } }, 'strategy');
     await chooseSystem();
     await addRouteByTaps(HOME, TARGET);
     await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
@@ -884,7 +885,7 @@ describe('the battle of a tactical action', () => {
 
   test('the details read the losses out', async () => {
     await fourCruisersArrive();
-    act(() => useGame.getState().updateEntry(action().id, { losses: { cruiser: 1 } }));
+    act(() => edits.updateEntry(action().id, { losses: { cruiser: 1 } }));
     await userEvent.click(screen.getByRole('button', { name: 'Done' }));
     await userEvent.click(screen.getByRole('button', { name: /^Tactical action · Quann/ }));
     expect(screen.getByText('Lost in battle')).toBeVisible();
@@ -892,7 +893,7 @@ describe('the battle of a tactical action', () => {
 
   test('a saved game keeps its losses', async () => {
     await fourCruisersArrive();
-    act(() => useGame.getState().updateEntry(action().id, { losses: { cruiser: 1 }, groundLosses: { quann: { infantry: 1 } } }));
+    act(() => edits.updateEntry(action().id, { losses: { cruiser: 1 }, groundLosses: { quann: { infantry: 1 } } }));
     const saved = reloaded(game()) as unknown as ReturnType<typeof game>;
     const entry = saved.plans[0].rounds.flatMap(r => r.entries).find(e => e.type === 'tactical');
     expect(entry).toMatchObject({ losses: { cruiser: 1 }, groundLosses: { quann: { infantry: 1 } } });
@@ -936,7 +937,7 @@ test('landing shows counts of what arrived and what is assigned; no icon for a u
 
 test('a landing whose units are gone stays visible, can go over the limit, and warns', async () => {
   await chooseSystem();
-  act(() => useGame.getState().updateEntry(tactical().id, { landings: [{ planetId: 'quann', units: { infantry: 1 } }] }));
+  act(() => edits.updateEntry(tactical().id, { landings: [{ planetId: 'quann', units: { infantry: 1 } }] }));
   expect(screen.getByText('Landing')).toBeVisible();
   expect(screen.getByText('Landing needs 1 × Infantry, but only 0 arrived.')).toBeVisible();
   // The stock is empty: the button keeps its place, shows nothing left and how many land beyond it, and still takes a tap.
@@ -979,7 +980,7 @@ test('production without a dock warns once something is built, and still works',
 });
 
 test('a merged entry names its system and opens the big hex in its own mode', async () => {
-  useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { carrier: 1 } } } }, 'strategy');
+  edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { carrier: 1 } } } }, 'strategy');
   useGame.getState().changeAdjustment(1, { kind: 'losses', systemId: TARGET, unit: 'carrier', planetId: null, amount: -1 });
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Edit: Losses · Quann' }));
@@ -1041,7 +1042,7 @@ test('Done returns to the plan, and the pencil reopens the editor', async () => 
 });
 
 describe('reading the plan', () => {
-  const plannedRoute = () => useGame.getState().addEntry(1, {
+  const plannedRoute = () => edits.addEntry(1, {
     type: 'tactical', systemId: TARGET, landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
     moves: [{ from: HOME, units: { carrier: 1, infantry: 1 }, via: [WAY] }, { from: WAY, units: { fighter: 1 }, pickupOf: HOME }],
   }, 'action');
@@ -1069,7 +1070,7 @@ describe('reading the plan', () => {
 
   test('Whole map closes it, and an entry with no system has no such button', async () => {
     plannedRoute();
-    useGame.getState().addEntry(1, { type: 'component', note: 'Plague' }, 'action');
+    edits.addEntry(1, { type: 'component', note: 'Plague' }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: label }));
     await userEvent.click(screen.getByRole('button', { name: 'Whole map' }));
@@ -1090,7 +1091,7 @@ describe('reading the plan', () => {
   });
 
   test('every entry type has a pencil and read-only steps; pass only its label', async () => {
-    const add = useGame.getState().addEntry;
+    const add = edits.addEntry;
     add(1, { type: 'component', note: 'Plague' }, 'action');
     add(1, { type: 'adjustment', label: 'Card', delta: { tradeGoods: 2 } }, 'action');
     add(1, { type: 'strategic', card: 8, effects: { mecatol: true } }, 'action');
@@ -1186,7 +1187,7 @@ describe('leaving', () => {
   };
 
   test('a tile tap opens the stage and closes the reading', async () => {
-    useGame.getState().addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
+    edits.addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Tactical action · Quann/ }));
     expect(screen.getByRole('button', { name: 'Whole map' })).toBeVisible();
@@ -1197,7 +1198,7 @@ describe('leaving', () => {
   });
 
   test('a change of round during the reading closes it and clears the highlight', async () => {
-    useGame.getState().addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
+    edits.addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
     useGame.getState().addRound();
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: 'Round 1' }));
@@ -1211,7 +1212,7 @@ describe('leaving', () => {
   });
 
   test('a change of plan during the reading closes it', async () => {
-    useGame.getState().addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
+    edits.addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Tactical action · Quann/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
@@ -1221,7 +1222,7 @@ describe('leaving', () => {
   });
 
   test('undo during a tap route leaves no stale draft', async () => {
-    useGame.getState().addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
+    edits.addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
     await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
@@ -1284,9 +1285,9 @@ describe('leaving', () => {
   });
 
   test('marking an action done in Now shows no earlier planned move during its flight', async () => {
-    const add = useGame.getState().addEntry;
+    const add = edits.addEntry;
     add(1, { type: 'adjustment', label: '', delta: { units: { systemId: WAY, units: { cruiser: 1 } } } }, 'strategy');
-    useGame.getState().setEntryStatus(entries()[0].id, 'done');
+    edits.setEntryStatus(entries()[0].id, 'done');
     add(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
     const later = add(1, tacticalBody([{ from: WAY, units: { cruiser: 1 } }]), 'action');
     render(<PlanScreen />);
@@ -1317,7 +1318,7 @@ describe('flying', () => {
   });
 
   test('marking an action with moves as done plays it; undo plays nothing', async () => {
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { carrier: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { carrier: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('checkbox', { name: 'Done' }));
     expect(document.querySelector('.flight-layer')).toBeInTheDocument();
@@ -1327,9 +1328,9 @@ describe('flying', () => {
 
   test('the number of an action stands on its arrow and in the list, renumbered at once', async () => {
     const body = (from: string) => ({ type: 'tactical' as const, systemId: TARGET, moves: [{ from, units: { cruiser: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } });
-    const first = useGame.getState().addEntry(1, body(HOME), 'action');
-    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
-    useGame.getState().addEntry(1, body(WAY), 'action');
+    const first = edits.addEntry(1, body(HOME), 'action');
+    edits.addEntry(1, { type: 'pass' }, 'action');
+    edits.addEntry(1, body(WAY), 'action');
     render(<PlanScreen />);
     const badges = () => [...document.querySelectorAll('.route-badge-number')].map(el => el.textContent);
     const froms = () => [...document.querySelectorAll('.route[role="img"]')].map(el => el.getAttribute('aria-label'));
@@ -1337,17 +1338,17 @@ describe('flying', () => {
     expect(froms()[0]).toContain(HOME);
     expect(screen.getByRole('img', { name: 'Action 1' })).toBeVisible();
     expect(screen.getByRole('img', { name: 'Action 2' })).toBeVisible();
-    act(() => useGame.getState().moveEntry(first, 'action', 2));
+    act(() => edits.moveEntry(first, 'action', 2));
     expect(badges()).toEqual(['1', '2']);
     expect(froms()[0]).toContain(WAY);
-    act(() => useGame.getState().setEntryStatus(first, 'cancelled'));
+    act(() => edits.setEntryStatus(first, 'cancelled'));
     expect(badges()).toEqual(['1']);
     expect(screen.queryByRole('img', { name: 'Action 2' })).toBeNull();
   });
 });
 
 test('the Forecast / Now switch changes what the map shows', async () => {
-  useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+  edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
   render(<PlanScreen />);
   const token = () => within(tile(TARGET) as HTMLElement).queryByRole('img', { name: 'Command token' });
   expect(token()).toBeInTheDocument();
@@ -1359,7 +1360,7 @@ test('the Forecast / Now switch changes what the map shows', async () => {
 });
 
 test('rounds switch and a new round can be added; the map shows that round', async () => {
-  useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+  edits.addEntry(1, { type: 'pass' }, 'action');
   render(<PlanScreen />);
   expect(screen.getByRole('listitem', { name: 'Pass' })).toBeVisible();
   await userEvent.click(screen.getByRole('button', { name: 'Add round' }));
@@ -1549,13 +1550,13 @@ describe('a manual adjustment', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Choose on the map' }));
     await userEvent.click(tile(WAY));
     await userEvent.click(dialog().getByRole('button', { name: 'Close' }));
-    act(() => useGame.getState().updateEntry(entries()[0].id, { delta: { units: { systemId: WAY, units: { cruiser: -1 } } } }));
+    act(() => edits.updateEntry(entries()[0].id, { delta: { units: { systemId: WAY, units: { cruiser: -1 } } } }));
     expect(screen.getByText(/is missing 1 × Cruiser/).closest('.editor-section')).toHaveTextContent('System');
   });
 
   test('undo that removes it closes the menu', async () => {
     await openAdjustment();
-    act(() => useGame.getState().removeEntry(entries()[0].id));
+    act(() => edits.removeEntry(entries()[0].id));
     expect(screen.getByRole('button', { name: 'Add action' })).toBeVisible();
   });
 });
@@ -1840,7 +1841,7 @@ describe('one slot of the panel, one head for every editor', () => {
   });
 
   test('the cross of the adjustment removes it', async () => {
-    useGame.getState().addEntry(1, { type: 'adjustment', label: 'Card', delta: { tradeGoods: 2 } }, 'action');
+    edits.addEntry(1, { type: 'adjustment', label: 'Card', delta: { tradeGoods: 2 } }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit: Manual adjustment/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Remove action' }));
@@ -1848,15 +1849,15 @@ describe('one slot of the panel, one head for every editor', () => {
   });
 
   test('a component action is named by its component in the list, so several of a round can be told apart', () => {
-    useGame.getState().addEntry(1, { type: 'component', note: '', componentId: 'actionCard:bribery' }, 'action');
-    useGame.getState().addEntry(1, { type: 'component', note: '' }, 'action');
+    edits.addEntry(1, { type: 'component', note: '', componentId: 'actionCard:bribery' }, 'action');
+    edits.addEntry(1, { type: 'component', note: '' }, 'action');
     render(<PlanScreen />);
     expect(screen.getByRole('listitem', { name: 'Component action: Bribery' })).toBeVisible();
     expect(screen.getByRole('listitem', { name: 'Component action' })).toBeVisible();
   });
 
   test('the expedition of a turn opens as a step of its editor; the closed row reads out the part and the payment', async () => {
-    useGame.getState().addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: 'res5', payment: { planets: ['nestphar'], tradeGoods: 1 } }] }, 'action');
+    edits.addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: 'res5', payment: { planets: ['nestphar'], tradeGoods: 1 } }] }, 'action');
     render(<PlanScreen />);
     const row = () => screen.getByRole('listitem', { name: /^Component action/ });
     expect(row()).toHaveTextContent('+ Expedition: 5 resources · Nestphar, trade goods 1');
@@ -1877,13 +1878,13 @@ describe('one slot of the panel, one head for every editor', () => {
 test('the Diplomacy primary puts every other player\'s command token on the chosen system of the map (#7)', () => {
   useGame.getState().setStrategyCard(1, 2);
   useGame.getState().setStrategyCard(1, 2);
-  useGame.getState().addEntry(1, { type: 'strategic', card: 2, effects: { systemId: HOME } }, 'action');
+  edits.addEntry(1, { type: 'strategic', card: 2, effects: { systemId: HOME } }, 'action');
   render(<PlanScreen />);
   expect(within(tile(HOME) as HTMLElement).getAllByRole('img', { name: /Command token of/ })).toHaveLength(game().opponents.length);
 });
 
 test('the totals count commodities beside the trade goods (#7)', () => {
-  useGame.getState().addEntry(1, { type: 'strategic', card: 5 }, 'action');
+  edits.addEntry(1, { type: 'strategic', card: 5 }, 'action');
   render(<PlanScreen />);
   expect(cell('Commodities')).toHaveTextContent(`0 → ${pack.factions.arborec.commodities}`);
 });
@@ -1891,7 +1892,7 @@ test('the totals count commodities beside the trade goods (#7)', () => {
 describe('acts inside an action in the plan list', () => {
   test('a turn shows its acts as lines under its name, without rows of their own', () => {
     const rival = game().opponents[0].id;
-    useGame.getState().addEntry(1, {
+    edits.addEntry(1, {
       type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
       acts: [{ kind: 'transaction', with: rival, give: { tradeGoods: 2 }, get: {} }, { kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }],
     }, 'action');
@@ -1903,9 +1904,9 @@ describe('acts inside an action in the plan list', () => {
   });
 
   test('Warfare\'s free tactical action shows under its card with no row of its own; the card row carries its number, as its arrow does', () => {
-    const card = useGame.getState().addEntry(1, { type: 'strategic', card: 6 }, 'action');
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 }, free: true, fromCard: card }, 'action');
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: HOME, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    const card = edits.addEntry(1, { type: 'strategic', card: 6 }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 }, free: true, fromCard: card }, 'action');
+    edits.addEntry(1, { type: 'tactical', systemId: HOME, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
     render(<PlanScreen />);
     const rows = screen.getAllByRole('listitem').filter(li => li.matches('.entry'));
     expect(rows).toHaveLength(2);
@@ -1917,7 +1918,7 @@ describe('acts inside an action in the plan list', () => {
 
 describe('the acts of a turn in its editor', () => {
   test('a pass opens a turn editor with «In this turn»; a transaction opens its step and comes back', async () => {
-    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    edits.addEntry(1, { type: 'pass' }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: 'Edit: Pass' }));
     const block = () => within(screen.getByRole('group', { name: 'In this turn' }));
@@ -1955,7 +1956,7 @@ describe('the acts of a turn in its editor', () => {
 
   test('the result of a tactical action belongs to its own part', async () => {
     await chooseSystem();
-    act(() => useGame.getState().updateEntry(tactical().id, { fleetRemovals: { carrier: 1 } }));
+    act(() => edits.updateEntry(tactical().id, { fleetRemovals: { carrier: 1 } }));
     const own = screen.getByRole('group', { name: 'Action setup' });
     expect(within(own).getByRole('group', { name: 'Action result' })).toBeVisible();
     expect(follows(within(own).getByRole('group', { name: 'Action result' }), screen.getByRole('group', { name: 'In this turn' }))).toBe(true);
@@ -1963,7 +1964,7 @@ describe('the acts of a turn in its editor', () => {
 
   test('the strategy editor names its own part by the card and its ability; a secondary keeps the common part with what it took, without the acts of a turn', async () => {
     useGame.getState().setStrategyCard(1, 1);
-    useGame.getState().addEntry(1, { type: 'strategic', card: 1 }, 'action');
+    edits.addEntry(1, { type: 'strategic', card: 1 }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit: / }));
     expect(parts()).toEqual({ titles: ['Leadership · primary ability', 'In this turn'], blocks: COMMON });
@@ -1999,8 +2000,8 @@ describe('the acts of a turn in its editor', () => {
   });
 
   test('a component action has both parts in the same order, and a pass only the common one', async () => {
-    useGame.getState().addEntry(1, { type: 'component', note: '' }, 'action');
-    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    edits.addEntry(1, { type: 'component', note: '' }, 'action');
+    edits.addEntry(1, { type: 'pass' }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit: Component action/ }));
     expect(parts()).toEqual({ titles: ['Action setup', 'In this turn'], blocks: COMMON });
@@ -2018,7 +2019,7 @@ describe('the acts of a turn in its editor', () => {
   });
 
   test('the pencil of a component action opens the turn editor, with its note', async () => {
-    useGame.getState().addEntry(1, { type: 'component', note: 'Plague' }, 'action');
+    edits.addEntry(1, { type: 'component', note: 'Plague' }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit: Component action/ }));
     expect(screen.getByRole('textbox', { name: 'Note' })).toHaveValue('Plague');
@@ -2027,7 +2028,7 @@ describe('the acts of a turn in its editor', () => {
 });
 
 test('the turn editor of a pass shows what its expedition lacks, so no warning of the turn is lost', async () => {
-  useGame.getState().addEntry(1, { type: 'pass', acts: [{ kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }] }, 'action');
+  edits.addEntry(1, { type: 'pass', acts: [{ kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }] }, 'action');
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Edit: Pass' }));
   expect(within(document.querySelector('.editor-frame') as HTMLElement).getByText(/trade goods/i, { selector: '.warning-text' })).toBeVisible();

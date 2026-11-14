@@ -2,14 +2,14 @@
 import { describe, expect, test } from 'vitest';
 
 const files = import.meta.glob<string>(
-  ['./gameStore.ts', './setupWrites.ts', './projection.ts', './turnBridge.ts', './legacyEdits.ts', '../domain/shareLink.ts', '../game/edit/table.ts', '../game/edit/merged.ts'],
+  ['./gameStore.ts', './setupWrites.ts', './projection.ts', './turnBridge.ts', '../domain/shareLink.ts', '../game/edit/table.ts', '../game/edit/merged.ts'],
   { query: '?raw', import: 'default', eager: true },
 );
 const OLD = /from '\.\.\/domain\/(players|newGame|mapBuilder|holdings|mecatol|thundersEdge|startStructures|slotRename)'/;
 
 describe('the start of the game', () => {
   test('the store, the setup writes and the projection do not import the old modules that wrote the setup', () => {
-    expect(Object.keys(files)).toHaveLength(8);
+    expect(Object.keys(files)).toHaveLength(7);
     for (const name of ['./gameStore.ts', './setupWrites.ts', './projection.ts', './turnBridge.ts']) {
       if (name === './projection.ts') continue; // still imports `gameAs` from players, which reads a game
       expect(files[name], name).not.toMatch(OLD);
@@ -23,7 +23,6 @@ describe('the start of the game', () => {
   });
   test('no setup edit goes the long way through the old game', () => {
     expect(files['./gameStore.ts']).not.toMatch(/viaGame|viaOld|commitOld|commitPlayers|placeStartUnits/);
-    expect(files['./legacyEdits.ts']).not.toMatch(/viaGame/);
   });
   test('the store writes setup edits over the saved game, not through the old game', () => {
     const store = files['./gameStore.ts'];

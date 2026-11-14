@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import * as edits from '../../testing/entries';
 
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -280,7 +281,7 @@ describe('the components drawer', () => {
 
   test('a note the plan handed over says with whom it is', async () => {
     const ta = 'promissory:<color>_ta@me';
-    useGame.getState().addEntry(1, { type: 'pass', acts: [{ kind: 'transaction', with: rival().id, give: { components: [ta] }, get: {} }] }, 'action');
+    edits.addEntry(1, { type: 'pass', acts: [{ kind: 'transaction', with: rival().id, give: { components: [ta] }, get: {} }] }, 'action');
     await openDrawer('Cards');
     const card = within(section('My promissory notes')).getByTestId(`component-${ta}`);
     expect(card).toHaveTextContent('with Hacan');
@@ -333,7 +334,7 @@ describe('the components drawer', () => {
   });
 
   test('a state the plan brought is shown and is not changed here', async () => {
-    useGame.getState().addEntry(1, { type: 'component', note: '', componentId: leaderId('agent') }, 'action');
+    edits.addEntry(1, { type: 'component', note: '', componentId: leaderId('agent') }, 'action');
     await openDrawer('Faction');
     expect(chosen('agent')).toBe('Exhausted');
     for (const button of within(stateOf('agent')).getAllByRole('button')) expect(button).toBeDisabled();
@@ -361,7 +362,7 @@ describe('the components drawer', () => {
   });
 
   test('what an entry of the plan brought says its round and cannot be taken off here', async () => {
-    useGame.getState().addEntry(1, { type: 'component', note: '', gains: ['relic:shard'] }, 'action');
+    edits.addEntry(1, { type: 'component', note: '', gains: ['relic:shard'] }, 'action');
     await openDrawer('Relics');
     const card = within(section('Relics')).getByTestId('component-relic:shard');
     expect(card).toHaveTextContent('from round 1');

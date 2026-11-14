@@ -1,5 +1,6 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import * as edits from '../../../testing/entries';
 
 vi.mock('../../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -23,7 +24,7 @@ const TARGET = '0,1';
 let id = '';
 const moves = () => (useGame.getState().game!.plans[0].rounds[0].entries[0] as Extract<Entry, { type: 'tactical' }>).moves;
 const start = (list: Move[]) => {
-  id = useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: list, landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+  id = edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: list, landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
 };
 const smooth = () => vi.stubGlobal('matchMedia', () => ({ matches: false }));
 
@@ -81,7 +82,7 @@ describe('a source left with nothing chosen', () => {
 
     motion.write(true);
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
-    act(() => useGame.getState().updateEntry(id, { moves: [{ from: HOME, units: {} }] }));
+    act(() => edits.updateEntry(id, { moves: [{ from: HOME, units: {} }] }));
     act(() => result.current.leave(id, HOME));
     expect(moves()).toEqual([]);
   });

@@ -1,6 +1,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import * as edits from '../../testing/entries';
 
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -104,7 +105,7 @@ describe('the reminders in the editors', () => {
   });
 
   test('a component action lists what can be played as one', async () => {
-    useGame.getState().addEntry(1, { type: 'component', note: '' }, 'action');
+    edits.addEntry(1, { type: 'component', note: '' }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit/ }));
     const hints = screen.getByRole('group', { name: 'Reminders for this step' });
@@ -115,7 +116,7 @@ describe('the reminders in the editors', () => {
 
   test('a strategy card shows the reminders of its step, the card', async () => {
     useGame.getState().setStartHolding('me', PSYCHOARCHAEOLOGY, true);
-    useGame.getState().addEntry(1, { type: 'strategic', card: 4 }, 'action');
+    edits.addEntry(1, { type: 'strategic', card: 4 }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit/ }));
     expect(effectOf(pack, PSYCHOARCHAEOLOGY)?.hintAt).toContain('card');
@@ -127,7 +128,7 @@ describe('the reminders in the editors', () => {
 
   test('a turn of the round shows the reminders of the round among what the entry brings', async () => {
     useGame.getState().setStartHolding('me', PSYCHOARCHAEOLOGY, true);
-    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    edits.addEntry(1, { type: 'pass' }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit/ }));
     expect(effectOf(pack, PSYCHOARCHAEOLOGY)?.hintAt).toContain('round');
@@ -136,7 +137,7 @@ describe('the reminders in the editors', () => {
   });
 
   test('the status entry holds a Used block, where Mitosis can name Letani Behemoth', async () => {
-    useGame.getState().addEntry(1, { type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0 }, 'status');
+    edits.addEntry(1, { type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0 }, 'status');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit: Tokens and points/ }));
     expect(screen.getByRole('button', { name: '+ Used' })).toBeInTheDocument();

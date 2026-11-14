@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import * as edits from '../../../testing/entries';
 
 vi.mock('../../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -23,7 +24,7 @@ beforeEach(() => {
   act().newGame({ expansions: ['pok'], playerCount: 4, faction: 'sol' }, pack);
   act().setTile('B', '20');
   act().setPlanetControl(planet, 'me');
-  act().addEntry(1, { type: 'secondary', card: CARD.construction, effects: { systemId: 'B' } }, 'action');
+  edits.addEntry(1, { type: 'secondary', card: CARD.construction, effects: { systemId: 'B' } }, 'action');
 });
 
 describe('what the big hex buys for a card', () => {

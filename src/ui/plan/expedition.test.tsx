@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import * as edits from '../../testing/entries';
 
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -105,7 +106,7 @@ test('the counter shows taken parts, mine from the plan and others by tapping', 
   expect(game().expedition.slices.secret ?? null).toBeNull();
   expect(within(widget()).getByText('0 of 6')).toBeVisible();
 
-  act(() => { useGame.getState().addEntry(1, { type: 'pass', acts: [{ kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }] }, 'action'); });
+  act(() => { edits.addEntry(1, { type: 'pass', acts: [{ kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }] }, 'action'); });
   expect(await within(widget()).findByText('1 of 6')).toBeVisible();
   // My own part comes from the plan, not from tapping.
   expect(part('3 trade goods')).toBeDisabled();
@@ -114,7 +115,7 @@ test('the counter shows taken parts, mine from the plan and others by tapping', 
 test('a part taken by another player cannot be chosen in the expedition of a turn', async () => {
   useGame.getState().setSlice('inf5', 'other');
   render(<PlanScreen />);
-  const id = useGame.getState().addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: null, payment: { planets: [], tradeGoods: 0 } }] }, 'action');
+  const id = edits.addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: null, payment: { planets: [], tradeGoods: 0 } }] }, 'action');
   await userEvent.click(await screen.findByRole('button', { name: 'Edit: Component action' }));
   await userEvent.click(within(screen.getByRole('group', { name: 'In this turn' })).getByRole('button', { name: /^\+ Expedition:/ }));
   const editor = screen.getByRole('group', { name: 'Expedition part' });

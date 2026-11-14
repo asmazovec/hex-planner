@@ -87,7 +87,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const toggleIngress = useGame(s => s.toggleIngress);
   const setThundersEdge = useGame(s => s.setThundersEdge);
   const addRound = useGame(s => s.addRound);
-  const removeEntry = useGame(s => s.removeEntry);
+  const removeEntry = useGame(s => s.removeTurn);
   const deleteRound = useGame(s => s.deleteRound);
   const deletePlan = useGame(s => s.deletePlan);
   const pack = usePack(game?.expansions);

@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import * as edits from '../../testing/entries';
 
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -42,7 +43,7 @@ const startPlan = (faction = 'arborec') => {
   useGame.getState().newGame({ expansions: ['pok'], playerCount: 6, faction }, small);
   useGame.getState().setTile('0,-3', null);
 };
-const addEntry = (body: EntryBody): string => useGame.getState().addEntry(1, body, 'action');
+const addEntry = (body: EntryBody): string => edits.addEntry(1, body, 'action');
 
 describe('the table', () => {
   test('shows cost, capacity, combat and move in this order, base values with no buttons', () => {

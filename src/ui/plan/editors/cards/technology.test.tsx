@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import * as edits from '../../../../testing/entries';
 
 vi.mock('../../../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -25,7 +26,7 @@ async function openResearch() {
   await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
   await userEvent.click(screen.getByRole('button', { name: 'Strategy' }));
   await userEvent.click(within(screen.getByRole('group', { name: 'Card' })).getByRole('button', { name: /Technology/ }));
-  act(() => store().updateEntry(cardEntry().id, { effects: { researched: ['technology:it'] } }));
+  act(() => edits.updateEntry(cardEntry().id, { effects: { researched: ['technology:it'] } }));
 }
 
 beforeEach(() => {
