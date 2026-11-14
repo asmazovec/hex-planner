@@ -4,7 +4,7 @@ import { loadPack } from '../../data/loadPack';
 import { changeOnBoard as oldChange, type MergedChange } from '../../domain/losses';
 import { createGame } from '../../domain/newGame';
 import type { AdjustmentKind, Entry, EntryBody, Game, Phase, UnitId } from '../../domain/types';
-import { savedOf } from '../../storage/legacySave';
+import { savedOf } from '../../testing/legacySave';
 import { boardOf, planOf, tableOf } from '../fromLegacy';
 import { changeOnBoard, mergedTurn } from './merged';
 

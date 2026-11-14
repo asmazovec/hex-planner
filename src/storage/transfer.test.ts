@@ -1,10 +1,15 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from '../domain/newGame';
-import { CURRENT_SCHEMA, parseGame, SAVE_FORMAT } from './schema';
+import { CURRENT_SCHEMA, parseSaved, SAVE_FORMAT } from './schema';
+import { gameOf, savedOf } from '../testing/legacySave';
 import type { Game } from '../domain/types';
-import { exportGame, importGame } from './transfer';
-import { oldFormatSave, sampleGame } from './fixture';
+import { exportGame as exportSaved, importGame as importSaved } from './transfer';
+import { oldFormatSave, legacySampleGame as sampleGame } from '../testing/fixture';
+
+/** The game as a file keeps it, and the file read back as the old game: the tests below are written over the old game. */
+const exportGame = (game: Game): string => exportSaved(savedOf(game));
+const importGame = (text: string) => { const r = importSaved(text); return r.ok ? { ok: true as const, game: gameOf(r.saved) } : r; };
 
 const game = sampleGame();
 
@@ -67,7 +72,7 @@ describe('a file of an earlier version of the app', () => {
 test('a file whose format mark is of a later version of the app is refused as newer, not as earlier', () => {
   for (const format of ['ti4-planner/4', 'ti4-planner/10']) {
     expect(importGame(JSON.stringify({ ...game, format }))).toEqual({ ok: false, reason: 'newerVersion' });
-    expect(parseGame({ ...game, format })).toMatchObject({ ok: false, kind: 'newerVersion' });
+    expect(parseSaved({ ...game, format })).toMatchObject({ ok: false, kind: 'newerVersion' });
   }
   // Only a whole number after the name of the app is a version of the format.
   for (const format of ['ti4-planner/2.5', 'ti4-planner/x', 'ti4-planner/', 'other/3', 3]) {
@@ -87,7 +92,7 @@ describe('the seats of a file agree with its count of players', () => {
   test('two players on one seat: the file is damaged', () => {
     expect(importGame(JSON.stringify(seated([2, 2, 4])))).toEqual({ ok: false, reason: 'invalidSchema' });
     expect(importGame(JSON.stringify(seated([1, 3, 4])))).toEqual({ ok: false, reason: 'invalidSchema' });
-    expect(parseGame(seated([2, 2, 4]))).toMatchObject({ ok: false, kind: 'damaged' });
+    expect(parseSaved(seated([2, 2, 4]))).toMatchObject({ ok: false, kind: 'damaged' });
   });
 
   test('a seat outside 1..N: the file is damaged', () => {

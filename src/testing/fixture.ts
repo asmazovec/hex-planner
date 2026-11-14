@@ -2,6 +2,7 @@ import { openDB } from 'idb';
 import { loadPack } from '../data/loadPack';
 import { createGame } from '../domain/newGame';
 import type { Entry, Game } from '../domain/types';
+import type { SavedGame } from '../game/save';
 import { savedOf } from './legacySave';
 
 /** Writes a record straight into the saves, past `saveGame`, as a damaged or foreign save would lie there. */
@@ -14,13 +15,16 @@ export async function putRawSave(record: Record<string, unknown>): Promise<void>
 /** A save whose game the schema refuses: its summary reads, its plans are not plans. */
 export const brokenSave = (id = 'broken', name = 'Damaged'): Record<string, unknown> => ({
   id, name, faction: 'sol', playerCount: 4, updatedAt: 1,
-  game: { ...savedOf({ ...sampleGame(), id, name }), plans: 'not a list' },
+  game: { ...sampleGame(), id, name, plans: 'not a list' },
 });
 
 const pay = { planets: ['a', 'b'], tradeGoods: 1 };
 
-/** A realistic game whose first round holds one entry of every body variant. */
-export function sampleGame(): Game {
+/** A realistic saved game whose first round holds one turn of every kind. */
+export const sampleGame = (): SavedGame => savedOf(legacySampleGame());
+
+/** The same game as the old model holds it, for the tests that still start from an old `Game`. */
+export function legacySampleGame(): Game {
   const pack = loadPack(['pok']);
   const game = createGame({ expansions: ['pok'], playerCount: 4, faction: Object.keys(pack.factions)[0] }, pack);
   const entries: Entry[] = [
@@ -45,6 +49,6 @@ export function sampleGame(): Game {
 
 /** A save as an earlier version of the app left it: a whole game, without the format mark. */
 export function oldFormatSave(id = 'old', name = 'Earlier'): Record<string, unknown> {
-  const game = sampleGame();
+  const game = legacySampleGame();
   return { id, name, faction: game.faction, playerCount: game.playerCount, updatedAt: 1, game: { ...game, id, name, format: 'ti4-planner/2', schemaVersion: 6 } };
 }

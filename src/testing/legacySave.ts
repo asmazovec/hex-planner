@@ -11,6 +11,7 @@ import type { SavedGame, StartEdits } from '../game/save';
 import type { Round as KernelRound } from '../game/round';
 import type { Table, UnitCounts } from '../game/types';
 import type { Round } from '../domain/types';
+import { parseSaved } from '../storage/schema';
 
 const nonEmpty = <T extends object>(record: Record<string, T>): Record<string, T> =>
   Object.fromEntries(Object.entries(record).filter(([, value]) => Object.keys(value).length > 0));
@@ -138,4 +139,11 @@ function viewOf(saved: SavedGame): Game {
     fracture: { active: start.fracture.active, ingress: [...start.fracture.ingress], seat: start.fracture.seat, ...(start.fracture.tiles ? { tiles: { ...start.fracture.tiles } } : {}) },
     plans, activePlanId: saved.activePlanId,
   };
+}
+
+/** The game as it comes back from a save: written as a saved game, through JSON, read again. What the format does not keep is lost, as in a reload. */
+export function reloaded(game: Game): Game {
+  const parsed = parseSaved(JSON.parse(JSON.stringify(savedOf(game))));
+  if (!parsed.ok) throw new Error(parsed.reason);
+  return gameOf(parsed.saved);
 }

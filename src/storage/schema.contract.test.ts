@@ -2,9 +2,9 @@ import { describe, expect, test } from 'vitest';
 import type { Action, Expedition, Transaction, Turn } from '../game/actions';
 import type { SavedGame, StartEdits } from '../game/save';
 import type { AdjustmentDelta, CardEffects, StartHoldings, StatusSpend } from '../domain/types';
-import { savedOf } from './legacySave';
-import { sampleGame } from './fixture';
-import { parseGame, savedSchema } from './schema';
+
+import { sampleGame } from '../testing/fixture';
+import { parseSaved, savedSchema } from './schema';
 
 /**
  * The schema strips what it does not list, so a field added to the kernel's types and forgotten there is lost on import
@@ -63,7 +63,7 @@ const start: Required<StartEdits> = {
 };
 
 function full(): Required<SavedGame> {
-  const saved = savedOf(sampleGame());
+  const saved = sampleGame();
   return {
     ...saved, name: 'name', start,
     table: { ...saved.table, players: saved.table.players.map(p => ({ ...p, setup: { technologies: ['technology:a'], structurePlanet: 'a' }, legacyId: p.legacyId ?? p.id })) },
@@ -72,7 +72,7 @@ function full(): Required<SavedGame> {
   };
 }
 
-const roundTrip = (saved: SavedGame) => parseGame(JSON.parse(JSON.stringify(saved)));
+const roundTrip = (saved: SavedGame) => parseSaved(JSON.parse(JSON.stringify(saved)));
 
 describe('the save schema keeps every field of the kernel types', () => {
   test('a saved game with every optional field filled comes back unchanged', () => {
@@ -97,9 +97,9 @@ describe('the save schema keeps every field of the kernel types', () => {
 
 describe('the old game and the saved game of the kernel', () => {
   test('writing a game, reading it and writing it again gives the same saved game', () => {
-    const saved = savedOf(sampleGame());
+    const saved = sampleGame();
     const parsed = roundTrip(saved);
     expect(parsed.ok).toBe(true);
-    if (parsed.ok) expect(savedOf(parsed.game)).toEqual(saved);
+    if (parsed.ok) expect(parsed.saved).toEqual(saved);
   });
 });

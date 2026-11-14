@@ -9,7 +9,8 @@ import { useGame } from '../state/gameStore';
 import { App } from './App';
 import { setLanguage, currentLanguage } from '../i18n';
 import { saveGame } from '../storage/db';
-import { sampleGame } from '../storage/fixture';
+import { legacySampleGame, sampleGame } from '../testing/fixture';
+import { savedOf } from '../testing/legacySave';
 
 afterEach(cleanup);
 
@@ -90,10 +91,10 @@ test('opening a save with every seat and tile set goes to the plan and map; an u
   cleanup();
 
   const tiles = Object.keys(pack.tiles).filter(id => /^\d+$/.test(id) && Number(id) >= 19 && Number(id) <= 80);
-  const ready = { ...sampleGame(), id: 'ready', name: 'Ready' };
+  const ready = { ...legacySampleGame(), id: 'ready', name: 'Ready' };
   ready.map = { ...ready.map, ...Object.fromEntries(emptySlots(ready, pack).map((key, i) => [key, tiles[i]])) };
   ready.opponents = ready.opponents.map((o, i) => ({ ...o, faction: ['hacan', 'jolnar', 'naalu'][i] }));
-  await saveGame(ready);
+  await saveGame(savedOf(ready));
   render(<App />);
   await userEvent.click(within((await screen.findByText('Ready')).closest('li')!).getByRole('button', { name: 'Open' }));
   expect(screen.getByRole('button', { name: 'Plan & map' })).toHaveAttribute('aria-current', 'page');

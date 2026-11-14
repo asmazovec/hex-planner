@@ -15,7 +15,7 @@ import type { Round } from '../game/round';
 import type { SavedGame, SavedPlan } from '../game/save';
 import { loadGame, listGames } from '../storage/db';
 import { errorText } from '../storage/errorText';
-import { gameOf, originOf, savedFor } from '../storage/legacySave';
+import { gameOf, originOf, savedFor } from '../testing/legacySave';
 import { flushSaves, queueSave } from './autosave';
 import * as history from './history';
 import {
@@ -256,11 +256,11 @@ export const useGame = create<GameStore>((set, get) => {
         return;
       }
       const found = saves.find(save => save.name === share.name);
-      let saved: Game | null;
+      let saved: SavedGame | null;
       let differences: ShareDifference[];
       try {
         saved = found ? await loadGame(found.id) : null;
-        differences = saved ? shareDifferences(share, savedFor(saved), loadPack) : [];
+        differences = saved ? shareDifferences(share, saved, loadPack) : [];
       } catch (error) {
         // The named save is broken: a new game under its name would hide it, so nothing starts.
         failLoad(found?.id ?? null, error);
@@ -306,7 +306,7 @@ export const useGame = create<GameStore>((set, get) => {
       try {
         const loaded = await loadGame(id);
         if (!loaded) return;
-        saved = withFractureTiles(savedFor(loaded));
+        saved = withFractureTiles(loaded);
       } catch (error) {
         failLoad(id, error);
         return;

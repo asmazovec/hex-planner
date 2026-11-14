@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { emptyHoldings, holdingsOf } from '../holdings';
-import { reloaded } from '../../storage/schema';
+import { reloaded } from '../../testing/legacySave';
 import { rulesGame, tactical } from '../rules/kit';
 import { applied } from './apply';
 import { inForceOf, passivesOf } from './registry';

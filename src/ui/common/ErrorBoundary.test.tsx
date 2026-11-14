@@ -2,7 +2,8 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
-import { sampleGame } from '../../storage/fixture';
+import { sampleGame } from '../../testing/fixture';
+import { gameOf } from '../../testing/legacySave';
 import { ErrorBoundary } from './ErrorBoundary';
 
 function Bomb(): never {
@@ -28,7 +29,7 @@ afterEach(() => {
 
 test('a crash of an open game closes it, marks it as failed and draws the app again instead of a blank page', async () => {
   const game = sampleGame();
-  useGame.setState({ game });
+  useGame.setState({ saved: game, game: gameOf(game) });
   render(<ErrorBoundary><GameBomb /></ErrorBoundary>);
   expect(await screen.findByText('game screen')).toBeVisible();
   expect(useGame.getState().game).toBeNull();
@@ -38,7 +39,7 @@ test('a crash of an open game closes it, marks it as failed and draws the app ag
 
 test('a crash that stays with no game open shows the error, without a loop', () => {
   setLanguage('en');
-  useGame.setState({ game: sampleGame() });
+  useGame.setState({ saved: sampleGame(), game: gameOf(sampleGame()) });
   render(<ErrorBoundary><Bomb /></ErrorBoundary>);
   expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong: boom');
   expect(useGame.getState().game).toBeNull();

@@ -157,7 +157,7 @@ describe('gameStore', () => {
 
   test('автосохранение вызывается после действия', async () => {
     act().addRound();
-    await vi.waitFor(() => expect(saveGame).toHaveBeenLastCalledWith(game()));
+    await vi.waitFor(() => expect(saveGame).toHaveBeenLastCalledWith(act().saved));
   });
 
   test('автосохранение: сбой записи выставляет saveError и не теряет состояние', async () => {
@@ -172,12 +172,12 @@ describe('gameStore', () => {
   });
 
   test('openGame загружает партию и сбрасывает историю', async () => {
-    const other = structuredClone(game());
+    const other = structuredClone(act().saved!);
     vi.mocked(loadGame).mockResolvedValue(other);
     act().addRound();
     await act().openGame('x');
     expect(loadGame).toHaveBeenCalledWith('x');
-    expect(game()).toEqual(other);
+    expect(act().saved).toEqual(other);
     expect(act().canUndo).toBe(false);
   });
 });
@@ -213,7 +213,7 @@ describe('a save that does not load', () => {
   test('a save that opens after all clears the failure and its mark', async () => {
     vi.mocked(loadGame).mockRejectedValueOnce(new Error('busy'));
     await act().openGame('x');
-    vi.mocked(loadGame).mockResolvedValue(structuredClone(game()));
+    vi.mocked(loadGame).mockResolvedValue(structuredClone(act().saved!));
     await act().openGame('x');
     expect(act().loadFailure).toBeNull();
     expect(act().brokenSaves).toEqual({});
@@ -280,7 +280,7 @@ describe('действия без изменений', () => {
     act().setEnemyUnits('1,0', opponent, { cruiser: 2 });
     act().setPlanetControl('p', opponent);
     const before = game();
-    await vi.waitFor(() => expect(saveGame).toHaveBeenLastCalledWith(before));
+    await vi.waitFor(() => expect(saveGame).toHaveBeenLastCalledWith(act().saved));
     vi.mocked(saveGame).mockClear();
     const noops = [
       () => act().removeEntry('nope'),
@@ -365,7 +365,7 @@ describe('layout', () => {
     expect(game().map['0,-1']).toBe('25');
     expect(game().map['-2,-1']).toBe('83A@0');
     await flushSaves();
-    expect(saveGame).toHaveBeenLastCalledWith(game());
+    expect(saveGame).toHaveBeenLastCalledWith(act().saved);
     act().undo();
     expect(game()).toEqual(before);
   });

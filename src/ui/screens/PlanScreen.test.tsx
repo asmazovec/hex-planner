@@ -14,7 +14,7 @@ import { project } from '../../domain/project';
 import type { Entry } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
-import { reloaded } from '../../storage/schema';
+import { reloaded } from '../../testing/legacySave';
 import { App } from '../App';
 import { PlanScreen } from './PlanScreen';
 import type { Move } from '../plan/tactical';

@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { SAVE_FORMAT, type Game } from '../domain/types';
+import { SAVE_FORMAT } from '../domain/types';
 import type { Action, Turn } from '../game/actions';
 import type { Round } from '../game/round';
 import type { SavedGame } from '../game/save';
-import { gameOf, savedOf } from './legacySave';
 
 export { SAVE_FORMAT };
 /** Counts the changes of the save within `SAVE_FORMAT`. Saves of the app before that format are not read. */
@@ -137,8 +136,8 @@ function formatNumber(mark: unknown): number | null {
   return found ? Number(found[0]) : null;
 }
 
-export type ParsedGame =
-  | { ok: true; game: Game }
+export type ParsedSave =
+  | { ok: true; saved: SavedGame }
   /** `oldFormat`: saved by the app before `SAVE_FORMAT`. `newerVersion`: a format or a schema this app does not know yet. */
   | { ok: false; kind: 'oldFormat' | 'newerVersion' | 'damaged'; reason: string };
 
@@ -147,7 +146,7 @@ export type ParsedGame =
  * format mark, or with an earlier or unknown one, is of an earlier version of the app and is refused as such; a mark
  * with a later number is of a newer version. Never throws.
  */
-export function parseGame(raw: unknown): ParsedGame {
+export function parseSaved(raw: unknown): ParsedSave {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return { ok: false, kind: 'damaged', reason: 'not a game' };
   const { format, schemaVersion } = raw as { format?: unknown; schemaVersion?: unknown };
   if (format !== SAVE_FORMAT) {
@@ -159,14 +158,7 @@ export function parseGame(raw: unknown): ParsedGame {
     return { ok: false, kind: 'newerVersion', reason: `schema ${schemaVersion} is newer than ${CURRENT_SCHEMA}` };
   }
   const parsed = savedSchema.safeParse(raw);
-  if (parsed.success) return { ok: true, game: gameOf(parsed.data) };
+  if (parsed.success) return { ok: true, saved: parsed.data };
   const issue = parsed.error.issues[0];
   return { ok: false, kind: 'damaged', reason: issue ? `${issue.path.join('.') || 'game'}: ${issue.message}` : 'invalid save' };
-}
-
-/** The game as it comes back from a save: written as a saved game, through JSON, read again. What the format does not keep is lost, as in a reload. */
-export function reloaded(game: Game): Game {
-  const parsed = parseGame(JSON.parse(JSON.stringify(savedOf(game))));
-  if (!parsed.ok) throw new Error(parsed.reason);
-  return parsed.game;
 }

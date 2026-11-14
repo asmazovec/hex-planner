@@ -76,7 +76,7 @@ export function App() {
                 <RowIcon name={id} />
               </button>
             ))}
-            <ExportReminder game={game} onExport={() => downloadGame(game)} />
+            <ExportReminder game={openSaved} onExport={() => downloadGame(openSaved!)} />
           </nav>
         )}
         <main data-screen={shown}>

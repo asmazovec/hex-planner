@@ -15,7 +15,7 @@ import { timelineOf } from './projection';
 import { playerOfLegacy } from '../game/entry';
 import type { Table } from '../game/types';
 import type { DataPack, EntryStatus, Game, Phase } from '../domain/types';
-import { savedFor } from '../storage/legacySave';
+import { savedFor } from '../testing/legacySave';
 import { loadPack } from '../data/loadPack';
 import { useGame } from './gameStore';
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Game } from '../../domain/types';
+import type { SavedGame } from '../../game/save';
 import { requestPersistence } from '../../storage/db';
 import { RowIcon } from '../primitives/Icon';
 import { EXPORTED_EVENT } from './download';
@@ -16,7 +16,7 @@ export function shouldRemindExport(input: { persisted: boolean; lastExportAt: nu
 }
 
 /** The export button of the menu. It asks the browser to keep the data, and is marked when a new file is due, with the reason in its name. */
-export function ExportReminder({ game, onExport }: { game: Game | null; onExport: () => void }) {
+export function ExportReminder({ game, onExport }: { game: SavedGame | null; onExport: () => void }) {
   const { t } = useTranslation();
   const [persisted, setPersisted] = useState<boolean | null>(null);
   const [lastExportAt, setLastExportAt] = useState(lastExport.read);

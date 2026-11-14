@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { setLanguage } from '../i18n';
 import { useGame } from '../state/gameStore';
 import { deleteGame, listGames, saveGame } from '../storage/db';
-import { sampleGame } from '../storage/fixture';
+import { sampleGame } from '../testing/fixture';
 import { App } from './App';
 import { ErrorBoundary } from './common/ErrorBoundary';
 

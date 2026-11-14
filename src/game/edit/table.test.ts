@@ -8,7 +8,7 @@ import { createGame } from '../../domain/newGame';
 import { placeStartUnits, addPlayer as oldAdd, draftWithExpansions as oldDraft, removePlayer as oldRemove, setPlayerFaction as oldFaction, swapSeats as oldSwap, withSeatHomes } from '../../domain/players';
 import { fractureSlots, withFractureMoved } from '../../domain/thundersEdge';
 import type { Entry, ExpansionId, Game, MapLayout } from '../../domain/types';
-import { gameOf, savedOf } from '../../storage/legacySave';
+import { gameOf, savedOf } from '../../testing/legacySave';
 import type { SavedGame } from '../save';
 import {
   addExpansion, addPlayer, changeLayout, createSaved, draftWithExpansions, removePlayer, setFaction, startedGame, swapSeats, withMap, withName, withTile,

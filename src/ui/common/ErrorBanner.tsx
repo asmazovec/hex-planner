@@ -7,12 +7,12 @@ import { downloadGame } from './download';
 /** An error with the way out it needs: the open game can still be saved to a file. */
 export function ErrorBanner({ message }: { message: ReactNode }) {
   const { t } = useTranslation();
-  const game = useGame(s => s.game);
+  const saved = useGame(s => s.saved);
   return (
     <Banner
       kind="error"
       message={message}
-      action={game ? { label: t('banner.export'), onClick: () => downloadGame(game) } : undefined}
+      action={saved ? { label: t('banner.export'), onClick: () => downloadGame(saved) } : undefined}
     />
   );
 }

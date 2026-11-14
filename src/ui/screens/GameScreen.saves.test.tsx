@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { deleteGame, listGames, loadRawGame, saveGame } from '../../storage/db';
-import { brokenSave, oldFormatSave, putRawSave, sampleGame } from '../../storage/fixture';
+import { brokenSave, oldFormatSave, putRawSave, sampleGame } from '../../testing/fixture';
 import { GameScreen } from './GameScreen';
 
 vi.mock('../common/download', () => ({ downloadGame: vi.fn(), downloadRaw: vi.fn() }));
@@ -80,7 +80,7 @@ test('opening a save that fails tells so, and the screen still works', async () 
 test('importing a file that is no game says it is damaged, and the saves stay', async () => {
   await saveGame(sampleGame());
   render(<GameScreen />);
-  const text = JSON.stringify({ ...sampleGame(), opponents: [null] });
+  const text = JSON.stringify({ ...sampleGame(), table: null });
   await userEvent.upload(screen.getByLabelText('Import game'), new File([text], 'bad.json', { type: 'application/json' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('the file is not a game or is damaged');
   expect(await listGames()).toHaveLength(1);

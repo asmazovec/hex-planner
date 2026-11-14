@@ -1,9 +1,11 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { BrokenSaveError, deleteGame, listGames, loadGame, loadRawGame, requestPersistence, saveGame } from './db';
+import { loadPack } from '../data/loadPack';
+import { createSaved } from '../game/edit/table';
 import { CURRENT_SCHEMA, SAVE_FORMAT } from './schema';
 import { exportGame, importGame } from './transfer';
-import { brokenSave, oldFormatSave, putRawSave, sampleGame } from './fixture';
+import { brokenSave, oldFormatSave, putRawSave, sampleGame } from '../testing/fixture';
 
 beforeEach(async () => {
   for (const g of await listGames()) await deleteGame(g.id);
@@ -18,12 +20,12 @@ test('сохранение и загрузка', async () => {
 
 test('список партий и удаление', async () => {
   const a = sampleGame();
-  const b = { ...sampleGame(), id: 'other', playerCount: 6 };
+  const b = { ...createSaved({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, loadPack(['pok'])), id: 'other' };
   await saveGame(a);
   await saveGame(b);
   const list = await listGames();
   expect(list.map(g => g.id).sort()).toEqual([a.id, 'other'].sort());
-  expect(list.find(g => g.id === 'other')).toMatchObject({ faction: b.faction, playerCount: 6 });
+  expect(list.find(g => g.id === 'other')).toMatchObject({ faction: 'sol', playerCount: 6 });
   expect(typeof list[0].updatedAt).toBe('number');
   await deleteGame(a.id);
   expect((await listGames()).map(g => g.id)).toEqual(['other']);
@@ -131,7 +133,7 @@ describe('a save of an earlier version of the app', () => {
 
 test('a game saved at the current schema opens unchanged, owners included', async () => {
   const game = sampleGame();
-  const owned = { ...game, planetControl: { arc: 'enemy' as const }, planetOwner: { arc: game.opponents[2].id } };
+  const owned = { ...game, start: { ...game.start, control: { arc: game.table.players[2].id } } };
   await saveGame(owned);
   expect(await loadGame(game.id)).toEqual(owned);
   await deleteGame(game.id);
@@ -163,7 +165,7 @@ describe('a save that does not load', () => {
   test('a save with no game, no summary, or a game that is no game is broken, not a crash', async () => {
     await putRawSave({ id: 'empty' });
     await putRawSave({ id: 'odd', name: 42, game: 'text' });
-    await putRawSave({ id: 'chokes', game: { ...sampleGame(), id: 'chokes', opponents: [null] } });
+    await putRawSave({ id: 'chokes', game: { ...sampleGame(), id: 'chokes', table: { ...sampleGame().table, players: [null] } } });
     const list = await listGames();
     for (const id of ['empty', 'odd', 'chokes']) {
       expect(list.find(g => g.id === id)).toMatchObject({ id, faction: '', playerCount: 0, broken: true });

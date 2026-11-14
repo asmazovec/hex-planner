@@ -1,8 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import type { Game } from '../domain/types';
+import type { SavedGame } from '../game/save';
 import { errorText } from './errorText';
-import { savedFor } from './legacySave';
-import { parseGame } from './schema';
+import { parseSaved } from './schema';
 
 /**
  * `broken`: the save is there but does not read as a game. It is listed so it can be exported or deleted, never dropped.
@@ -40,11 +39,11 @@ function db(): Promise<IDBPDatabase<Ti4DB>> {
 
 
 /** The stored game, or why it does not read: its kind and the words for it. Never throws. */
-function readGame(stored: unknown): { ok: true; game: Game } | { ok: false; kind: BrokenKind; reason: string } {
+function readGame(stored: unknown): { ok: true; saved: SavedGame } | { ok: false; kind: BrokenKind; reason: string } {
   const raw = typeof stored === 'object' && stored !== null ? (stored as { game?: unknown }).game : undefined;
   if (raw === undefined) return { ok: false, kind: 'damaged', reason: 'no game in the save' };
   try {
-    const parsed = parseGame(raw);
+    const parsed = parseSaved(raw);
     if (parsed.ok) return parsed;
     return { ok: false, kind: parsed.kind === 'oldFormat' ? 'oldFormat' : 'damaged', reason: parsed.reason };
   } catch (error) {
@@ -52,13 +51,15 @@ function readGame(stored: unknown): { ok: true; game: Game } | { ok: false; kind
   }
 }
 
-export async function saveGame(game: Game): Promise<void> {
-  const { id, name, faction, playerCount } = game;
-  await (await db()).put('games', { id, name, faction, playerCount, updatedAt: Date.now(), game: savedFor(game) });
+export async function saveGame(saved: SavedGame): Promise<void> {
+  const { id, name, table } = saved;
+  const faction = table.players.find(p => p.id === table.viewer)?.faction ?? '';
+  const playerCount = table.players.filter(p => p.seat < 100).length;
+  await (await db()).put('games', { id, name, faction, playerCount, updatedAt: Date.now(), game: saved });
 }
 
 /** Null when there is no such save; a save that is there but does not read throws `BrokenSaveError`. */
-export async function loadGame(id: string): Promise<Game | null> {
+export async function loadGame(id: string): Promise<SavedGame | null> {
   const d = await db();
   let stored: StoredGame | undefined;
   try {
@@ -69,7 +70,7 @@ export async function loadGame(id: string): Promise<Game | null> {
   if (stored === undefined) return null;
   const read = readGame(stored);
   if (!read.ok) throw new BrokenSaveError(id, read.reason, read.kind);
-  return read.game;
+  return read.saved;
 }
 
 /** The save as it lies in the database, for a file copy of one that cannot be opened. Undefined when there is none. */

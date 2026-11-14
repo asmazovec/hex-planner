@@ -45,6 +45,7 @@ export interface GameScreenProps {
 export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
   const { t } = useTranslation();
   const open = useGame(s => s.game);
+  const openSaved = useGame(s => s.saved);
   const game = useGame(s => s.game ?? s.draft);
   const shared = useGame(s => s.saved ?? s.draftSaved);
   const openGame = useGame(s => s.openGame);
@@ -129,7 +130,7 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
         setImportError(IMPORT_REFUSALS[result.reason](t));
         return;
       }
-      const imported = withFreeId(result.game, (await listGames()).map(g => g.id));
+      const imported = withFreeId(result.saved, (await listGames()).map(g => g.id));
       await saveGame(imported);
       await openGame(imported.id);
       setImportError(null);
@@ -222,7 +223,7 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
           </ul>
           <div className="side-actions">
             {open && <button type="button" onClick={closeGame}>{t('players.newGame')}</button>}
-            <button type="button" disabled={!open} onClick={() => open && downloadGame(open)}>{t('game.export')}</button>
+            <button type="button" disabled={!open} onClick={() => openSaved && downloadGame(openSaved)}>{t('game.export')}</button>
             <button type="button" onClick={() => void copyLink()}>{t(linkCopied ? 'game.linkCopied' : 'game.copyLink')}</button>
             <label className="button">
               {t('game.import')}

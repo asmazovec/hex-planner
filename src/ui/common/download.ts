@@ -1,4 +1,4 @@
-import type { Game } from '../../domain/types';
+import type { SavedGame } from '../../game/save';
 import { exportGame } from '../../storage/transfer';
 import { lastExport } from './preferences';
 
@@ -23,8 +23,8 @@ function saveFile(name: string, text: string): void {
 }
 
 /** Saves the game as a JSON file through a Blob. */
-export function downloadGame(game: Game): void {
-  saveFile(`ti4-${game.id}.json`, exportGame(game));
+export function downloadGame(saved: SavedGame): void {
+  saveFile(`ti4-${saved.id}.json`, exportGame(saved));
   markExported();
 }
 

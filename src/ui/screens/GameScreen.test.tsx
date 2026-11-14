@@ -9,7 +9,7 @@ import { createGame } from '../../domain/newGame';
 import { setLanguage } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
 import { deleteGame, listGames, saveGame } from '../../storage/db';
-import { sampleGame } from '../../storage/fixture';
+import { sampleGame } from '../../testing/fixture';
 import { exportGame } from '../../storage/transfer';
 import { GameScreen } from './GameScreen';
 

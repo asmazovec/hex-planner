@@ -3,7 +3,7 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { setLanguage } from '../../i18n';
-import { sampleGame } from '../../storage/fixture';
+import { sampleGame } from '../../testing/fixture';
 import { EXPORTED_EVENT } from './download';
 import { LAST_EXPORT_KEY } from './preferences';
 import { ExportReminder, shouldRemindExport } from './ExportReminder';

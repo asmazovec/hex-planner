@@ -8,7 +8,7 @@ import { setLeader, setStartHolding } from '../domain/holdings';
 import { createGame } from '../domain/newGame';
 import { addPlayer, placeStartUnits, setPlayerFaction } from '../domain/players';
 import type { Game } from '../domain/types';
-import { gameOf, savedOf } from '../storage/legacySave';
+import { gameOf, savedOf } from '../testing/legacySave';
 import { normalState } from '../game/compare';
 import { boardOf, legacyState, tableOf } from '../game/fromLegacy';
 import { startBoard } from '../game/setup';

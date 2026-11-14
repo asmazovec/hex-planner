@@ -100,7 +100,7 @@ describe('the choice', () => {
     expect(store().game?.opponents.map(o => o.faction)).toContain('letnev');
     expect(store().game?.id).not.toBe(saved.id);
     await flushSaves();
-    expect((await loadGame(saved.id))?.opponents.map(o => o.faction)).toContain('arborec');
+    expect((await loadGame(saved.id))?.table.players.map(p => p.faction)).toContain('arborec');
     expect(await listGames()).toHaveLength(2);
   });
 

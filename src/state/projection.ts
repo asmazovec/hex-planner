@@ -14,7 +14,7 @@ import { timeline as kernelTimeline, type Filter, type Frame as KernelFrame, typ
 import type { Board, Table } from '../game/types';
 import type { Round as KernelRound } from '../game/round';
 import { waiveBoard } from '../game/resolve/waive';
-import { originOf, savedFor } from '../storage/legacySave';
+import { originOf, savedFor } from '../testing/legacySave';
 import type { SavedGame } from '../game/save';
 import { checkSystemOf } from '../domain/replay/transport';
 import type { Turn } from '../game/actions';
