@@ -72,11 +72,11 @@ describe('mech:naaz_voltron on the board checked without an entry', () => {
     return systemWarningsAt(timelineOf(table.game, table.game.plans[0], 'forecast', table.pack), 1, HOME);
   };
 
-  test('with Absolute Synergy the lone mech is over the capacity, listed and waived by Eidolon Maximum', () => {
+  test('mech:naaz_voltron with Absolute Synergy the lone mech is over the capacity, listed and waived by Eidolon Maximum', () => {
     expectWaived(lone(true), 'capacitySystem', id);
   });
 
-  test('without it the warning stands', () => {
+  test('mech:naaz_voltron without Absolute Synergy the warning stands', () => {
     expectStanding(lone(false), 'capacitySystem');
   });
 });

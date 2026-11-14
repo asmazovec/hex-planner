@@ -136,21 +136,34 @@ export type Who = Holdings | Holder;
 /** The holder of `who`: holdings alone take the faction of the game, a holder keeps its own. */
 export const holderFor = (who: Who, faction: string): Holder => ('holdings' in who ? (who.faction === undefined ? { ...who, faction } : who) : { holdings: who, faction });
 
-/** The holder a player of a game is: `state` is their own, `shared` mine, which keeps the laws. */
-/** The holders built from the same holdings, control and shared state are the one holder: a state of a view is shared and never changes, and what is kept per holder is kept once. */
-const HOLDER_KEPT = new WeakMap<object, { control: unknown; shared: unknown; faction: string; holder: Holder }[]>();
+/**
+ * The holder a player of a game is: `state` is their own, `shared` mine, which keeps the laws. A state of a view is
+ * shared and never changes, so holders that come to the same holdings, control, laws and lent holdings are the one
+ * holder, and what is kept per holder (what is in force, the passive effects) is worked out once.
+ */
+const HOLDER_KEPT = new WeakMap<object, Holder[]>();
+
+const sameList = (a: readonly string[] | undefined, b: readonly string[] | undefined): boolean =>
+  a === b || (a !== undefined && b !== undefined && a.length === b.length && a.every((id, i) => id === b[i]));
+const sameOthers = (a: Holder['others'], b: Holder['others']): boolean => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every(key => a[key] === b[key]);
+};
 
 export function holderOf(
   game: Pick<Game, 'faction'>, state: Pick<GameState, 'holdings' | 'control' | 'laws'>,
   shared: Pick<GameState, 'laws' | 'lawOwners'> | Pick<GameState, 'laws' | 'lawOwners' | 'holdings' | 'rivals'> = state,
 ): Holder {
+  const built = holderBuilt(game, state, shared);
   let kept = HOLDER_KEPT.get(state.holdings);
-  const known = kept?.find(k => k.control === state.control && k.shared === shared && k.faction === game.faction);
-  if (known) return known.holder;
-  const holder = holderBuilt(game, state, shared);
+  const same = kept?.find(k => k.faction === built.faction && k.control === built.control && sameList(k.laws, built.laws) && sameOthers(k.others, built.others));
+  if (same) return same;
   if (!kept) HOLDER_KEPT.set(state.holdings, kept = []);
-  if (kept.length < 8) kept.push({ control: state.control, shared, faction: game.faction, holder });
-  return holder;
+  if (kept.length >= 8) kept.shift();
+  kept.push(built);
+  return built;
 }
 
 const holderBuilt = (

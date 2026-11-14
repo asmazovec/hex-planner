@@ -64,6 +64,16 @@ export function shipBlockers(board: Board, mover: PlayerId, pack: DataPack): Set
 
 /** The ships of the others, and what the others' components bar to the mover (Aerie Hololattice). */
 export function blockersOf(table: Table, board: Board, mover: PlayerId, pack: DataPack): Blockers {
+  let by = BLOCKERS.get(board);
+  if (by?.table !== table || by.pack !== pack) BLOCKERS.set(board, by = { table, pack, of: new Map() });
+  let known = by.of.get(mover);
+  if (!known) by.of.set(mover, known = blockersBuilt(table, board, mover, pack));
+  return known;
+}
+/** Asked again and again for the one board a turn begins from; no one changes what it gives (a readonly set). */
+const BLOCKERS = new WeakMap<Board, { table: Table; pack: DataPack; of: Map<PlayerId, Blockers> }>();
+
+function blockersBuilt(table: Table, board: Board, mover: PlayerId, pack: DataPack): Blockers {
   const blockers = shipBlockers(board, mover, pack);
   const views = legacyViews(table, board, pack);
   const key = table.viewer === mover ? undefined : table.players.find(p => p.id === mover)?.legacyId ?? mover;
