@@ -7,10 +7,9 @@
  * happens. The research is made as any other (`researchTechnologies`): a technology already owned or one whose
  * prerequisites are lacking is warned of.
  */
-import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 import { componentsOf } from '../../../components';
-import { researchTechnologies } from '../../../replay/research';
-import { textOf } from '../../helpers/cardPlay';
+import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:tech_rider';
 
@@ -21,8 +20,12 @@ export const effect: ComponentEffect = {
     key: 'technology', kind: 'component',
     options: ctx => componentsOf(ctx.pack).filter(component => component.kind === 'technology').map(component => component.id),
   }],
-  play: turn => {
-    const technology = textOf(turn, 'technology');
-    if (technology) researchTechnologies(turn.game, turn.state, turn.shared, [technology], turn.pack, turn.warnings);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const technology = ctx.choices.technology === undefined || ctx.choices.technology === '' ? undefined : String(ctx.choices.technology);
+    return technology ? ctx.research(technology) : [];
   },
 };

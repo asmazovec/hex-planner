@@ -7,26 +7,33 @@
  * capacity, none where other players have ships. A fighter may be placed beyond the capacity (note 2): the capacity
  * warning of the system is made and stands, since the player must then remove one.
  */
-import type { ComponentEffect } from '../../types';
+import type { GameEvent, Hooked } from '../../../../game/abilities/types';
 import { unitIds } from '../../../replay/state';
-import { carries, othersShipsIn, place, slotOfPlanet } from '../../helpers/cardPlay';
+import { carriesBy, othersHaveShips, placeIn } from '../../helpers/cardPlay';
+import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:f_conscription';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => {
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
     const slots = new Set<string>();
-    for (const [slot, units] of Object.entries(turn.state.systems)) {
-      if (unitIds(units).some(unit => carries(turn, turn.state, unit))) slots.add(slot);
+    for (const slot of Object.keys(ctx.board.systems)) {
+      if (unitIds(ctx.my.unitsIn(slot)).some(unit => carriesBy(ctx, unit))) slots.add(slot);
     }
-    for (const planetId of turn.state.docks) {
-      const slot = slotOfPlanet(turn, planetId);
-      if (slot !== undefined) slots.add(slot);
+    for (const { planet, structures } of ctx.my.structures()) {
+      const slot = ctx.systemOf(planet);
+      if ((structures.spacedock ?? 0) > 0 && slot !== undefined) slots.add(slot);
     }
+    const events: GameEvent[] = [];
     for (const slot of slots) {
-      if (!othersShipsIn(turn, slot)) place(turn, slot, { fighter: 1 });
+      if (!othersHaveShips(ctx, slot)) placeIn(ctx, events, slot, { fighter: 1 });
     }
+    return events;
   },
 };

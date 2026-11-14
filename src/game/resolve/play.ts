@@ -35,16 +35,19 @@ export function runPlay(table: Table, start: Board, pack: DataPack, id: string, 
 /** Whether the component's play is written for the kernel. */
 export const playsNatively = (pack: DataPack, id: string): boolean => effectOf(pack, id)?.nativePlay !== undefined;
 
-/** The plays the entry names that are written for the kernel, in the order it names them; the turn's board takes what they did. */
-export function playNative(ctx: Ctx): void {
+/** One component the entry names, played on the turn's board: its events and warnings join the step. */
+export function playOne(ctx: Ctx, id: string): void {
+  const lacking = ctx.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
+  const result = runPlay(ctx.table, ctx.board, ctx.pack, id, ctx.player, { actor: ctx.player, step: ctx.cur.step, entry: ctx.entry, choices: choicesFor(ctx.entry, id), held: !lacking });
+  ctx.board = result.board;
+  ctx.cur.events.push(...result.events);
+  if (result.violations.length > 0) warn(ctx, result.violations);
+}
+
+/** The plays the entry names that are written for the kernel and run at a step of a tactical action (`playAt`), in the order it names them. */
+export function playNativeAt(ctx: Ctx, at: 'activation' | 'combat'): void {
   for (const id of playedBy(ctx.entry)) {
     const effect = effectOf(ctx.pack, id);
-    // A play that asked to run in the middle of a tactical action has run there already.
-    if (!effect?.nativePlay || (effect.playAt && ctx.entry.type === 'tactical')) continue;
-    const lacking = ctx.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
-    const result = runPlay(ctx.table, ctx.board, ctx.pack, id, ctx.player, { actor: ctx.player, step: ctx.cur.step, entry: ctx.entry, choices: choicesFor(ctx.entry, id), held: !lacking });
-    ctx.board = result.board;
-    ctx.cur.events.push(...result.events);
-    if (result.violations.length > 0) warn(ctx, result.violations);
+    if (effect?.nativePlay && effect.playAt === at) playOne(ctx, id);
   }
 }

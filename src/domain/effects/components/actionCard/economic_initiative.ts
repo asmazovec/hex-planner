@@ -6,6 +6,8 @@
  * warning; that is the effect of the play, not a waiver, as the planet really is ready. Zero cultural planets is
  * allowed (ruling): nothing happens.
  */
+import { planet } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:economic_initiative';
@@ -13,7 +15,9 @@ export const id = 'actionCard:economic_initiative';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ state, pack }) => {
-    state.exhausted = state.exhausted.filter(planet => !(state.control[planet] === 'me' && pack.planets[planet]?.traits?.includes('cultural')));
-  },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => ctx.my.planets().filter(p => p.exhausted && ctx.pack.planets[p.id]?.traits?.includes('cultural')).map(p => planet.ready(ctx.holder, p.id)),
 };

@@ -2,10 +2,14 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { COMPONENT_FILES, effectOf } from '../../domain/effects/registry';
 import { createGame } from '../../domain/newGame';
-import { tableOf } from '../fromLegacy';
+import { tableOf, turnOf } from '../fromLegacy';
 import { applyAll } from '../apply';
 import { initialBoard } from '../setup';
+import { tactical } from '../../domain/rules/kit';
+import type { Entry } from '../../domain/types';
+import { resolveTurn } from './index';
 import { runPlay } from './play';
+import { newTrack } from './track';
 
 const pack = loadPack(['pok']);
 const game = createGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, pack);
@@ -42,5 +46,25 @@ describe('the native play of a component', () => {
     expect(r.events).toEqual([{ type: 'StructureRemoved', player: p2, at: { planet }, structures: { pds: 2 }, cause: { step: 'component', component: 'actionCard:cripple' } }]);
     expect(r.board.planets[planet].structures.pds ?? 0).toBe(0);
     expect(runPlay(table, start, pack, 'actionCard:cripple', p1, { actor: p1, choices: { planet }, held: true }).events).toEqual([]);
+  });
+});
+
+describe('what a play is run with, among the plays an entry names', () => {
+  const slot = Object.keys(table.map).find(s => table.map[s] !== undefined)!;
+  const named = (uses: string[]) => ({ ...tactical(slot), free: true, uses }) as Entry;
+  const resolve = (entry: Entry, board = start) => resolveTurn(table, board, turnOf(table, entry, pack), pack, { track: newTrack() });
+
+  test('a native play that asks to run at the activation of a tactical action runs there (Rally: 2 tokens to the fleet pool)', () => {
+    const r = resolve(named(['actionCard:rally']));
+    expect(r.board.players[p1].pools.fleet).toBe(start.players[p1].pools.fleet + 2);
+    expect(r.steps.find(s => s.step === 'activation')?.events.some(e => e.cause?.component === 'actionCard:rally')).toBe(true);
+  });
+
+  test('a native play and an old one named by the same entry run in the order the entry names them', () => {
+    const board = applyAll(start, [{ type: 'CommoditiesChanged', player: p1, delta: -1 }]);
+    // The old play gives 1 trade good (Minent), the native one sets the commodities (Harness).
+    const order = (uses: string[]) => resolve(named(uses), board).steps.flatMap(s => s.events).map(e => e.type).filter(t => t === 'TradeGoodsChanged' || t === 'CommoditiesChanged');
+    expect(order(['exploration:minent', 'actionCard:harness'])).toEqual(['TradeGoodsChanged', 'CommoditiesChanged']);
+    expect(order(['actionCard:harness', 'exploration:minent'])).toEqual(['CommoditiesChanged', 'TradeGoodsChanged']);
   });
 });

@@ -12,8 +12,9 @@
  *
  * Pass 1: the hint it is today; the tests say what it must do.
  */
+import { card } from '../../../../game/abilities/emit';
+import type { GameEvent, Hooked } from '../../../../game/abilities/types';
 import { componentById, componentsOf } from '../../../components';
-import { researchTechnologies } from '../../../replay/research';
 import returnedTechInvalid from '../../../rules/codes/returnedTechInvalid';
 import { violation } from '../../../rules/registry';
 import type { DataPack } from '../../../types';
@@ -34,19 +35,24 @@ export const effect: ComponentEffect = {
     { key: 'returned', kind: 'component', options: ctx => ctx.state.holdings.technologies.filter(tech => returnable(ctx.pack, tech)) },
     { key: 'researched', kind: 'component', options: ctx => componentsOf(ctx.pack).filter(def => def.kind === 'technology' && !ctx.state.holdings.technologies.includes(def.id)).map(def => def.id) },
   ],
-  play: ({ game, state, shared, choices, pack, warnings }) => {
-    const returned = String(choices.returned ?? '');
-    const researched = String(choices.researched ?? '');
-    const back = componentById(pack, returned);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const returned = String(ctx.choices.returned ?? '');
+    const researched = String(ctx.choices.researched ?? '');
+    const back = componentById(ctx.pack, returned);
+    const events: GameEvent[] = [];
     if (back) {
-      if (!state.holdings.technologies.includes(returned) || !returnable(pack, returned)) warnings.push(violation(returnedTechInvalid.code, { id: returned, name: back.name }));
+      if (!ctx.my.holds(returned) || !returnable(ctx.pack, returned)) ctx.warn(violation(returnedTechInvalid.code, { id: returned, name: back.name }));
       // The returned technology goes back to the deck first, so the research cannot lean on it (ruling 2).
-      state.holdings.technologies = state.holdings.technologies.filter(tech => tech !== returned);
-      state.holdings.exhausted = state.holdings.exhausted.filter(tech => tech !== returned);
+      if (ctx.my.holds(returned)) events.push(card.lose(ctx.holder, returned));
     }
-    if (!researched) return;
+    if (!researched) return events;
     // Ruling 4: the researched technology is another one than the returned one.
-    if (researched === returned && back) warnings.push(violation('researchOwned', { id: researched, name: back.name }));
-    else researchTechnologies(game, state, shared, [researched], pack, warnings);
+    if (researched === returned && back) ctx.warn(violation('researchOwned', { id: researched, name: back.name }));
+    else events.push(...ctx.after(events).research(researched));
+    return events;
   },
 };

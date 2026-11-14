@@ -15,7 +15,7 @@ import { legacyEvents, legacyViews, legacyViewsFresh, viewFor, type LegacyViews 
 import { ACQUIESCENCE } from './natives';
 import { emit, warn, type Ctx } from './context';
 import { hook } from './hooks';
-import { playNative } from './play';
+import { playOne } from './play';
 import { cardRoundOf, keepRound } from './track';
 
 /** Components whose play is a rule of the kernel (resolved natively), not a hook. */
@@ -71,30 +71,53 @@ export function viaLegacy(ctx: Ctx, effect: (r: Run) => void): void {
   warn(ctx, warnings.filter(w => !known.includes(w)));
 }
 
-/** What a component the entry names plays at a step of the action (Salvage, once the losses are taken). */
-export const playNamed = (ctx: Ctx, at: 'activation' | 'combat'): void =>
-  !playedBy(ctx.entry).some(id => effectOf(ctx.pack, id)?.playAt === at) ? undefined : viaLegacy(ctx, r => playNamedAt(at, r.game, r.state, r.shared, r.entry as Tactic, ctx.pack, r.warnings));
+/** What a component the entry names plays at a step of the action (Salvage, once the losses are taken), in the order the entry names them: those written for the kernel and those for the old state alike. */
+export function playNamed(ctx: Ctx, at: 'activation' | 'combat'): void {
+  const ids = playedBy(ctx.entry).filter(id => effectOf(ctx.pack, id)?.playAt === at);
+  for (const run of runsOf(ctx, ids)) {
+    if (run.native) for (const id of run.ids) playOne(ctx, id);
+    else viaLegacy(ctx, r => playNamedAt(at, r.game, r.state, r.shared, r.entry as Tactic, ctx.pack, r.warnings, run.ids));
+  }
+}
+
+/** The ids cut into runs of the same kind, in order: the plays written for the kernel and those for the old state take turns as the entry names them. */
+function runsOf(ctx: Ctx, ids: readonly string[]): { native: boolean; ids: string[] }[] {
+  const runs: { native: boolean; ids: string[] }[] = [];
+  for (const id of ids) {
+    const native = effectOf(ctx.pack, id)?.nativePlay !== undefined;
+    const last = runs[runs.length - 1];
+    if (last?.native === native) last.ids.push(id);
+    else runs.push({ native, ids: [id] });
+  }
+  return runs;
+}
 
 /** The play of the components the entry names, run where they have an effect: the hooks of the components, not the rules of playing them. */
 export function playHooks(ctx: Ctx): void {
   // Nothing named, nothing played, and the round's cards stay as they are.
   if (playedBy(ctx.entry).length === 0) return;
-  playNative(ctx);
   const spent: { count: number; secondary: boolean }[] = [];
-  viaLegacy(ctx, r => {
-    const { entry, pack } = ctx;
-    const cards = cardRoundOf(ctx.table, ctx.track, r.states);
-    for (const id of playedBy(entry)) {
-      const effect = effectOf(pack, id);
-      // A play that asked to run in the middle of a tactical action has run there already; in any other entry (a component action) it runs here, once.
-      if (!effect?.play || effect.nativePlay || (effect.playAt && entry.type === 'tactical') || NATIVE_PLAYS.includes(noteBase(id))) continue;
-      const lacking = r.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
-      effect.play({
-        game: r.game, state: r.state, shared: r.shared, entry, id, player: entry.owner ?? 'me', states: r.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings: r.warnings, cards, spent,
-      });
-    }
-    keepRound(ctx.table, ctx.track, cards);
+  const { entry, pack } = ctx;
+  // A play that asked to run in the middle of a tactical action has run there already; in any other entry (a component action) it runs here, once.
+  const ids = playedBy(entry).filter(id => {
+    const effect = effectOf(pack, id);
+    return !(effect?.playAt && entry.type === 'tactical') && !NATIVE_PLAYS.includes(noteBase(id));
   });
+  for (const run of runsOf(ctx, ids)) {
+    if (run.native) { for (const id of run.ids) playOne(ctx, id); continue; }
+    viaLegacy(ctx, r => {
+      const cards = cardRoundOf(ctx.table, ctx.track, r.states);
+      for (const id of run.ids) {
+        const effect = effectOf(pack, id);
+        if (!effect?.play) continue;
+        const lacking = r.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
+        effect.play({
+          game: r.game, state: r.state, shared: r.shared, entry, id, player: entry.owner ?? 'me', states: r.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings: r.warnings, cards, spent,
+        });
+      }
+      keepRound(ctx.table, ctx.track, cards);
+    });
+  }
   // The components in force are told of the strategy tokens the play spent.
   for (const each of spent) hook(ctx, 'onTokenSpent', [ctx.player], each);
 }

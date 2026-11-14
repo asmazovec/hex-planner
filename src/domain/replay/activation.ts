@@ -26,8 +26,9 @@ export function reactToActivation(game: Game, state: GameState, shared: GameStat
 }
 
 /** The `play` of each component the entry names that asks to run at this step of the action, with no choices (a tactical action has none). */
-export function playNamedAt(at: 'activation' | 'combat', game: Game, state: GameState, shared: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[]): void {
+export function playNamedAt(at: 'activation' | 'combat', game: Game, state: GameState, shared: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[], only?: readonly string[]): void {
   for (const id of playedBy(entry)) {
+    if (only && !only.includes(id)) continue;
     const effect = effectOf(pack, id);
     if (effect?.playAt === at) effect.play?.({
       game, state, shared, entry, id, player: entry.owner ?? 'me', states: { ...(shared.rivals ?? {}), me: shared, [entry.owner ?? 'me']: state },

@@ -6,8 +6,10 @@
  * one of my cruisers in the active system, there when it was activated, is replaced by a dreadnought. A missing
  * cruiser is reported as any missing unit (`unitsMissing`). The dreadnought is placed, not produced.
  */
+import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { missingUnits } from '../../../replay/state';
 import type { ComponentEffect } from '../../types';
-import { add, take } from '../../../replay/state';
 
 export const id = 'actionCard:upgrade';
 
@@ -15,10 +17,15 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   playAt: 'activation',
-  play: turn => {
-    if (turn.entry.type !== 'tactical' || turn.entry.systemId === null) return;
-    const slot = turn.entry.systemId;
-    const taken = take(turn.state.systems, slot, { cruiser: 1 }, turn.warnings, 'activation');
-    if (taken.cruiser) add(turn.state.systems, slot, { dreadnought: 1 });
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (ctx.entry?.type !== 'tactical' || ctx.entry.systemId === null) return [];
+    const slot = ctx.entry.systemId;
+    const here = ctx.my.unitsIn(slot);
+    missingUnits({ [slot]: here }, slot, { cruiser: 1 }, 'activation').forEach(ctx.warn);
+    return (here.cruiser ?? 0) > 0 ? [removeUnits(ctx.holder, { slot }, { cruiser: 1 }), placeUnits(ctx.holder, { slot }, { dreadnought: 1 })] : [];
   },
 };

@@ -54,7 +54,7 @@ describe('actionCard:f_researched Focused Research', () => {
   test('actionCard:f_researched is a play effect', () => {
     const { pack } = table(4);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).play).toBeTypeOf('function');
+    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
   });
 });
 

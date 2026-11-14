@@ -166,6 +166,20 @@ export interface AbilityContext {
   planetsIn(slot: string): string[];
   /** The slot of the map a planet lies in. */
   systemOf(planet: string): string | undefined;
+  /** The context over the board once these events have happened: a play that does one thing and then asks the rules about the result. */
+  after(events: readonly GameEvent[]): AbilityContext;
+  /** Researches a technology of the holder as a technology is researched (90): the events, and through `warn` the checks of the research. */
+  research(technology: ComponentId): GameEvent[];
+  /** The checks of the holder's units in a system as the board stands: capacity and the fleet pool (16.3, 37.1). */
+  systemWarnings(slot: string): Warning[];
+  /** What a planet is worth to the holder for a payment of the kind, after what they hold changed it. */
+  planetValue(planet: string, kind: 'resources' | 'influence'): number;
+  /** The kind of tile a system of the map is (`home`, `green`, ...); none for a slot with no tile. */
+  tileKind(slot: string): string | undefined;
+  /** The wormholes a system holds, its tile's and its tokens'. */
+  wormholes(slot: string): string[];
+  /** The systems next to a system for a move (a shared side, a wormhole, a hyperlane). */
+  adjacent(slot: string): string[];
   /** Adds a warning of the turn. */
   warn(warning: Warning): void;
 }

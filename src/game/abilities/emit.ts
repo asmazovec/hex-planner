@@ -46,3 +46,9 @@ export const commodities = (player: PlayerId, delta: number): GameEvent => ({ ty
 
 /** A technology researched. */
 export const researched = (player: PlayerId, technology: ComponentId): GameEvent => ({ type: 'TechnologyResearched', player, technology });
+
+/** A command token of the player laid on a system of the map, or taken off it (neither moves a pool). */
+export const commandToken = {
+  place: (player: PlayerId, system: string): GameEvent => ({ type: 'SystemActivated', player, system }),
+  remove: (player: PlayerId, system: string): GameEvent => ({ type: 'TokenReturned', player, system }),
+};

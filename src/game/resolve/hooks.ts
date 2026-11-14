@@ -8,19 +8,23 @@
 import { speaksIn } from '../../domain/effects/holder';
 import { effectOf, holderRuleOf } from '../../domain/effects/registry';
 import { checkPoolChange } from '../../domain/replay/status';
+import { tileAt } from '../../domain/replay/board';
+import { researchTechnologies } from '../../domain/replay/research';
+import { checkSystem } from '../../domain/replay/transport';
+import { adjacentTo, wormholesOf } from '../../domain/movement';
 import { commodityValueOf } from '../../domain/replay/cards/trade';
 import { violation } from '../../domain/rules/registry';
 import { noteBase } from '../../domain/components';
 import type { Entry, Warning } from '../../domain/types';
 import { readerOf, type Reader } from '../abilities/facade';
 import { appliedOn, inForce } from '../abilities/registry';
-import { areNeighbours, reinforcementsOf } from '../queries';
+import { areNeighbours, planetValue, reinforcementsOf } from '../queries';
 import { planetsIn } from '../space';
 import { homeOf } from '../setup';
 import type { AbilityContext, HookKind, HookPayloads } from '../abilities/types';
-import { applyChecked } from '../apply';
+import { applyAll, applyChecked } from '../apply';
 import type { GameEvent } from '../events';
-import { legacyKey, playerOfKey, viewFor } from '../legacyViews';
+import { legacyEvents, legacyKey, legacyViews, legacyViewsFresh, playerOfKey, viewFor } from '../legacyViews';
 import type { Board, DataPack, PlayerId, RuleStep, Table } from '../types';
 import { warn, type Ctx } from './context';
 
@@ -79,6 +83,21 @@ export function contextOf(
     },
     planetsIn: slot => planetsIn(table, at, pack, slot),
     systemOf: planet => Object.keys({ ...table.map, ...at.common.fracture.tiles }).find(slot => planetsIn(table, at, pack, slot).includes(planet)),
+    after: events => contextOf(table, applyAll(at, events), pack, player, id, options, warn),
+    research: technology => {
+      const before = legacyViews(table, at, pack);
+      const work = legacyViewsFresh(table, at, pack);
+      const v = viewFor(table, at, pack, player, work);
+      const found: Warning[] = [];
+      researchTechnologies(v.game, v.state, v.shared, [technology], pack, found);
+      found.forEach(warn);
+      return legacyEvents(table, pack, before, work, player);
+    },
+    systemWarnings: slot => { const v = viewFor(table, at, pack, player); return checkSystem(v.game, v.state, slot, pack); },
+    planetValue: (planet, kind) => planetValue(table, at, pack, player, planet, kind),
+    tileKind: slot => { const v = viewFor(table, at, pack, player); return tileAt(v.game, slot, pack)?.kind; },
+    wormholes: slot => { const v = viewFor(table, at, pack, player); return wormholesOf(v.game, pack, slot, v.shared.wormholeTokens); },
+    adjacent: slot => { const v = viewFor(table, at, pack, player); return adjacentTo(v.game, slot, pack); },
     warn,
   };
 }

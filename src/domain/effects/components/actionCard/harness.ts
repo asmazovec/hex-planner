@@ -8,6 +8,8 @@
  *
  * Pass 1: the hint it is today; the tests say what it must do.
  */
+import { commodities } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:harness';
@@ -15,7 +17,12 @@ export const id = 'actionCard:harness';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ game, state, pack }) => {
-    state.commodities = pack.factions[game.faction]?.commodities ?? state.commodities;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const printed = ctx.pack.factions[ctx.my.faction]?.commodities;
+    return printed === undefined || printed === ctx.my.commodities ? [] : [commodities(ctx.holder, printed - ctx.my.commodities)];
   },
 };

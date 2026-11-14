@@ -6,11 +6,11 @@
  * system outside the card's words (no wormhole, a home system, other players' ships there) is warned of
  * (`ghostShipSystem`, a code of this card); the destroyer is placed all the same. A wormhole token counts as a wormhole.
  */
-import { wormholesOf } from '../../../movement';
-import { tileAt } from '../../../replay/board';
+import { placeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import ghostShipSystem from '../../../rules/codes/ghostShipSystem';
 import { violation } from '../../../rules/registry';
-import type { UnitId } from '../../../types';
+import { othersHaveShips } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:ghost_ship';
@@ -19,18 +19,17 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'system', kind: 'system' }],
-  play: ({ game, state, shared, states, player, choices, pack, warnings }) => {
-    const slot = String(choices.system ?? '');
-    if (!slot) return;
-    const isShip = (unit: string) => { const def = pack.units[unit as UnitId]; return def !== undefined && !def.ground; };
-    const foreign = (units: Record<string, number | undefined> | undefined) => Object.entries(units ?? {}).some(([unit, n]) => (n ?? 0) > 0 && isShip(unit));
-    const others = Object.entries(states).some(([who, s]) => who !== player && foreign(s.systems[slot]))
-      || Object.entries(game.enemyUnits[slot] ?? {}).some(([who, units]) => !(who in states) && foreign(units));
-    const reason = tileAt(game, slot, pack)?.kind === 'home' ? 'home'
-      : wormholesOf(game, pack, slot, shared.wormholeTokens).length === 0 ? 'wormhole'
-        : others ? 'ships' : undefined;
-    if (reason) warnings.push(violation(ghostShipSystem.code, { systemId: slot, reason }, 'component'));
-    const here = state.systems[slot] ?? (state.systems[slot] = {});
-    here.destroyer = (here.destroyer ?? 0) + 1;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const slot = String(ctx.choices.system ?? '');
+    if (!slot) return [];
+    const reason = ctx.tileKind(slot) === 'home' ? 'home'
+      : ctx.wormholes(slot).length === 0 ? 'wormhole'
+        : othersHaveShips(ctx, slot) ? 'ships' : undefined;
+    if (reason) ctx.warn(violation(ghostShipSystem.code, { systemId: slot, reason }, 'component'));
+    return [placeUnits(ctx.holder, { slot }, { destroyer: 1 })];
   },
 };

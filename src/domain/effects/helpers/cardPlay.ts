@@ -13,6 +13,9 @@ import { violation } from '../../rules/registry';
 import { holderIn } from '../../stacks';
 import { unitStats } from '../../unitStats';
 import type { GameState, UnitCounts, UnitId } from '../../types';
+import type { AbilityContext } from '../../../game/abilities/types';
+import componentUnresolved from '../../rules/codes/componentUnresolved';
+import type { GameEvent } from '../../../game/events';
 import type { EffectTurn } from '../types';
 
 /** The card's own condition is not met: the play is warned of (2.6), and what was entered is applied all the same. */
@@ -99,4 +102,44 @@ export const removeFrom = (state: GameState, slot: string, units: UnitCounts): U
 /** Adds a planet to a state's exhausted ones. */
 export function exhaust(state: GameState, planetId: string): void {
   if (!state.exhausted.includes(planetId)) state.exhausted.push(planetId);
+}
+
+// The same questions for a play written for the kernel: they read the board through the context.
+
+/** The card's own condition is not met: the play is warned of (2.6), and what was entered is applied all the same. */
+export function unmetBy(ctx: AbilityContext): void {
+  ctx.warn(violation(playCondition.code, { id: ctx.id, name: componentById(ctx.pack, ctx.id)?.name ?? ctx.id }));
+}
+
+/** What the card asks cannot be done as chosen: the play is warned of with the reason and does nothing. */
+export function unresolvedBy(ctx: AbilityContext, reason: string): void {
+  ctx.warn(violation(componentUnresolved.code, { id: ctx.id, name: componentById(ctx.pack, ctx.id)?.name ?? ctx.id, reason }));
+}
+
+/** A number the player entered for a choice; 0 where there is none. */
+export const numberChosen = (ctx: AbilityContext, key: string): number => Number(ctx.choices[key] ?? 0) || 0;
+
+/** How many ships (fighters among them, ground forces not) a player has in the space area of a system. */
+export function shipsOf(ctx: AbilityContext, player: string, slot: string): number {
+  const here = ctx.of(player).unitsIn(slot);
+  return unitIds(here).filter(unit => !(ctx.pack.units[unit]?.ground ?? (unit === 'infantry' || unit === 'mech'))).reduce((sum, unit) => sum + (here[unit] ?? 0), 0);
+}
+
+/** The other players. */
+export const othersBy = (ctx: AbilityContext): string[] => ctx.table.players.map(p => p.id).filter(id => id !== ctx.holder);
+
+/** Whether another player has ships in the space area of a system. */
+export const othersHaveShips = (ctx: AbilityContext, slot: string): boolean => othersBy(ctx).some(player => shipsOf(ctx, player, slot) > 0);
+
+/** Whether a unit of the holder has capacity (the upgrade counted when its technology is held). */
+export function carriesBy(ctx: AbilityContext, unit: UnitId): boolean {
+  const faction = ctx.my.faction;
+  const tech = upgradeTech(ctx.pack, faction, unit as never);
+  return (unitStats(faction, unit, tech !== undefined && ctx.my.holds(tech), ctx.pack)?.capacity ?? 0) > 0;
+}
+
+/** Puts units of the holder in a system: the event is added to the play's, and the checks of the system after it (16.3, 37.1) are warned of. */
+export function placeIn(ctx: AbilityContext, events: GameEvent[], slot: string, units: UnitCounts): void {
+  events.push({ type: 'UnitsPlaced', player: ctx.holder, at: { slot }, units });
+  ctx.after(events).systemWarnings(slot).forEach(ctx.warn);
 }

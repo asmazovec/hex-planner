@@ -7,8 +7,9 @@
  * specialty warns `playTargetInvalid` and is readied all the same); `{ player: '<me or opponent id>' }` is the other
  * branch, gaining that player's breakthrough, which is not modelled (a holder has only its own faction's breakthrough).
  */
+import { planet as planets } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
-import { readyPlanets } from '../../../replay/payment';
 import playTargetInvalid from '../../../rules/codes/playTargetInvalid';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
@@ -23,12 +24,17 @@ export const effect: ComponentEffect = {
     kind: 'planet',
     options: ({ state, pack }) => Object.keys(state.control).filter(planet => state.control[planet] === 'me' && (pack.planets[planet]?.tech ?? []).length > 0),
   }],
-  play: ({ state, choices, pack, warnings }) => {
-    const planet = choices.planet === undefined ? '' : String(choices.planet);
-    if (!planet) return;
-    if ((pack.planets[planet]?.tech ?? []).length === 0) {
-      warnings.push(violation(playTargetInvalid.code, { name: componentById(pack, id)?.name ?? id, reason: 'no technology specialty' }, 'component'));
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const planet = ctx.choices.planet === undefined ? '' : String(ctx.choices.planet);
+    if (!planet) return [];
+    if ((ctx.pack.planets[planet]?.tech ?? []).length === 0) {
+      ctx.warn(violation(playTargetInvalid.code, { name: componentById(ctx.pack, id)?.name ?? id, reason: 'no technology specialty' }, 'component'));
     }
-    readyPlanets(state, [planet], warnings, 'component');
+    if (ctx.board.planets[planet]?.owner !== ctx.holder) ctx.warn(violation('readyNotControlled', { planetId: planet }, 'component'));
+    return ctx.board.planets[planet]?.exhausted ? [planets.ready(ctx.holder, planet)] : [];
   },
 };

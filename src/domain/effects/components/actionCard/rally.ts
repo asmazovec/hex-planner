@@ -9,6 +9,8 @@
  *
  * Pass 1: the hint it is today; the tests say what it must do.
  */
+import { tokens } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:rally';
@@ -17,9 +19,10 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   playAt: 'activation',
-  play: ({ state, entry }) => {
-    // An activation exists only in a tactical action: the card discarded as a cost elsewhere (Nanomachines) places nothing.
-    if (entry.type !== 'tactical') return;
-    state.fleet += 2;
-  },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  // An activation exists only in a tactical action: the card discarded as a cost elsewhere (Nanomachines) places nothing.
+  play: ctx => (ctx.entry?.type === 'tactical' ? [tokens(ctx.holder, { fleet: 2 })] : []),
 };
