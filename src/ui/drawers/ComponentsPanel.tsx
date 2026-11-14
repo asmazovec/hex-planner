@@ -9,7 +9,7 @@ import type { ComponentDef, DataPack, Game, TechType } from '../../domain/types'
 import { legacyNotes, shelfOf } from '../../game/shelf';
 import type { Board, Table } from '../../game/types';
 import { playerOfKey } from '../../game/keys';
-import { playerView, tableView } from '../../game/views';
+import { tableView } from '../../game/views';
 import { useGame } from '../../state/gameStore';
 import { ComponentCard, type CardState } from '../components/ComponentCard';
 import { ComponentSearchField } from '../components/ComponentSearchField';
@@ -78,7 +78,7 @@ export function ComponentsPanel({ game, pack, table, board, rounds, group, chose
   const rival = game.opponents.find(o => o.id === chosen);
   const player = rival ? rival.id : 'me';
   const faction = rival ? rival.faction : game.faction;
-  const holdings = shelfOf(table, playerView(table, board, pack, playerOfKey(table, player) ?? table.viewer));
+  const holdings = shelfOf(table, board, playerOfKey(table, player) ?? table.viewer);
   const start = (rival ? game.start.opponents[rival.id] : game.start.me) ?? {};
   const fromPlan = rounds[player] ?? {};
   const laws = tableView(table, board, pack).laws.map(law => law.id);

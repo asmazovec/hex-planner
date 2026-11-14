@@ -7,7 +7,6 @@ import { timelineOf } from './projection';
 import { legacyKey } from '../game/keys';
 import { ownNotes } from '../domain/holdings';
 import { legacyNotes, shelfOf, shownOf } from '../game/shelf';
-import { playerView } from '../game/views';
 
 const pack = loadPack(['pok', 'te']);
 let game = createGame({ expansions: ['pok', 'te'], playerCount: 3, faction: 'sol' }, pack);
@@ -25,7 +24,7 @@ describe('the shelf of a player', () => {
       for (const p of table.players) {
         const key = legacyKey(table, p.id);
         const old = key === 'me' ? line.end.holdings : line.end.rivals?.[key]?.holdings;
-        expect(sorted(shelfOf(table, playerView(table, board, pack, p.id))), key).toEqual(sorted(old!));
+        expect(sorted(shelfOf(table, board, p.id)), key).toEqual(sorted(old!));
       }
     });
   }

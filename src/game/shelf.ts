@@ -5,10 +5,10 @@
  */
 import { noteAddress, noteBase, noteId } from '../domain/components';
 import { holdingsOfCards, legacyKey, playerOfKey, type Shelf } from './keys';
-import { tableView, type PlayerView } from './views';
+import { tableView } from './views';
 import { genericNotes, factionNotes } from '../domain/holdings';
 import { cardsOf } from './queries';
-import type { Board, ComponentId, CardHold, DataPack, Table } from './types';
+import type { Board, ComponentId, CardHold, DataPack, PlayerId, Table } from './types';
 
 /** A note id with its address, a kernel player id, turned into the old id of that player. */
 export function legacyNote(table: Table, id: ComponentId): ComponentId {
@@ -19,9 +19,10 @@ export function legacyNote(table: Table, id: ComponentId): ComponentId {
 /** The kernel id of the player a note, with an old address, belongs to. */
 export const noteHolder = (table: Table, address: string): string | undefined => playerOfKey(table, address);
 
-export function shelfOf(table: Table, view: PlayerView): Shelf {
+/** Every card the player holds, a purged leader too (the sheet shows it purged), as the lists read them. */
+export function shelfOf(table: Table, board: Board, player: PlayerId): Shelf {
   const cards: Record<ComponentId, CardHold> = {};
-  for (const held of Object.values(view.cards).flat()) cards[legacyNote(table, held.id)] = { state: held.state, count: held.count };
+  for (const [id, hold] of Object.entries(board.players[player]?.cards ?? {})) cards[legacyNote(table, id)] = hold;
   return holdingsOfCards(cards);
 }
 
@@ -39,7 +40,7 @@ export interface Shown { shelf: Shelf; structures: { docks: number; pds: number 
 export function shownOf(table: Table, board: Board, pack: DataPack): { players: Record<string, Shown>; laws: ComponentId[] } {
   const view = tableView(table, board, pack);
   const players = Object.fromEntries(view.players.map((p): [string, Shown] => [legacyKey(table, p.id), {
-    shelf: shelfOf(table, p),
+    shelf: shelfOf(table, board, p.id),
     structures: { docks: p.planets.filter(planet => (planet.structures.spacedock ?? 0) > 0).length, pds: p.planets.reduce((sum, planet) => sum + (planet.structures.pds ?? 0), 0) },
     vp: p.vp,
   }]));
