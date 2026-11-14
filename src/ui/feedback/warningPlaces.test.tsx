@@ -21,6 +21,7 @@ import { StrategyEditor } from '../plan/editors/StrategyEditor';
 import type { TacticalEntry } from '../plan/tactical';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
+import { turnProps } from '../testing/turnProps';
 import { placeWarnings, placesOf } from './warningPlaces';
 
 const pack = loadPack(['pok', 'te']);
@@ -59,9 +60,9 @@ function editor(warnings: Warning[], patch: Partial<TacticalEntry> = {}, pickerF
   }
   return render(
     <TacticalEditor view={kernelViewOf(game(), pack)}
-      game={game()} pack={pack} entry={entry} before={before()} warnings={warnings} manualPayment={false}
+      pack={pack} {...turnProps(kernelViewOf(game(), pack), pack, entry, () => undefined)} warnings={warnings} manualPayment={false}
       choosing={null} onChoose={() => undefined}
-      onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
+      onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
     />,
   );
 }
@@ -250,22 +251,21 @@ describe('the tactical editor', () => {
     expect(screen.queryByText(/\(optional\)/)).toBeNull();
   });
 
+  const NOPROD = { id: 'e', type: 'tactical', status: 'planned', phase: 'action', systemId: SOURCE, moves: [], landings: [], production: { fighter: 1 }, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry;
   test('no word about a space dock of its own: the domain\'s noProduction stands in the production block', () => {
     useGame.getState().setTile(SOURCE, '25');
     const { unmount } = render(
       <TacticalEditor view={kernelViewOf(game(), pack)}
-        game={game()} pack={pack} before={before()} warnings={[]} manualPayment={false} choosing={null} onChoose={() => undefined}
-        entry={{ id: 'e', type: 'tactical', status: 'planned', systemId: SOURCE, moves: [], landings: [], production: { fighter: 1 }, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry}
-        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
+        pack={pack} {...turnProps(kernelViewOf(game(), pack), pack, NOPROD, () => undefined)} warnings={[]} manualPayment={false} choosing={null} onChoose={() => undefined}
+        onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
       />,
     );
     expect(screen.queryByText(/with Production/)).toBeNull();
     unmount();
     render(
       <TacticalEditor view={kernelViewOf(game(), pack)}
-        game={game()} pack={pack} before={before()} warnings={[{ code: 'noProduction', params: { systemId: SOURCE } }]} manualPayment={false} choosing={null} onChoose={() => undefined}
-        entry={{ id: 'e', type: 'tactical', status: 'planned', systemId: SOURCE, moves: [], landings: [], production: { fighter: 1 }, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry}
-        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
+        pack={pack} {...turnProps(kernelViewOf(game(), pack), pack, NOPROD, () => undefined)} warnings={[{ code: 'noProduction', params: { systemId: SOURCE } }]} manualPayment={false} choosing={null} onChoose={() => undefined}
+        onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
       />,
     );
     const warning = screen.getByText(/with Production/);

@@ -10,6 +10,7 @@ import { pickupAllowed } from '../../domain/replay/transport';
 import { productionDue } from '../../domain/replay/production';
 import { autoPay } from '../../domain/payment';
 import type { Entry, EntryBody, Game, UnitCounts } from '../../domain/types';
+import { holderOf, inForceOf } from '../../domain/effects/registry';
 import { legacyEntry } from '../entry';
 import { turnOf } from '../fromLegacy';
 import { routeHintOn } from '../flight';
@@ -135,3 +136,17 @@ describe('the edits that read the board', () => {
 function same2(t: ReturnType<typeof build>, patch: Partial<Entry>, edited: ReturnType<typeof turnOf>) {
   expect(legacyEntry(t.table, edited)).toEqual(legacyEntry(t.table, turnOf(t.table, { ...t.e, ...patch } as Entry, pack)));
 }
+
+describe('the losses, the custodians and the places of a turn', () => {
+  const t = build('sol', BODY);
+  test('the losses of the acting player as the entry keeps them', () => {
+    expect(now.spaceLossesOf(t.turn)).toEqual(t.e.losses);
+    expect(now.groundLossesOf(t.turn)).toEqual(t.e.groundLosses);
+    expect(now.groundLossesOf(build('sol', {}).turn)).toEqual({});
+  });
+  test('the custodians by hand, the places of the flights, the free landing', () => {
+    expect(tacticalOf(now.withCustodiansSet(t.turn, noPay)).custodians).toEqual(noPay);
+    expect(now.movesOf(tacticalOf(t.turn)).map(m => [m.from, m.pickupOf])).toEqual(t.e.moves.map(m => [m.from, m.pickupOf]));
+    expect(now.custodiansFreeOn(t.table, t.board, pack, t.player)).toBe(inForceOf(pack, holderOf(t.g, t.before), e => e.permit?.some(w => w.code === 'custodians') ?? false).length > 0);
+  });
+});

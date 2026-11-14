@@ -52,7 +52,7 @@ import { StrategyEditor } from '../plan/editors/StrategyEditor';
 import { SummaryBar } from '../plan/SummaryBar';
 import { systemName } from '../map/systemName';
 import { playerColour } from '../units/sprites';
-import { TacticalEditor } from '../plan/editors/TacticalEditor';
+import { TacticalEditorHost } from '../plan/editors/TacticalEditorHost';
 import { mapHighlights, planArrows, shownSystemsOf } from './plan/mapMarks';
 import { adjustmentIn, backFrom, cardIn, choosesForTe, hintKey, IDLE, LIST, resolvePick, slotOf, START, tacticalIn, turnIn, type PickState, type Slot } from './plan/pick';
 import { useBoards } from './plan/useBoards';
@@ -550,12 +550,11 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const edited = slot.entry;
         const systemId = edited.systemId;
         return (
-          <TacticalEditor
-            game={entryGame} pack={pack} view={boards.view(edited.id)} entry={edited} before={boards.before(edited.id)}
+          <TacticalEditorHost
+            entryId={edited.id} pack={pack} view={boards.view(edited.id)}
             warnings={forecast.warningsByEntry[edited.id] ?? []}
             manualPayment={manualPayment} choosing={choosing}
             onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) { drawers.closeRight(); setView('map'); } }}
-            onUpdate={patch => updateEntry(edited.id, patch)}
             onOpenPicker={toPicker}
             leaving={sourcesOf(game, pack, edited).filter(source => leavers.leaving.includes(leaveKey(edited.id, source)))}
             onLeft={source => leavers.finish(edited.id, source)}

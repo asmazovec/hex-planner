@@ -11,7 +11,8 @@ import { holderIn } from '../abilities/registry';
 import { autoPayOn, productionDueOnBoard } from '../planQueries';
 import { groundOn, shipsIn, tokensOnMapOf } from '../queries';
 import { mapSource } from '../space';
-import type { Turn, Flight } from '../actions';
+import { inForceOf } from '../../domain/effects/registry';
+import type { Turn, Flight, Payment, Tactical } from '../actions';
 import type { Board, DataPack, PlanetId, PlayerId, Slot, StructureCounts, StructureKind, Table, UnitCounts, UnitId } from '../types';
 import { groupOf, onTactical, sourcesOf, tacticalOf, withCustodiansPayment, withProduction, type At } from './tactical';
 
@@ -165,3 +166,24 @@ export function tacticalSystems(at: At, turn: Turn): Slot[] {
   const known = new Set(boardSlots(at.map, at.pack));
   return [...new Set(slots)].filter((s): s is string => Boolean(s) && (isOnMap(at.map, s as string) || known.has(s as string)));
 }
+
+/** What the battles on planets cost the acting player: planet, then units. */
+export function groundLossesOf(turn: Turn): Record<PlanetId, UnitCounts> {
+  const lost: Record<PlanetId, UnitCounts> = {};
+  for (const [planet, by] of Object.entries(tacticalOf(turn).groundCombat ?? {})) if (by[turn.player]) lost[planet] = by[turn.player];
+  return lost;
+}
+
+/** What the battle in space cost the acting player. */
+export const spaceLossesOf = (turn: Turn): UnitCounts => tacticalOf(turn).spaceCombat?.[turn.player] ?? {};
+
+/** The payment of the custodians token, set by hand (nothing left removes it). */
+export const withCustodiansSet = (turn: Turn, payment: Payment | undefined): Turn => onTactical(turn, a => ({ ...a, custodians: payment }));
+
+/** Whether a component in force lets the player land on Mecatol Rex without paying the custodians token (Blood Ties): the payment is then not seeded. */
+export const custodiansFreeOn = (table: Table, board: Board, pack: DataPack, player: PlayerId): boolean =>
+  inForceOf(pack, holderIn(table, board, player), effect => effect.permit?.some(w => w.code === 'custodians') ?? false).length > 0;
+
+/** The flights as the places of a warning name them: the source or planet each takes from. */
+export const movesOf = (action: Tactical): { from: string; units: UnitCounts; pickupOf?: Slot }[] =>
+  action.movement.map(f => ({ from: idOf(f.from), units: f.units, ...(f.pickupOf !== undefined ? { pickupOf: f.pickupOf } : {}) }));

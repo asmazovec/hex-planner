@@ -25,6 +25,7 @@ import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
 import { TurnEditor } from '../plan/editors/TurnEditor';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
+import { turnProps } from './turnProps';
 
 type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 type ComponentEntry = Extract<Entry, { type: 'component' }>;
@@ -93,10 +94,10 @@ export function showFlight(bench: Bench, entry: Entry, source: string): Live<Tac
 /** The whole tactical editor of an entry, with «Used» as its common part: the landing, the result of the action, every block's warnings. */
 export function showTactical(bench: Bench, entry: Entry): Live<TacticalEntry> {
   const nothing = () => undefined;
-  return live(bench, entry as TacticalEntry, ({ game, pack, view, entry: shown, before, warnings, update }) => (
+  return live(bench, entry as TacticalEntry, ({ pack, view, entry: shown, warnings, update }) => (
     <TacticalEditor
-      game={game} pack={pack} view={view} entry={shown as TacticalEntry} before={before} warnings={warnings} manualPayment={false} choosing={null}
-      onChoose={nothing} onUpdate={patch => update(patch as Partial<EntryBody>)} onOpenPicker={nothing} onManualPayment={nothing}
+      pack={pack} view={view} {...turnProps(view, pack, shown, update)} warnings={warnings} manualPayment={false} choosing={null}
+      onChoose={nothing} onOpenPicker={nothing} onManualPayment={nothing}
       onOpenShop={nothing} onOpenBattle={nothing} onOpenFleet={nothing} onDone={nothing} onRemove={nothing}
       common={<UsesBlock entry={shown} pack={pack} view={view} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />}
     />
