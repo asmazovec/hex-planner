@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { emptyHoldings, upgradesOf } from '../../../domain/holdings';
-import { standing, productionCost } from '../../../domain/project';
+import { standing, productionCost } from '../../../domain/replay';
 import { boardAt, boardBefore, systemWarningsAt, timelineOf } from '../../../state/projection';
 import { unitStats } from '../../../domain/unitStats';
 import type { PlanetDef, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';

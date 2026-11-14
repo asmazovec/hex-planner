@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { standing } from '../../domain/project';
+import { standing } from '../../domain/replay';
 import type { DataPack, Payment, UnitCounts, Warning } from '../../domain/types';
 import { hasUnits } from '../../domain/tactical';
 import type { Turn } from '../../game/actions';

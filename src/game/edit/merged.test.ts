@@ -1,7 +1,8 @@
 /** The taps of the big hex against the old edit of entries: the round they make is the round the old edit makes. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
-import { changeOnBoard as oldChange, type MergedChange } from '../../domain/losses';
+import type { MergedChange } from '../../domain/losses';
+import { changeOnBoard as oldChange } from '../../testing/oldMerged';
 import { createGame } from '../../domain/newGame';
 import type { AdjustmentKind, Entry, EntryBody, Game, Phase, UnitId } from '../../domain/types';
 import { savedOf } from '../../testing/legacySave';

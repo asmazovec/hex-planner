@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { HEX_INNER, hexLayout, type HexLayout, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack } from '../../domain/hexLayout';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
 import { rotateLanes } from '../../domain/lanes';
-import { isOnMap, tileIdOf } from '../../domain/project';
+import { isOnMap, tileIdOf } from '../../domain/replay';
 import type { PlanetValues } from '../../domain/payment';
 import type { DataPack, PlanetDef } from '../../domain/types';
 import { mapSource, planetsIn } from '../../game/space';

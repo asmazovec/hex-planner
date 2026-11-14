@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { changeMerged, changeOnBoard, mergedCounts, mergedEntry } from './losses';
+import { changeMerged, mergedCounts, mergedEntry } from './losses';
+import { changeOnBoard } from '../testing/oldMerged';
 import { createGame } from './newGame';
 import { project } from './project';
 import type { AdjustmentKind, Entry, EntryBody, Game, Phase, Round, UnitId } from './types';

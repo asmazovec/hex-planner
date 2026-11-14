@@ -9,7 +9,7 @@ import { boardSlots, fleetSpeed, linksOf, routeMove, routeReach, type Blockers, 
 import { autoPay } from './payment';
 import type { MapSource } from './replay/board';
 import { productionDue } from './replay/production';
-import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, tileIdOf } from './project';
+import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, tileIdOf } from './replay';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Holdings, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;

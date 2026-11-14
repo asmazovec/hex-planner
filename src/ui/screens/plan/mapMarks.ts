@@ -4,7 +4,7 @@
  */
 import type { Turn } from '../../../game/actions';
 import type { EntryStatus } from '../../../domain/types';
-import { systemsAdjacent } from '../../../domain/project';
+import { systemsAdjacent } from '../../../domain/replay';
 import type { DataPack } from '../../../domain/types';
 import { arrowsOf, sourcesOf, tacticalOf, viaOf } from '../../../game/edit/tactical';
 import { mapSource } from '../../../game/space';

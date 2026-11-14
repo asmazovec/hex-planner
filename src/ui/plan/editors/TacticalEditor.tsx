@@ -3,7 +3,7 @@ import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CUSTODIANS_COST } from '../../../domain/mecatol';
 import { autoPayOn, landingOffersOn, productionDueOnBoard } from '../../../game/planQueries';
-import { standing } from '../../../domain/project';
+import { standing } from '../../../domain/replay';
 import { stepPlayers } from '../../../game/abilities/registry';
 import { fleetExcessOf, flightOf as flightAt } from '../../../game/flight';
 import type { Turn } from '../../../game/actions';

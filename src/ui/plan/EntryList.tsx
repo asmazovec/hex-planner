@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
 import { componentById } from '../../domain/components';
 import { CARD } from '../../domain/strategy';
-import { standing } from '../../domain/project';
+import { standing } from '../../domain/replay';
 import type { Turn } from '../../game/actions';
 import { turnNumbers } from '../../game/numbering';
 import { mapSource } from '../../game/space';

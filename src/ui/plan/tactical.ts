@@ -3,7 +3,7 @@
  * entry itself live in src/domain/tactical.ts; the names others still take from here are passed on.
  */
 import { hexLayout } from '../../domain/hexLayout';
-import { sourceSlot, systemsAdjacent } from '../../domain/project';
+import { sourceSlot, systemsAdjacent } from '../../domain/replay';
 import { groupOf, sourcesOf, viaOf, tacticalOf, type At } from '../../game/edit/tactical';
 import type { Turn } from '../../game/actions';
 import { flightDuration, joinShare, slotToPixel, type CurveSegment, type Point, type RouteShape } from '../map/geometry';

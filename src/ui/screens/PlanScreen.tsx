@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { emptySlots } from '../../game/edit/table';
 import { EXPEDITION_SLICES } from '../../domain/payment';
-import { isOnMap, systemSlots } from '../../domain/project';
+import { isOnMap, systemSlots } from '../../domain/replay';
 import { shownOf } from '../../game/shelf';
 import { warningsByTurn } from '../../game/rowWarnings';
 import { boardAt, statusIn, tacticalNumbers, timelineOf } from '../../state/projection';

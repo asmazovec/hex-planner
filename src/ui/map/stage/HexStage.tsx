@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { isOnMap, tileIdOf } from '../../../domain/project';
+import { isOnMap, tileIdOf } from '../../../domain/replay';
 import type { DataPack } from '../../../domain/types';
 import type { Board, PlayerId } from '../../../game/types';
 import { mapSource } from '../../../game/space';
