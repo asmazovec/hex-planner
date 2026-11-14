@@ -52,3 +52,6 @@ export const commandToken = {
   place: (player: PlayerId, system: string): GameEvent => ({ type: 'SystemActivated', player, system }),
   remove: (player: PlayerId, system: string): GameEvent => ({ type: 'TokenReturned', player, system }),
 };
+
+/** A law leaves the game (and what it was attached to goes with it). */
+export const lawDiscarded = (law: ComponentId): GameEvent => ({ type: 'LawDiscarded', law });

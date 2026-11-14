@@ -6,8 +6,10 @@
  * goods equal to its resources. A home planet, a planet of mine or an exhausted one is warned of; a planet of mine
  * changes nothing, the others are counted as entered.
  */
+import { planet, tradeGoods } from '../../../../game/abilities/emit';
+import type { GameEvent, Hooked } from '../../../../game/abilities/types';
+import { unmetBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
-import { exhaust, rivalStateOf, unmet } from '../../helpers/cardPlay';
 
 export const id = 'actionCard:uprising';
 
@@ -15,14 +17,21 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planetId', kind: 'planet' }],
-  play: turn => {
-    if (turn.choices.planetId === undefined) return;
-    const planetId = String(turn.choices.planetId);
-    const owner = rivalStateOf(turn, planetId);
-    const home = Object.values(turn.pack.tiles).some(tile => tile.kind === 'home' && tile.planetIds.includes(planetId));
-    if (!owner || home || owner.exhausted.includes(planetId)) unmet(turn);
-    if (!owner) return;
-    exhaust(owner, planetId);
-    turn.state.tradeGoods += turn.pack.planets[planetId]?.resources ?? 0;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (ctx.choices.planetId === undefined) return [];
+    const planetId = String(ctx.choices.planetId);
+    const held = ctx.board.planets[planetId];
+    const owner = held?.owner !== undefined && held.owner !== ctx.holder ? held.owner : undefined;
+    const home = Object.values(ctx.pack.tiles).some(tile => tile.kind === 'home' && tile.planetIds.includes(planetId));
+    if (owner === undefined || home || held?.exhausted) unmetBy(ctx);
+    if (owner === undefined) return [];
+    const events: GameEvent[] = held?.exhausted ? [] : [planet.exhaust(owner, planetId)];
+    const resources = ctx.pack.planets[planetId]?.resources ?? 0;
+    if (resources > 0) events.push(tradeGoods(ctx.holder, resources));
+    return events;
   },
 };

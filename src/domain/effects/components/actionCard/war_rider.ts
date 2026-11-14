@@ -7,8 +7,9 @@
  * the player enters the system (`systemId`) when the prediction came true and a dreadnought is placed there. A system
  * without my ships is warned of.
  */
+import type { GameEvent, Hooked } from '../../../../game/abilities/types';
+import { placeIn, shipsOf, unmetBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
-import { place, shipsIn, unmet } from '../../helpers/cardPlay';
 
 export const id = 'actionCard:war_rider';
 
@@ -16,10 +17,16 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'systemId', kind: 'system' }],
-  play: turn => {
-    if (turn.choices.systemId === undefined) return;
-    const slot = String(turn.choices.systemId);
-    if (shipsIn(turn, turn.state, slot) === 0) unmet(turn);
-    place(turn, slot, { dreadnought: 1 });
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (ctx.choices.systemId === undefined) return [];
+    const slot = String(ctx.choices.systemId);
+    if (shipsOf(ctx, ctx.holder, slot) === 0) unmetBy(ctx);
+    const events: GameEvent[] = [];
+    placeIn(ctx, events, slot, { dreadnought: 1 });
+    return events;
   },
 };

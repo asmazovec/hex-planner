@@ -8,6 +8,8 @@
  * non-home planet with no units (`playTargetInvalid` otherwise). A planet of mine loses my control, a rival's likewise.
  * Neutral units are not modelled (no neutral player on the board), so the two infantry themselves are not placed.
  */
+import { tradeGoods } from '../../../../game/abilities/emit';
+import type { GameEvent, Hooked } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import { planetsOf, systemSlots, tileIdOf } from '../../../replay/board';
 import { unitIds } from '../../../replay/state';
@@ -25,23 +27,25 @@ export const effect: ComponentEffect = {
     kind: 'planet',
     options: ({ game, pack }) => [...new Set(systemSlots(game).flatMap(slot => (pack.tiles[tileIdOf(game, slot)]?.kind === 'home' ? [] : planetsOf(game, slot, pack))))],
   }],
-  play: ({ game, state, shared, states, choices, pack, warnings }) => {
-    if (state.tradeGoods < 2) warnings.push(violation('shortTradeGoods', { needed: 2, have: state.tradeGoods }, 'component'));
-    state.tradeGoods = Math.max(0, state.tradeGoods - 2);
-    const planet = String(choices.planet ?? '');
-    if (!planet) return;
-    const name = componentById(pack, id)?.name ?? id;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const have = ctx.my.tradeGoods;
+    if (have < 2) ctx.warn(violation('shortTradeGoods', { needed: 2, have }, 'component'));
+    const events: GameEvent[] = have > 0 ? [tradeGoods(ctx.holder, -Math.min(2, have))] : [];
+    const planet = String(ctx.choices.planet ?? '');
+    if (!planet) return events;
+    const name = componentById(ctx.pack, id)?.name ?? id;
     const invalid = (reason: string): void => {
-      warnings.push(violation(playTargetInvalid.code, { name, reason }, 'component'));
+      ctx.warn(violation(playTargetInvalid.code, { name, reason }, 'component'));
     };
-    if (Object.values(pack.tiles).some(tile => tile.kind === 'home' && tile.planetIds.includes(planet))) invalid('home planet');
-    const rivals = Object.values(shared.rivals ?? {});
-    const occupied = [state, shared, ...rivals, ...Object.values(states)].some(
-      view => unitIds(view.ground[planet] ?? {}).length > 0 || (view.pds[planet] ?? 0) > 0 || view.docks.includes(planet),
-    ) || Object.values(game.enemyGround[planet] ?? {}).some(units => unitIds(units ?? {}).length > 0);
+    if (Object.values(ctx.pack.tiles).some(tile => tile.kind === 'home' && tile.planetIds.includes(planet))) invalid('home planet');
+    const here = ctx.board.planets[planet];
+    const occupied = Object.values(here?.ground ?? {}).some(units => unitIds(units ?? {}).length > 0) || (here?.structures.pds ?? 0) > 0 || (here?.structures.spacedock ?? 0) > 0;
     if (occupied) invalid('units on it');
-    for (const view of new Set([state, shared, ...rivals, ...Object.values(states)])) {
-      if (view.control[planet] === 'me') delete view.control[planet];
-    }
+    if (here?.owner === ctx.holder) events.push({ type: 'PlanetLost', planet });
+    return events;
   },
 };

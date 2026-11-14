@@ -10,9 +10,11 @@
  *
  * The choices are `counts` slots: one button per planet that holds my infantry (`ChoiceSpec.slots`).
  */
+import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
+import type { GameEvent, Hooked } from '../../../../game/abilities/types';
 import choiceOverLimit from '../../../rules/codes/choiceOverLimit';
 import { violation } from '../../../rules/registry';
-import { add, take } from '../../../replay/state';
+import { missingUnits } from '../../../replay/state';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:refit';
@@ -25,13 +27,21 @@ export const effect: ComponentEffect = {
     slots: ({ state }) => Object.keys(state.ground).filter(planetId => (state.ground[planetId]?.infantry ?? 0) > 0)
       .map(planetId => ({ key: planetId, unit: 'infantry' as const, planet: planetId, max: state.ground[planetId]?.infantry })),
   }],
-  play: ({ state, choices, warnings }) => {
-    const chosen = Object.entries(choices).filter(([, count]) => Number(count) > 0);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const chosen = Object.entries(ctx.choices).filter(([, count]) => Number(count) > 0);
     const total = chosen.reduce((sum, [, count]) => sum + Number(count), 0);
-    if (total > 2) warnings.push(violation(choiceOverLimit.code, { limit: 2, chosen: total }, 'component'));
-    for (const [planetId, count] of chosen) {
-      const removed = take(state.ground, planetId, { infantry: Number(count) }, warnings, 'component');
-      if (removed.infantry) add(state.ground, planetId, { mech: removed.infantry });
+    if (total > 2) ctx.warn(violation(choiceOverLimit.code, { limit: 2, chosen: total }, 'component'));
+    const events: GameEvent[] = [];
+    for (const [planet, count] of chosen) {
+      const here = ctx.my.unitsOn(planet);
+      missingUnits({ [planet]: here }, planet, { infantry: Number(count) }, 'component').forEach(ctx.warn);
+      const removed = Math.min(here.infantry ?? 0, Number(count));
+      if (removed > 0) events.push(removeUnits(ctx.holder, { planet }, { infantry: removed }), placeUnits(ctx.holder, { planet }, { mech: removed }));
     }
+    return events;
   },
 };

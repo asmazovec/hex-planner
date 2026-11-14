@@ -6,8 +6,10 @@
  * their reinforcements into the system (their pools do not change). The card's own condition (a non-home system that
  * contains or is adjacent to one of my ships) is warned of when it is not met.
  */
+import { commandToken } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { shipsOf, unmetBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
-import { adjacentSlots, isHomeSlot, shipsIn, unmet } from '../../helpers/cardPlay';
 
 export const id = 'actionCard:jamming';
 
@@ -18,12 +20,16 @@ export const effect: ComponentEffect = {
     { key: 'systemId', kind: 'system' },
     { key: 'player', kind: 'player' },
   ],
-  play: turn => {
-    const slot = turn.choices.systemId === undefined ? undefined : String(turn.choices.systemId);
-    if (slot === undefined) return;
-    const near = shipsIn(turn, turn.state, slot) > 0 || adjacentSlots(turn, slot).some(next => shipsIn(turn, turn.state, next) > 0);
-    if (isHomeSlot(turn, slot) || !near) unmet(turn);
-    const target = turn.states[String(turn.choices.player)];
-    if (target && target !== turn.state && !target.tokensOnMap.includes(slot)) target.tokensOnMap.push(slot);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const slot = ctx.choices.systemId === undefined ? undefined : String(ctx.choices.systemId);
+    if (slot === undefined) return [];
+    const near = shipsOf(ctx, ctx.holder, slot) > 0 || ctx.adjacent(slot).some(next => shipsOf(ctx, ctx.holder, next) > 0);
+    if (ctx.tileKind(slot) === 'home' || !near) unmetBy(ctx);
+    const target = ctx.playerOf(String(ctx.choices.player));
+    return target !== undefined && target !== ctx.holder && !ctx.board.systems[slot]?.tokens.includes(target) ? [commandToken.place(target, slot)] : [];
   },
 };

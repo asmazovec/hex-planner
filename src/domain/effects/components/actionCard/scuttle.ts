@@ -10,12 +10,12 @@
  *
  * The choices are `counts` slots: one button per non-fighter ship type in each system that holds mine, under the name of the system.
  */
+import { removeUnits, tradeGoods } from '../../../../game/abilities/emit';
+import type { GameEvent, Hooked } from '../../../../game/abilities/types';
 import choiceOverLimit from '../../../rules/codes/choiceOverLimit';
 import { violation } from '../../../rules/registry';
-import { take } from '../../../replay/state';
-import { productionCost } from '../../../unitStats';
+import { missingUnits } from '../../../replay/state';
 import type { UnitId } from '../../../types';
-import { holderOf } from '../../registry';
 import { UNIT_ORDER } from '../../../hexLayout';
 import type { ComponentEffect } from '../../types';
 
@@ -30,18 +30,27 @@ export const effect: ComponentEffect = {
       .filter(unit => pack.units[unit] && !pack.units[unit].ground && !pack.units[unit].fighter && (state.systems[slot]?.[unit] ?? 0) > 0)
       .map(unit => ({ key: unit + '@' + slot, unit, group: slot, max: state.systems[slot]?.[unit] }))),
   }],
-  play: ({ game, state, shared, pack, choices, warnings }) => {
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
     let total = 0;
     let gain = 0;
-    for (const [key, count] of Object.entries(choices)) {
+    const events: GameEvent[] = [];
+    for (const [key, count] of Object.entries(ctx.choices)) {
       const [unit, slot] = key.split('@') as [UnitId, string | undefined];
-      const def = pack.units[unit];
+      const def = ctx.pack.units[unit];
       if (!slot || !def || def.ground || def.fighter || Number(count) <= 0) continue;
       total += Number(count);
-      const removed = take(state.systems, slot, { [unit]: Number(count) }, warnings, 'component');
-      gain += productionCost(removed, game.faction, holderOf(game, state, shared), pack);
+      const here = ctx.my.unitsIn(slot);
+      missingUnits({ [slot]: here }, slot, { [unit]: Number(count) }, 'component').forEach(ctx.warn);
+      const taken = Math.min(here[unit] ?? 0, Number(count));
+      if (taken <= 0) continue;
+      events.push(removeUnits(ctx.holder, { slot }, { [unit]: taken }));
+      gain += ctx.unitCost({ [unit]: taken });
     }
-    if (total > 2) warnings.push(violation(choiceOverLimit.code, { limit: 2, chosen: total }, 'component'));
-    state.tradeGoods += gain;
+    if (total > 2) ctx.warn(violation(choiceOverLimit.code, { limit: 2, chosen: total }, 'component'));
+    return gain > 0 ? [...events, tradeGoods(ctx.holder, gain)] : events;
   },
 };

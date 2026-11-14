@@ -5,19 +5,25 @@
  * all of their commodities, which become my trade goods (LRR 21.6). The plan does not say who won the battle; the
  * card's own condition is only that there was one, so an active system with no other player's ships is warned of.
  */
+import { commodities, tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { othersBy, shipsOf, unmetBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
-import { othersOf, shipsIn, unmet } from '../../helpers/cardPlay';
 
 export const id = 'actionCard:salvage';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => {
-    const slot = turn.entry.type === 'tactical' ? turn.entry.systemId : null;
-    const opponent = slot === null ? undefined : othersOf(turn).find(([, state]) => shipsIn(turn, state, slot) > 0);
-    if (!opponent) return unmet(turn);
-    turn.state.tradeGoods += opponent[1].commodities;
-    opponent[1].commodities = 0;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const slot = ctx.entry?.type === 'tactical' ? ctx.entry.systemId : null;
+    const opponent = slot === null ? undefined : othersBy(ctx).find(player => shipsOf(ctx, player, slot) > 0);
+    if (opponent === undefined) { unmetBy(ctx); return []; }
+    const taken = ctx.of(opponent).commodities;
+    return taken > 0 ? [tradeGoods(ctx.holder, taken), commodities(opponent, -taken)] : [];
   },
 };

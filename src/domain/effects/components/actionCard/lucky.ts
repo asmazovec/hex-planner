@@ -7,12 +7,11 @@
  * units cannot be chosen (tirules2 ruling 1): `componentUnresolved` (2.6.1). Pass 1 keeps it the hint it is today; its
  * tests say what it must do.
  */
-import { componentById } from '../../../components';
-import { violation } from '../../../rules/registry';
-import componentUnresolved from '../../../rules/codes/componentUnresolved';
-import type { ComponentEffect, EffectTurn } from '../../types';
-import { planetsOf } from '../../../replay/board';
+import { removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { UnitId } from '../../../types';
+import { unresolvedBy } from '../../helpers/cardPlay';
+import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:lucky';
 
@@ -26,24 +25,23 @@ export const effect: ComponentEffect = {
     { key: 'player', kind: 'player' },
     { key: 'unit', kind: 'unit', options: () => SHIPS },
   ],
-  play: turn => {
-    const { system, player, unit } = turn.choices;
-    if (system === undefined || player === undefined || unit === undefined) return;
-    const target = turn.states[String(player)];
-    if (!target || target === turn.state) return unresolved(turn, 'another player must be chosen');
-    if (!SHIPS.includes(String(unit))) return unresolved(turn, 'only a dreadnought, cruiser or destroyer');
-    const slot = String(system);
-    if (!planetsOf(turn.game, slot, turn.pack).some(planetId => turn.state.control[planetId] === 'me')) {
-      return unresolved(turn, 'the system has no planet you control');
-    }
-    const there = target.systems[slot];
-    const ship = unit as UnitId;
-    if (!there || (there[ship] ?? 0) < 1) return unresolved(turn, 'that player has no such ship in the system');
-    there[ship] = (there[ship] ?? 0) - 1;
-    if (there[ship] === 0) delete there[ship];
-  },
 };
 
-const unresolved = (turn: EffectTurn, reason: string): void => {
-  turn.warnings.push(violation(componentUnresolved.code, { id: turn.id, name: componentById(turn.pack, turn.id)?.name ?? turn.id, reason }));
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const { system, player, unit } = ctx.choices;
+    if (system === undefined || player === undefined || unit === undefined) return [];
+    const target = ctx.playerOf(String(player));
+    if (target === undefined || target === ctx.holder) { unresolvedBy(ctx, 'another player must be chosen'); return []; }
+    if (!SHIPS.includes(String(unit))) { unresolvedBy(ctx, 'only a dreadnought, cruiser or destroyer'); return []; }
+    const slot = String(system);
+    if (!ctx.planetsIn(slot).some(planetId => ctx.board.planets[planetId]?.owner === ctx.holder)) {
+      unresolvedBy(ctx, 'the system has no planet you control');
+      return [];
+    }
+    const ship = unit as UnitId;
+    if ((ctx.of(target).unitsIn(slot)[ship] ?? 0) < 1) { unresolvedBy(ctx, 'that player has no such ship in the system'); return []; }
+    return [removeUnits(target, { slot }, { [ship]: 1 })];
+  },
 };

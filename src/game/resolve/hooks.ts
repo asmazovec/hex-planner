@@ -6,7 +6,8 @@
  * per-player state is not built here: where a pool warning needs it (tokens gained), it is read from the board once.
  */
 import { speaksIn } from '../../domain/effects/holder';
-import { effectOf, holderRuleOf } from '../../domain/effects/registry';
+import { effectOf, holderOf, holderRuleOf } from '../../domain/effects/registry';
+import { productionCost } from '../../domain/unitStats';
 import { checkPoolChange } from '../../domain/replay/status';
 import { tileAt } from '../../domain/replay/board';
 import { researchTechnologies } from '../../domain/replay/research';
@@ -94,6 +95,7 @@ export function contextOf(
       return legacyEvents(table, pack, before, work, player);
     },
     systemWarnings: slot => { const v = viewFor(table, at, pack, player); return checkSystem(v.game, v.state, slot, pack); },
+    unitCost: units => { const v = viewFor(table, at, pack, player); return productionCost(units, v.game.faction, holderOf(v.game, v.state, v.shared), pack); },
     planetValue: (planet, kind) => planetValue(table, at, pack, player, planet, kind),
     tileKind: slot => { const v = viewFor(table, at, pack, player); return tileAt(v.game, slot, pack)?.kind; },
     wormholes: slot => { const v = viewFor(table, at, pack, player); return wormholesOf(v.game, pack, slot, v.shared.wormholeTokens); },

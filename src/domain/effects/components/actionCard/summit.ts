@@ -5,8 +5,10 @@
  * `tactic`, `fleet`, `strategy`: the tokens are gained into the pools chosen (LRR 20: a token gained may go to any
  * pool). More than two asked of the card is warned of, and still counted as entered.
  */
+import { tokens } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { numberChosen, unmetBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
-import { numberOf, unmet } from '../../helpers/cardPlay';
 
 export const id = 'actionCard:summit';
 
@@ -20,13 +22,15 @@ export const effect: ComponentEffect = {
     { key: 'fleet', kind: 'number', range: [0, 2], label: pool('Fleet pool', 'Резерв флота') },
     { key: 'strategy', kind: 'number', range: [0, 2], label: pool('Strategy pool', 'Стратегический резерв') },
   ],
-  play: turn => {
-    const tactic = numberOf(turn, 'tactic');
-    const fleet = numberOf(turn, 'fleet');
-    const strategy = numberOf(turn, 'strategy');
-    if (tactic + fleet + strategy > 2) unmet(turn);
-    turn.state.tactic += tactic;
-    turn.state.fleet += fleet;
-    turn.state.strategy += strategy;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const tactic = numberChosen(ctx, 'tactic');
+    const fleet = numberChosen(ctx, 'fleet');
+    const strategy = numberChosen(ctx, 'strategy');
+    if (tactic + fleet + strategy > 2) unmetBy(ctx);
+    return tactic || fleet || strategy ? [tokens(ctx.holder, { ...(tactic ? { tactic } : {}), ...(fleet ? { fleet } : {}), ...(strategy ? { strategy } : {}) })] : [];
   },
 };

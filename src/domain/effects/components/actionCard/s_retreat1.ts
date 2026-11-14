@@ -8,8 +8,10 @@
  * is placed there (the pools do not change). The card's own condition (adjacent, no other player's ships) is warned of
  * when it is not met; the fleet pool and capacity of the system I retreat into are checked as for any arrival.
  */
+import { commandToken } from '../../../../game/abilities/emit';
+import type { GameEvent, Hooked } from '../../../../game/abilities/types';
+import { othersHaveShips, placeIn, unmetBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
-import { adjacentSlots, othersShipsIn, place, removeFrom, unmet } from '../../helpers/cardPlay';
 
 export const id = 'actionCard:s_retreat1';
 
@@ -20,13 +22,19 @@ export const effect: ComponentEffect = {
     { key: 'from', kind: 'system' },
     { key: 'to', kind: 'system' },
   ],
-  play: turn => {
-    if (turn.choices.from === undefined || turn.choices.to === undefined) return;
-    const from = String(turn.choices.from);
-    const to = String(turn.choices.to);
-    if (!adjacentSlots(turn, from).includes(to) || othersShipsIn(turn, to)) unmet(turn);
-    const moved = removeFrom(turn.state, from, { ...turn.state.systems[from] });
-    place(turn, to, moved);
-    if (!turn.state.tokensOnMap.includes(to)) turn.state.tokensOnMap.push(to);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (ctx.choices.from === undefined || ctx.choices.to === undefined) return [];
+    const from = String(ctx.choices.from);
+    const to = String(ctx.choices.to);
+    if (!ctx.adjacent(from).includes(to) || othersHaveShips(ctx, to)) unmetBy(ctx);
+    const moved = { ...ctx.my.unitsIn(from) };
+    const events: GameEvent[] = Object.keys(moved).length > 0 ? [{ type: 'UnitsRemoved', player: ctx.holder, at: { slot: from }, units: moved }] : [];
+    placeIn(ctx, events, to, moved);
+    if (!ctx.board.systems[to]?.tokens.includes(ctx.holder)) events.push(commandToken.place(ctx.holder, to));
+    return events;
   },
 };

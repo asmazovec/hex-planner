@@ -138,8 +138,15 @@ export function carriesBy(ctx: AbilityContext, unit: UnitId): boolean {
   return (unitStats(faction, unit, tech !== undefined && ctx.my.holds(tech), ctx.pack)?.capacity ?? 0) > 0;
 }
 
-/** Puts units of the holder in a system: the event is added to the play's, and the checks of the system after it (16.3, 37.1) are warned of. */
+/** Whether a unit of the holder has a bombardment roll (the upgrade counted when its technology is held). */
+export function bombardsBy(ctx: AbilityContext, unit: UnitId): boolean {
+  const faction = ctx.my.faction;
+  const tech = upgradeTech(ctx.pack, faction, unit as never);
+  return unitStats(faction, unit, tech !== undefined && ctx.my.holds(tech), ctx.pack)?.bombard !== undefined;
+}
+
+/** Puts units of the holder in a system: the event is added to the play's (none for no units), and the checks of the system after it (16.3, 37.1) are warned of. */
 export function placeIn(ctx: AbilityContext, events: GameEvent[], slot: string, units: UnitCounts): void {
-  events.push({ type: 'UnitsPlaced', player: ctx.holder, at: { slot }, units });
+  if (unitIds(units).length > 0) events.push({ type: 'UnitsPlaced', player: ctx.holder, at: { slot }, units });
   ctx.after(events).systemWarnings(slot).forEach(ctx.warn);
 }

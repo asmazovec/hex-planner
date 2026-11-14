@@ -5,11 +5,10 @@
  * dock in a home system, or the player's own dock, cannot be chosen (tirules2 rulings 1 and 3): `componentUnresolved`
  * (2.6.1). Written in pass 2.
  */
-import { componentById } from '../../../components';
-import { violation } from '../../../rules/registry';
-import componentUnresolved from '../../../rules/codes/componentUnresolved';
-import type { ComponentEffect, EffectTurn } from '../../types';
-import { inHomeSystem } from '../../../stacks';
+import { structures } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { unresolvedBy } from '../../helpers/cardPlay';
+import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:meltdown';
 
@@ -17,19 +16,21 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-  play: turn => {
-    if (turn.choices.planet === undefined) return;
-    const planetId = String(turn.choices.planet);
-    // tirules2, Reactor Meltdown 3: a dock in a home system cannot be targeted.
-    if (inHomeSystem(turn.game, planetId, turn.pack)) return unresolved(turn, 'the system is a home system');
-    // tirules2, Reactor Meltdown 1: not your own dock.
-    if (turn.state.docks.includes(planetId)) return unresolved(turn, 'the space dock is your own');
-    const holder = Object.values(turn.states).find(own => own !== turn.state && own.docks.includes(planetId));
-    if (!holder) return unresolved(turn, 'no other player has a space dock on that planet');
-    holder.docks = holder.docks.filter(dock => dock !== planetId);
-  },
 };
 
-const unresolved = (turn: EffectTurn, reason: string): void => {
-  turn.warnings.push(violation(componentUnresolved.code, { id: turn.id, name: componentById(turn.pack, turn.id)?.name ?? turn.id, reason }));
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (ctx.choices.planet === undefined) return [];
+    const planetId = String(ctx.choices.planet);
+    const slot = ctx.systemOf(planetId);
+    // tirules2, Reactor Meltdown 3: a dock in a home system cannot be targeted.
+    if (slot !== undefined && ctx.tileKind(slot) === 'home') { unresolvedBy(ctx, 'the system is a home system'); return []; }
+    const here = ctx.board.planets[planetId];
+    const dock = (here?.structures.spacedock ?? 0) > 0;
+    // tirules2, Reactor Meltdown 1: not your own dock.
+    if (dock && here?.owner === ctx.holder) { unresolvedBy(ctx, 'the space dock is your own'); return []; }
+    if (!dock || here?.owner === undefined) { unresolvedBy(ctx, 'no other player has a space dock on that planet'); return []; }
+    return [structures.remove(here.owner, planetId, { spacedock: 1 })];
+  },
 };

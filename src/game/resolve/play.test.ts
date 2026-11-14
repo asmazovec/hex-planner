@@ -27,6 +27,14 @@ describe('the native play of a component', () => {
     }
   });
 
+  test('no file of the action cards keeps a play or a playAt written for the old state', () => {
+    const files = Object.values(COMPONENT_FILES).filter(f => f.id.startsWith('actionCard:'));
+    expect(files.length).toBeGreaterThan(30);
+    for (const file of files) expect((file.effect as { play?: unknown; playAt?: unknown } | undefined)?.play, file.id).toBeUndefined();
+    // What is left of `playAt` is the step a native play runs at, read by the runner.
+    for (const file of files.filter(f => (f.effect as { playAt?: unknown } | undefined)?.playAt !== undefined)) expect(effectOf(pack, file.id)?.nativePlay, file.id).toBeTypeOf('function');
+  });
+
   test('Bribery: the trade goods chosen leave the holder as an event; more than held is told and nothing goes below zero', () => {
     const board = applyAll(start, [{ type: 'TradeGoodsChanged', player: p1, delta: 3 }]);
     const ok = runPlay(table, board, pack, 'actionCard:bribery', p1, { actor: p1, step: 'component', choices: { tradeGoods: 2 }, held: true });

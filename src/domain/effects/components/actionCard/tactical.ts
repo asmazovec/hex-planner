@@ -5,10 +5,11 @@
  * A `play` of a component action with the choice `systemId`: every planet of other players in that system is
  * exhausted. The card's own condition (a unit of mine with BOMBARDMENT in the system) is warned of when it is not met.
  */
-import type { ComponentEffect } from '../../types';
-import { planetsOf } from '../../../replay/board';
+import { planet } from '../../../../game/abilities/emit';
+import type { GameEvent, Hooked } from '../../../../game/abilities/types';
 import { unitIds } from '../../../replay/state';
-import { exhaust, hasBombardment, rivalStateOf, unmet } from '../../helpers/cardPlay';
+import { bombardsBy, unmetBy } from '../../helpers/cardPlay';
+import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:tactical';
 
@@ -16,13 +17,19 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'systemId', kind: 'system' }],
-  play: turn => {
-    if (turn.choices.systemId === undefined) return;
-    const slot = String(turn.choices.systemId);
-    if (!unitIds(turn.state.systems[slot] ?? {}).some(unit => hasBombardment(turn, turn.state, unit))) unmet(turn);
-    for (const planetId of planetsOf(turn.game, slot, turn.pack)) {
-      const owner = rivalStateOf(turn, planetId);
-      if (owner) exhaust(owner, planetId);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (ctx.choices.systemId === undefined) return [];
+    const slot = String(ctx.choices.systemId);
+    if (!unitIds(ctx.my.unitsIn(slot)).some(unit => bombardsBy(ctx, unit))) unmetBy(ctx);
+    const events: GameEvent[] = [];
+    for (const planetId of ctx.planetsIn(slot)) {
+      const held = ctx.board.planets[planetId];
+      if (held?.owner !== undefined && held.owner !== ctx.holder && !held.exhausted) events.push(planet.exhaust(held.owner, planetId));
     }
+    return events;
   },
 };

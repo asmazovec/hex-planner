@@ -7,10 +7,10 @@
  * completely, is warned of with `componentUnresolved`. Pass 1 keeps it the hint it is today; its tests say what it
  * must do.
  */
-import { componentById } from '../../../components';
-import { violation } from '../../../rules/registry';
-import componentUnresolved from '../../../rules/codes/componentUnresolved';
-import type { ComponentEffect, EffectTurn } from '../../types';
+import { tokens } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { unresolvedBy } from '../../helpers/cardPlay';
+import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:insub';
 
@@ -18,16 +18,16 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'player', kind: 'player' }],
-  play: turn => {
-    if (turn.choices.player === undefined) return;
-    const target = turn.states[String(turn.choices.player)];
-    if (!target || target === turn.state) return unresolved(turn, 'another player must be chosen');
-    // tirules2, Insubordination 1: no token in the tactic pool, no target.
-    if (target.tactic < 1) return unresolved(turn, 'that player has no command token in their tactic pool');
-    target.tactic -= 1;
-  },
 };
 
-const unresolved = (turn: EffectTurn, reason: string): void => {
-  turn.warnings.push(violation(componentUnresolved.code, { id: turn.id, name: componentById(turn.pack, turn.id)?.name ?? turn.id, reason }));
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (ctx.choices.player === undefined) return [];
+    const target = ctx.playerOf(String(ctx.choices.player));
+    if (target === undefined || target === ctx.holder) { unresolvedBy(ctx, 'another player must be chosen'); return []; }
+    // tirules2, Insubordination 1: no token in the tactic pool, no target.
+    if (ctx.of(target).pools.tactic < 1) { unresolvedBy(ctx, 'that player has no command token in their tactic pool'); return []; }
+    return [tokens(target, { tactic: -1 })];
+  },
 };

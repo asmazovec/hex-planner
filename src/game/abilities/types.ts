@@ -172,6 +172,8 @@ export interface AbilityContext {
   research(technology: ComponentId): GameEvent[];
   /** The checks of the holder's units in a system as the board stands: capacity and the fleet pool (16.3, 37.1). */
   systemWarnings(slot: string): Warning[];
+  /** What the units cost the holder, each at its own cost (not the combined cost of a PRODUCTION use). */
+  unitCost(units: UnitCounts): number;
   /** What a planet is worth to the holder for a payment of the kind, after what they hold changed it. */
   planetValue(planet: string, kind: 'resources' | 'influence'): number;
   /** The kind of tile a system of the map is (`home`, `green`, ...); none for a slot with no tile. */
