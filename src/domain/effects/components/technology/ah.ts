@@ -22,7 +22,6 @@ export const ability: Ability = {
   // A planet with one of my structures produces as a unit of PRODUCTION 1.
   modify: { planetProduction: (value, ctx) => (ctx.structures.pds || ctx.structures.spacedock ? Math.max(value, 1) : value) },
   // The systems where a planet of mine has a space dock or a PDS.
-  stopsPassage: ({ game, pack, state }) => systemSlots(game).filter(slot =>
-    planetsOf(game, slot, pack).some(planet => state.docks.includes(planet) || (state.pds[planet] ?? 0) > 0)),
+  stopsPassage: ({ map, pack, structures }) => systemSlots(map).filter(slot => planetsOf(map, slot, pack).some(planet => structures.includes(planet))),
   holder: 'self',
 };

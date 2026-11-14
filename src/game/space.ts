@@ -4,12 +4,14 @@
  * `MapSource`); this file only gives them a table and a board. Other players' ships come from `board.systems`.
  */
 import {
-  adjacentTo, boardSlots, closedToRoute, endsRoute, fullPath, holdsShips, joined, passageBarredOf, routeDistances, routeReach, routeSteps,
+  adjacentTo, boardSlots, closedToRoute, endsRoute, fullPath, holdsShips, joined, routeDistances, routeReach, routeSteps,
   type Blockers, type Link, type MoveView,
 } from '../domain/movement';
 import { planetsOf as planetsOfSystem, tileAt, type MapSource } from '../domain/replay/board';
 import type { DataPack } from '../domain/types';
-import { legacyViews, SOURCES } from './legacyViews';
+import { effectOf, inForceOf } from '../domain/effects/registry';
+import { holderIn } from './abilities/registry';
+import { SOURCES } from './legacyViews';
 import type { Board, PlayerId, Slot, Table } from './types';
 
 const sources = new WeakMap<Table, WeakMap<Board['common']['fracture'], MapSource>>();
@@ -82,9 +84,15 @@ const BLOCKERS = new WeakMap<Board, { table: Table; pack: DataPack; of: Map<Play
 
 function blockersBuilt(table: Table, board: Board, mover: PlayerId, pack: DataPack): Blockers {
   const blockers = shipBlockers(board, mover, pack);
-  const views = legacyViews(table, board, pack);
-  const key = table.viewer === mover ? undefined : table.players.find(p => p.id === mover)?.legacyId ?? mover;
-  for (const slot of passageBarredOf(views.game, views.states.me, key, pack)) blockers.add(slot);
+  const map = mapSource(table, board);
+  for (const { id: owner } of table.players) {
+    if (owner === mover) continue;
+    const structures = Object.entries(board.planets)
+      .filter(([, planet]) => planet.owner === owner && ((planet.structures.pds ?? 0) > 0 || (planet.structures.spacedock ?? 0) > 0)).map(([planet]) => planet);
+    for (const id of inForceOf(pack, holderIn(table, board, owner), effect => effect.stopsPassage !== undefined)) {
+      for (const slot of effectOf(pack, id)!.stopsPassage!({ id, pack, map, owner, mover, structures })) blockers.add(slot);
+    }
+  }
   return blockers;
 }
 

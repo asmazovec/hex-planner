@@ -238,7 +238,8 @@ export function passageBarredOf(game: Game, state: Pick<GameState, 'systems' | '
     if (owner === (mover ?? 'me')) continue;
     const holder = holderOf(owner === 'me' ? game : { faction: own.faction ?? game.faction }, own, shared);
     for (const id of inForceOf(pack, holder, effect => effect.stopsPassage !== undefined)) {
-      for (const slot of effectOf(pack, id)!.stopsPassage!({ id, game, pack, owner, mover: mover ?? 'me', state: own, shared })) barred.add(slot);
+      const structures = [...own.docks, ...Object.keys(own.pds).filter(planet => (own.pds[planet] ?? 0) > 0)];
+      for (const slot of effectOf(pack, id)!.stopsPassage!({ id, pack, map: game, owner, mover: mover ?? 'me', structures })) barred.add(slot);
     }
   }
   return barred;

@@ -7,20 +7,21 @@
  *  - `onLanding`: a cost or a check asked of the components in force of every other player when a player lands on a
  *    planet (Keleres mech): it may change the lander's state and push warnings.
  */
+import type { MapSource } from '../../replay/board';
 import type { DataPack, Game, GameState, Holdings, Warning } from '../../types';
 
 /** What a component that bars systems to other players' ships is asked with. */
 export interface PassageTurn {
   /** The component, as held. */
   id: string;
-  game: Game;
   pack: DataPack;
-  /** The player whose component it is, and the player whose ships move (`me` or an opponent's id). */
+  /** The map as the movement code reads it. */
+  map: MapSource;
+  /** The player whose component it is, and the player whose ships move. */
   owner: string;
   mover: string;
-  /** The owner's state, and my state (laws, every player's state in `rivals`). */
-  state: GameState;
-  shared: GameState;
+  /** The planets of the owner that hold a structure. */
+  structures: readonly string[];
 }
 
 /** What a component is asked with when a player lands ground forces on a planet. */
