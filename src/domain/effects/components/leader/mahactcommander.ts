@@ -12,22 +12,24 @@
  */
 import type { ComponentEffect } from '../../types';
 import type { Hooked } from '../../../../game/abilities/types';
+import { commandToken } from '../../../../game/abilities/emit';
 
 export const id = 'leader:mahactcommander';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ entry, state, held, warnings }) => {
-    if (!held || entry.type !== 'tactical' || entry.systemId === null) return;
-    const slot = entry.systemId;
-    if (!warnings.some(w => w.code === 'systemHasToken' && w.params.systemId === slot)) return;
-    state.tokensOnMap = state.tokensOnMap.filter(token => token !== slot);
-  },
 };
 
 export const ability: Hooked = {
   holder: 'self',
+  play: ctx => {
+    const entry = ctx.entry;
+    if (!ctx.held || entry?.type !== 'tactical' || entry.systemId === null) return [];
+    const slot = entry.systemId;
+    if (!ctx.warned.some(w => w.code === 'systemHasToken' && w.params.systemId === slot)) return [];
+    return [commandToken.remove(ctx.holder, slot)];
+  },
   permit: [{
     code: 'systemHasToken',
     rule: 'you can activate systems that contain your command tokens.',

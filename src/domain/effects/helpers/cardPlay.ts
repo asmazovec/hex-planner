@@ -16,7 +16,7 @@ import type { GameState, UnitCounts, UnitId } from '../../types';
 import type { AbilityContext } from '../../../game/abilities/types';
 import componentUnresolved from '../../rules/codes/componentUnresolved';
 import type { GameEvent } from '../../../game/events';
-import { tokens } from '../../../game/abilities/emit';
+import { tokens, tradeGoods as tradeGoodsOf } from '../../../game/abilities/emit';
 import { MECATOL_PLANET, MECATOL_PLANET_TE, MECATOL_TILE_TE } from '../../mecatol';
 import type { EffectTurn } from '../types';
 
@@ -168,3 +168,24 @@ export function spendStrategyBy(ctx: AbilityContext, count = 1): GameEvent[] {
 /** The planet id of Mecatol Rex on this map: the Thunder's Edge one when its tile is in the centre. */
 export const mecatolPlanetBy = (ctx: AbilityContext): string =>
   Object.values(ctx.table.map).some(tile => tile.split('@')[0] === MECATOL_TILE_TE) ? MECATOL_PLANET_TE : MECATOL_PLANET;
+
+/** The units a move asks of a system that the holder has there: what is short is warned of (`unitsMissing`), and the source only ends empty, never below. */
+export function missingBy(ctx: AbilityContext, slot: string, units: UnitCounts): UnitCounts {
+  const have = ctx.my.unitsIn(slot);
+  const found: UnitCounts = {};
+  for (const unit of unitIds(units)) {
+    const wanted = units[unit] ?? 0;
+    const missing = wanted - (have[unit] ?? 0);
+    if (missing > 0) ctx.warn(violation('unitsMissing', { where: slot, unit, missing }));
+    const taken = Math.min(wanted, have[unit] ?? 0);
+    if (taken > 0) found[unit] = taken;
+  }
+  return found;
+}
+
+/** The holder takes control of a planet as a landing does: it comes exhausted, and the trade goods `tradeGoodsOnControl` asks come with it. A planet already theirs changes nothing. */
+export function takeControlBy(ctx: AbilityContext, planetId: string): GameEvent[] {
+  if (ctx.board.planets[planetId]?.owner === ctx.holder) return [];
+  const goods = ctx.applied('tradeGoodsOnControl', 0, { planetId });
+  return [{ type: 'PlanetGained', player: ctx.holder, planet: planetId }, { type: 'PlanetExhausted', player: ctx.holder, planet: planetId }, ...(goods > 0 ? [tradeGoodsOf(ctx.holder, goods)] : [])];
+}

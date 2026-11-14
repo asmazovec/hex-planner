@@ -10,9 +10,9 @@
  * itself, not held or exhausted, are the replay's). The token goes to the player whose entry names the agent: the
  * agent's owner, or the mover when the entry is another player's.
  */
-import { planetsOf } from '../../../replay/board';
-import { gainTokens } from '../../../replay/status';
 import type { ComponentEffect } from '../../types';
+import { tokens } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:empyreanagent';
 
@@ -30,12 +30,16 @@ export const effect: ComponentEffect = {
       strategy: { ru: 'Стратегический', en: 'Strategy' },
     },
   }],
-  play: turn => {
-    const { entry, game, pack } = turn;
-    if (entry.type !== 'tactical' || entry.systemId === null) return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const entry = ctx.entry;
+    if (entry?.type !== 'tactical' || entry.systemId === null) return [];
     const moved = entry.moves.some(move => Object.values(move.units).some(count => (count ?? 0) > 0));
-    if (!moved || planetsOf(game, entry.systemId, pack).length > 0) return;
-    const pool = turn.choices.pool;
-    gainTokens(turn, { [pool === 'fleet' || pool === 'strategy' ? pool : 'tactic']: 1 });
+    if (!moved || ctx.planetsIn(entry.systemId).length > 0) return [];
+    const pool = ctx.choices.pool;
+    return [tokens(ctx.holder, { [pool === 'fleet' || pool === 'strategy' ? pool : 'tactic']: 1 }, 'component')];
   },
 };

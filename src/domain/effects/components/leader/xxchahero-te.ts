@@ -7,10 +7,13 @@
  * hero). The structure rules still hold (on a planet the player controls, 2 PDS a planet), and more than 4 units is
  * warned of with a new code. Rulings: a readied planet may take units, several on one planet.
  */
-import { placeOnPlanet } from '../../../replay/invasion';
+import placeNotControlled from '../../../rules/codes/placeNotControlled';
 import placementOverLimit from '../../../rules/codes/placementOverLimit';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
+import { placeUnits, planet, structures } from '../../../../game/abilities/emit';
+import type { GameEvent } from '../../../../game/events';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:xxchahero-te';
 
@@ -22,24 +25,35 @@ const PDS_PER_PLANET = 2;
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ held, game, state, choices, warnings }) => {
-    if (!held || game.faction !== 'xxcha') return;
-    const placements = Object.entries(choices).flatMap(([key, count]) => {
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held || ctx.my.faction !== 'xxcha') return [];
+    const placements = Object.entries(ctx.choices).flatMap(([key, count]) => {
       const [unit, planetId] = key.split('@');
       return (unit === 'pds' || unit === 'mech') && planetId && Number(count) > 0 ? [{ unit, planetId, count: Number(count) }] : [];
     });
     const total = placements.reduce((sum, placement) => sum + placement.count, 0);
-    if (total > LIMIT) warnings.push(violation(placementOverLimit.code, { count: total, limit: LIMIT }));
-    for (const { unit, planetId, count } of placements) {
+    if (total > LIMIT) ctx.warn(violation(placementOverLimit.code, { count: total, limit: LIMIT }));
+    const standing = new Map<string, number>(ctx.my.planets().map(each => [each.id, each.structures.pds ?? 0]));
+    const readied = new Set<string>(ctx.my.planets().filter(each => each.exhausted).map(each => each.id));
+    return placements.flatMap(({ unit, planetId, count }) => {
+      const events: GameEvent[] = [];
       if (unit === 'pds') {
-        if (state.control[planetId] !== 'me') warnings.push(violation('structureNotControlled', { planetId }));
-        if ((state.pds[planetId] ?? 0) + count > PDS_PER_PLANET) warnings.push(violation('structureLimit', { kind: 'pds', planetId, count: PDS_PER_PLANET }));
-        state.pds[planetId] = (state.pds[planetId] ?? 0) + count;
+        if (ctx.board.planets[planetId]?.owner !== ctx.holder) ctx.warn(violation('structureNotControlled', { planetId }));
+        const had = standing.get(planetId) ?? 0;
+        if (had + count > PDS_PER_PLANET) ctx.warn(violation('structureLimit', { kind: 'pds', planetId, count: PDS_PER_PLANET }));
+        standing.set(planetId, had + count);
+        events.push(structures.place(ctx.holder, planetId, { pds: count }));
       } else {
-        placeOnPlanet(state, planetId, { mech: count }, warnings, 'component');
+        if (ctx.board.planets[planetId]?.owner !== ctx.holder) ctx.warn(violation(placeNotControlled.code, { planetId }, 'component'));
+        events.push(placeUnits(ctx.holder, { planet: planetId }, { mech: count }));
       }
       // Each planet a unit is placed on is readied.
-      state.exhausted = state.exhausted.filter(each => each !== planetId);
-    }
+      if (readied.delete(planetId)) events.push(planet.ready(ctx.holder, planetId));
+      return events;
+    });
   },
 };

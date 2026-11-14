@@ -62,6 +62,6 @@ describe('leader:jolnaragent Doctor Sucaban', () => {
   test('leader:jolnaragent is a play effect', () => {
     const { pack } = jolnar([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).play).toBeTypeOf('function');
+    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
   });
 });

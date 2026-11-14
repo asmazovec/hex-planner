@@ -13,7 +13,7 @@ import { applyChecked } from '../apply';
 import type { GameEvent } from '../events';
 import type { Board, DataPack, PlayerId, Table } from '../types';
 import { warn, type Ctx } from './context';
-import { contextOf, type HookOptions, type HookResult } from './hooks';
+import { contextOf, poolWarnings, type HookOptions, type HookResult } from './hooks';
 
 /** Plays the component `id` for `player`: what it does is applied one event at a time, its warnings are listed. */
 export function runPlay(table: Table, start: Board, pack: DataPack, id: string, player: PlayerId, options: HookOptions): HookResult {
@@ -26,7 +26,10 @@ export function runPlay(table: Table, start: Board, pack: DataPack, id: string, 
   for (const event of returned) {
     const step = event.cause?.step ?? options.step;
     const stamped: GameEvent = { ...event, cause: { ...(options.turn ? { turn: options.turn } : {}), ...event.cause, ...(step ? { step } : {}), component: id } };
-    board = applyChecked(board, stamped).board;
+    const applied = applyChecked(board, stamped);
+    // Tokens a play names a step for are checked as the tokens of any component are (pools below zero, over the faction's, the fleet pool under the ships).
+    if (stamped.type === 'TokensChanged' && event.cause?.step !== undefined) violations.push(...poolWarnings(table, board, applied.board, pack, stamped, event.cause.step));
+    board = applied.board;
     events.push(stamped);
   }
   return { board, events, violations };
@@ -35,10 +38,18 @@ export function runPlay(table: Table, start: Board, pack: DataPack, id: string, 
 /** Whether the component's play is written for the kernel. */
 export const playsNatively = (pack: DataPack, id: string): boolean => effectOf(pack, id)?.nativePlay !== undefined;
 
+/** A warning of the turn taken back, or worded again where it stands. */
+function revise(ctx: Ctx, found: Warning, to?: Warning): void {
+  const change = (list: Warning[]): Warning[] => (to === undefined ? list.filter(w => w !== found) : list.map(w => (w === found ? to : w)));
+  ctx.warnings = change(ctx.warnings);
+  for (const step of ctx.steps) step.violations = change(step.violations);
+  ctx.cur.violations = change(ctx.cur.violations);
+}
+
 /** One component the entry names, played on the turn's board: its events and warnings join the step. */
 export function playOne(ctx: Ctx, id: string): GameEvent[] {
   const lacking = ctx.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
-  const result = runPlay(ctx.table, ctx.board, ctx.pack, id, ctx.player, { actor: ctx.player, step: ctx.cur.step, entry: ctx.entry, choices: choicesFor(ctx.entry, id), held: !lacking });
+  const result = runPlay(ctx.table, ctx.board, ctx.pack, id, ctx.player, { actor: ctx.player, step: ctx.cur.step, entry: ctx.entry, choices: choicesFor(ctx.entry, id), held: !lacking, warned: ctx.warnings, revise: (found, to) => revise(ctx, found, to) });
   ctx.board = result.board;
   ctx.cur.events.push(...result.events);
   if (result.violations.length > 0) warn(ctx, result.violations);

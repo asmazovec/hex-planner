@@ -11,20 +11,20 @@
 
  * The tokens go to the tactic pool: the pass has no field for choosing a pool yet.
  */
-import { gainTokens } from '../../../replay/status';
 import type { ComponentEffect } from '../../types';
 import type { Hooked } from '../../../../game/abilities/types';
+import { tokens } from '../../../../game/abilities/emit';
 
 export const id = 'leader:ralnelhero';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => gainTokens(turn, { tactic: 2 }),
 };
 
 export const ability: Hooked = {
   holder: 'self',
+  play: ctx => [tokens(ctx.holder, { tactic: 2 }, 'component')],
   permit: [{
     code: 'actionAfterPass',
     rule: 'You may choose to no longer be passed',

@@ -7,14 +7,17 @@
  * leave it; the replay already purges a hero when it is played.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:solhero';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ held, state }) => {
-    if (!held) return;
-    state.tokensOnMap = [];
-  },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  // Every command token of mine on the map goes back to my reinforcements.
+  play: ctx => (ctx.held ? [{ type: 'TokenReturned', player: ctx.holder }] : []),
 };

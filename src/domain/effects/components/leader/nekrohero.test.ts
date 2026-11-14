@@ -66,6 +66,6 @@ describe('leader:nekrohero UNIT.DSGN.FLAYESH', () => {
   test('leader:nekrohero is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).play).toBeTypeOf('function');
+    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
   });
 });

@@ -7,6 +7,8 @@
  * played. The Space Cannon is combat, which the plan does not roll.
  */
 import type { ComponentEffect } from '../../types';
+import { planet } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:titanshero';
 
@@ -20,9 +22,12 @@ export const effect: ComponentEffect = {
     planetResources: (value, ctx) => (attached(ctx) ? value + 3 : value),
     planetInfluence: (value, ctx) => (attached(ctx) ? value + 3 : value),
   },
-  play: ({ state, shared }) => {
-    state.exhausted = state.exhausted.filter(planetId => planetId !== 'elysium');
-    const all = (shared.attachments ??= {});
-    all.elysium = [...(all.elysium ?? []).filter(card => card !== id), id];
-  },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => [
+    ...(ctx.my.planets().some(each => each.id === 'elysium' && each.exhausted) ? [planet.ready(ctx.holder, 'elysium')] : []),
+    { type: 'CardAttached', planet: 'elysium', card: id },
+  ],
 };

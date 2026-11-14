@@ -7,13 +7,18 @@
  * the replay already does when a hero is played.
  *
  */
-import { readyPlanets } from '../../../replay/payment';
 import type { ComponentEffect } from '../../types';
+import { planet } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:obsidianhero';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ state, warnings }) => readyPlanets(state, state.exhausted.filter(planet => state.control[planet] === 'me'), warnings, 'component'),
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => ctx.my.planets().filter(each => each.exhausted).map(each => planet.ready(ctx.holder, each.id)),
 };

@@ -11,7 +11,7 @@ import { productionCost } from '../../domain/unitStats';
 import { checkPoolChange } from '../../domain/replay/status';
 import { tileAt } from '../../domain/replay/board';
 import { researchTechnologies } from '../../domain/replay/research';
-import { checkSystem } from '../../domain/replay/transport';
+import { capacity, checkSystem } from '../../domain/replay/transport';
 import { applyComponentProduction } from '../../domain/replay/production';
 import { buildStructures } from '../../domain/replay/structures';
 import { adjacentTo, wormholesOf } from '../../domain/movement';
@@ -48,10 +48,13 @@ export interface HookOptions {
   choices?: Readonly<Record<string, string | number>>;
   /** `play` only: whether the component was held and ready when it was played. */
   held?: boolean;
+  /** `play` only: the warnings of the turn so far, and how a play takes one back or words it again. */
+  warned?: readonly Warning[];
+  revise?: (warning: Warning, to?: Warning) => void;
 }
 
 /** The pool warnings of tokens just changed: a pool below zero, more than the tokens of a faction, a fleet pool under the ships standing (the checks of the old `gainTokens`). */
-function poolWarnings(table: Table, before: Board, board: Board, pack: DataPack, event: Extract<GameEvent, { type: 'TokensChanged' }>, step: RuleStep | undefined): Warning[] {
+export function poolWarnings(table: Table, before: Board, board: Board, pack: DataPack, event: Extract<GameEvent, { type: 'TokensChanged' }>, step: RuleStep | undefined): Warning[] {
   const found: Warning[] = [];
   const pools = { tactic: event.delta.tactic ?? 0, fleet: event.delta.fleet ?? 0, strategy: event.delta.strategy ?? 0 };
   for (const pool of ['tactic', 'fleet', 'strategy'] as const) {
@@ -65,7 +68,7 @@ function poolWarnings(table: Table, before: Board, board: Board, pack: DataPack,
 
 /** The context a component is asked with: the board as it stands, the holder and the actor, the readers and the questions of the game. */
 export function contextOf(
-  table: Table, at: Board, pack: DataPack, player: PlayerId, id: string, options: Pick<HookOptions, 'actor' | 'step' | 'choices' | 'entry' | 'held'>, warn: (warning: Warning) => void,
+  table: Table, at: Board, pack: DataPack, player: PlayerId, id: string, options: Pick<HookOptions, 'actor' | 'step' | 'choices' | 'entry' | 'held' | 'warned' | 'revise'>, warn: (warning: Warning) => void,
 ): AbilityContext {
   return {
     board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), held: options.held ?? true, choices: options.choices ?? {}, own: player === options.actor,
@@ -117,6 +120,9 @@ export function contextOf(
       return legacyEvents(table, pack, before, work, player);
     },
     systemWarnings: slot => { const v = viewFor(table, at, pack, player); return checkSystem(v.game, v.state, slot, pack); },
+    capacityOf: units => { const v = viewFor(table, at, pack, player); const { capacity: room, load } = capacity(v.game, units, holderOf(v.game, v.state, v.shared), pack); return { capacity: room, load }; },
+    warned: options.warned ?? [],
+    revise: (found, to) => { options.revise?.(found, to); },
     unitCost: units => { const v = viewFor(table, at, pack, player); return productionCost(units, v.game.faction, holderOf(v.game, v.state, v.shared), pack); },
     planetValue: (planet, kind) => planetValue(table, at, pack, player, planet, kind),
     tileKind: slot => { const v = viewFor(table, at, pack, player); return tileAt(v.game, slot, pack)?.kind; },

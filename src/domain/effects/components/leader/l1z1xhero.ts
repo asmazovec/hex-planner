@@ -12,11 +12,13 @@
  * `systemOccupied`. Only the system can be chosen on the screen (the choices declare no per-system ship counts); with no
  * `<unit>@<slot>` choice at all the play takes the flagship and every dreadnought of the other systems.
  */
-import { moveUnits } from '../../../replay/movement';
 import systemOccupied from '../../../rules/codes/systemOccupied';
 import { violation } from '../../../rules/registry';
-import type { UnitCounts, UnitId } from '../../../types';
 import type { ComponentEffect } from '../../types';
+import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import type { UnitCounts } from '../../../types';
+import { missingBy, othersHaveShips } from '../../helpers/cardPlay';
 
 const SHIPS = ['flagship', 'dreadnought'] as const;
 
@@ -26,27 +28,27 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'system', kind: 'system' }],
-  play: ({ game, pack, state, states, player, choices, warnings }) => {
-    if (game.faction !== 'l1z1x') return;
-    const target = choices.system;
-    if (typeof target !== 'string') return;
-    // Other players' ships in the chosen system: the replayed states, and what stands there by hand for the others.
-    const others = Object.entries(states).filter(([owner]) => owner !== player);
-    const shipsIn = (units: UnitCounts | undefined): boolean =>
-      Object.entries(units ?? {}).some(([unit, count]) => (count ?? 0) > 0 && pack.units[unit as UnitId] !== undefined && !pack.units[unit as UnitId]?.ground);
-    const occupied = others.some(([, other]) => shipsIn(other.systems[target]))
-      || Object.entries(game.enemyUnits[target] ?? {}).some(([owner, units]) => owner !== player && !(owner in states) && shipsIn(units));
-    if (occupied) warnings.push(violation(systemOccupied.code, {}));
-    const named = Object.entries(choices).flatMap(([key, count]) => {
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (ctx.my.faction !== 'l1z1x') return [];
+    const target = ctx.choices.system;
+    if (typeof target !== 'string') return [];
+    if (othersHaveShips(ctx, target)) ctx.warn(violation(systemOccupied.code, {}));
+    const named = Object.entries(ctx.choices).flatMap(([key, count]) => {
       const [unit, from] = key.split('@');
       return (SHIPS as readonly string[]).includes(unit) && from !== undefined && from !== target && typeof count === 'number' && count > 0
         ? [{ from, units: { [unit]: count } as UnitCounts }] : [];
     });
-    const everything = Object.keys(choices).some(key => key.includes('@')) ? [] : Object.entries(state.systems).flatMap(([from, units]) => {
+    const everything = Object.keys(ctx.choices).some(key => key.includes('@')) ? [] : Object.keys({ ...ctx.table.map, ...ctx.board.common.fracture.tiles }).flatMap(from => {
+      const units = ctx.my.unitsIn(from);
       const ships: UnitCounts = {};
       for (const unit of SHIPS) if (from !== target && (units[unit] ?? 0) > 0) ships[unit] = units[unit];
       return Object.keys(ships).length > 0 ? [{ from, units: ships }] : [];
     });
-    moveUnits(game, state, target, [...named, ...everything], pack, warnings);
+    // What was asked for flies all the same: a shortfall at the source is told, and the source only ends empty.
+    return [...named, ...everything].flatMap(({ from, units }) => [removeUnits(ctx.holder, { slot: from }, missingBy(ctx, from, units)), placeUnits(ctx.holder, { slot: target }, units)]);
   },
 };

@@ -6,16 +6,22 @@
  * exhausted by its use.
  */
 import type { ComponentEffect } from '../../types';
+import { tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:titanscommander';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ entry, state }) => {
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
     // Note 1.2: no trade good unless at least one unit is produced.
-    if (entry.type !== 'tactical') return;
-    const produced = Object.values(entry.production).reduce((sum, n) => sum + (n ?? 0), 0);
-    if (produced > 0) state.tradeGoods += 1;
+    if (ctx.entry?.type !== 'tactical') return [];
+    const produced = Object.values(ctx.entry.production).reduce((sum, n) => sum + (n ?? 0), 0);
+    return produced > 0 ? [tradeGoods(ctx.holder, 1)] : [];
   },
 };

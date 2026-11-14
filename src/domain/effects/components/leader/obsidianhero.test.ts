@@ -59,6 +59,6 @@ describe('leader:obsidianhero Sharsiss Hollow', () => {
   test('leader:obsidianhero is a play effect', () => {
     const { pack } = obsidian([[]]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).play).toBeTypeOf('function');
+    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
   });
 });

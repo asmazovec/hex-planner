@@ -8,19 +8,25 @@
  * combat, bombardment) is combat, which the plan does not simulate; the battle's `losses` should be left empty.
 
  */
-import type { UnitId } from '../../../types';
 import type { ComponentEffect } from '../../types';
+import { removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:sardakkhero';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ state, entry, held, pack }) => {
-    if (!held || entry.type !== 'tactical' || entry.systemId === null) return;
-    const here = state.systems[entry.systemId];
-    if (!here) return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const entry = ctx.entry;
+    if (!ctx.held || entry?.type !== 'tactical' || entry.systemId === null) return [];
     // Every ship of mine in the active system returns to reinforcements; ground forces in the space area stay.
-    for (const unit of Object.keys(here) as UnitId[]) if (!pack.units[unit]?.ground) delete here[unit];
+    const here = ctx.my.unitsIn(entry.systemId);
+    const ships = Object.fromEntries(Object.entries(here).filter(([unit, count]) => (count ?? 0) > 0 && !ctx.pack.units[unit as keyof typeof ctx.pack.units]?.ground));
+    return Object.keys(ships).length > 0 ? [removeUnits(ctx.holder, { slot: entry.systemId }, ships)] : [];
   },
 };

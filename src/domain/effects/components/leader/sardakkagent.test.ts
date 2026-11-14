@@ -53,6 +53,6 @@ describe('leader:sardakkagent T\'ro', () => {
   test('leader:sardakkagent is a play effect', () => {
     const { pack } = sardakk([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).play).toBeTypeOf('function');
+    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
   });
 });

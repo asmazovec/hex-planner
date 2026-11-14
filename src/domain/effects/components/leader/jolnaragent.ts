@@ -11,6 +11,8 @@
 
  */
 import type { ComponentEffect } from '../../types';
+import { removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:jolnaragent';
 
@@ -24,24 +26,29 @@ export const effect: ComponentEffect = {
       .filter(([, units]) => (units.infantry ?? 0) > 0)
       .map(([planet, units]) => ({ key: planet, unit: 'infantry' as const, planet, max: units.infantry })),
   }],
-  play: ({ state, choices, held, warnings }) => {
-    if (!held) return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held) return [];
     // The infantry chosen by planet are removed, never more than stand there; each lowers the resources spent by 1.
     let removed = 0;
-    for (const [planet, wanted] of Object.entries(choices)) {
-      const stands = state.ground[planet]?.infantry ?? 0;
+    const events = [];
+    for (const [planet, wanted] of Object.entries(ctx.choices)) {
+      const stands = ctx.my.unitsOn(planet).infantry ?? 0;
       const count = Math.min(Math.max(0, Math.floor(Number(wanted)) || 0), stands);
       if (count <= 0) continue;
-      state.ground[planet] = { ...state.ground[planet], infantry: stands - count };
+      events.push(removeUnits(ctx.holder, { planet }, { infantry: count }));
       removed += count;
     }
-    if (removed === 0) return;
+    if (removed === 0) return [];
     // The card's payment was checked first as a shortfall of `needed`; against the cost lowered by `removed` it may be none.
-    const index = warnings.findIndex(w => w.code === 'shortResources');
-    if (index < 0) return;
-    const warning = warnings[index];
-    const needed = Math.max(0, Number(warning.params.needed) - removed);
-    if (needed > Number(warning.params.paid)) warnings[index] = { ...warning, params: { ...warning.params, needed } };
-    else warnings.splice(index, 1);
+    const found = ctx.warned.find(w => w.code === 'shortResources');
+    if (found === undefined) return events;
+    const needed = Math.max(0, Number(found.params.needed) - removed);
+    if (needed > Number(found.params.paid)) ctx.revise(found, { ...found, params: { ...found.params, needed } });
+    else ctx.revise(found);
+    return events;
   },
 };

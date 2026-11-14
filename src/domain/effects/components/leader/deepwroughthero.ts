@@ -8,6 +8,8 @@
  * as a gain of the entry. The hero's own purge is the common rule of heroes (51.12).
  */
 import type { ComponentEffect } from '../../types';
+import { card } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:deepwroughthero';
 
@@ -20,12 +22,14 @@ export const effect: ComponentEffect = {
     label: { ru: 'Технология', en: 'Technology' },
     options: ({ pack }) => Object.entries(pack.technologies).filter(([, def]) => !def.upgrade).map(([key]) => `technology:${key}`),
   }],
-  play: ({ choices, states }) => {
-    const chosen = choices.technology;
-    if (typeof chosen !== 'string' || chosen === '') return;
-    for (const player of Object.values(states)) {
-      player.holdings.technologies = player.holdings.technologies.filter(owned => owned !== chosen);
-      player.holdings.exhausted = player.holdings.exhausted.filter(owned => owned !== chosen);
-    }
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const chosen = ctx.choices.technology;
+    if (typeof chosen !== 'string' || chosen === '') return [];
+    // The technology leaves every player's holdings.
+    return ctx.table.players.filter(player => ctx.of(player.id).holds(chosen)).map(player => card.lose(player.id, chosen));
   },
 };

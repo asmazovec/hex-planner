@@ -176,6 +176,12 @@ export interface AbilityContext {
   buildStructures(structures: readonly { kind: 'pds' | 'spacedock'; planetId: string }[]): GameEvent[];
   /** The production of a component's entry (`effects.production`): checked as a system's, placed, paid for by the entry's payment; the events, and through `warn` the checks. Needs a component entry. */
   produce(systemId: string, units: UnitCounts): GameEvent[];
+  /** What the units can carry and how much they load: the capacity of a set of units for the holder (16). */
+  capacityOf(units: UnitCounts): { capacity: number; load: number };
+  /** The warnings the turn has made so far (a play runs after the checks of its entry); none outside a turn. */
+  readonly warned: readonly Warning[];
+  /** Takes back a warning of the turn, or words it again as `to` (Doctor Sucaban lowers the cost a payment check was made against). */
+  revise(warning: Warning, to?: Warning): void;
   /** What the units cost the holder, each at its own cost (not the combined cost of a PRODUCTION use). */
   unitCost(units: UnitCounts): number;
   /** What a planet is worth to the holder for a payment of the kind, after what they hold changed it. */

@@ -9,9 +9,9 @@
  * (an opponent's entry naming my agent) it is not modelled: an opponent's entry does not change my state.
 
  */
-import { add } from '../../../replay/state';
-import { systemOfPlanet } from '../../../stacks';
 import type { ComponentEffect } from '../../types';
+import { placeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:sardakkagent';
 
@@ -19,10 +19,15 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-  play: ({ game, state, entry, choices, held, pack }) => {
-    if (!held || entry.type !== 'tactical') return;
-    const planet = String(choices.planet ?? '');
-    if (!planet || state.control[planet] !== 'me' || systemOfPlanet(game, planet, pack) !== entry.systemId) return;
-    add(state.ground, planet, { infantry: 2 });
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const entry = ctx.entry;
+    if (!ctx.held || entry?.type !== 'tactical') return [];
+    const planet = String(ctx.choices.planet ?? '');
+    if (!planet || ctx.board.planets[planet]?.owner !== ctx.holder || ctx.systemOf(planet) !== entry.systemId) return [];
+    return [placeUnits(ctx.holder, { planet }, { infantry: 2 })];
   },
 };

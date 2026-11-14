@@ -62,6 +62,6 @@ describe('leader:xxchahero-te Xxekir Grom — Planetary Defense Nexus', () => {
   test('leader:xxchahero-te is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).play).toBeTypeOf('function');
+    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
   });
 });

@@ -9,6 +9,9 @@
  */
 import { componentsOf } from '../../../components';
 import type { ComponentEffect } from '../../types';
+import { card, removeUnits, structures, tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { othersBy } from '../../helpers/cardPlay';
 
 export const id = 'leader:nekrohero';
 
@@ -29,19 +32,26 @@ export const effect: ComponentEffect = {
       },
     },
   ],
-  play: ({ choices, states, state, player, pack, held }) => {
-    if (!held) return;
-    const planetId = String(choices.planet ?? '');
-    const planet = pack.planets[planetId];
-    if (!planet) return;
-    for (const [owner, other] of Object.entries(states)) {
-      if (owner === player) continue;
-      delete other.ground[planetId];
-      delete other.pds[planetId];
-      other.docks = other.docks.filter(dock => dock !== planetId);
-    }
-    state.tradeGoods += planet.resources + planet.influence;
-    const technology = String(choices.technology ?? '');
-    if (technology && !state.holdings.technologies.includes(technology)) state.holdings.technologies.push(technology);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held) return [];
+    const planetId = String(ctx.choices.planet ?? '');
+    const planet = ctx.pack.planets[planetId];
+    if (!planet) return [];
+    const events = othersBy(ctx).flatMap(who => {
+      const ground = ctx.of(who).unitsOn(planetId);
+      const built = ctx.of(who).structures().find(each => each.planet === planetId)?.structures ?? {};
+      return [
+        ...(Object.keys(ground).length > 0 ? [removeUnits(who, { planet: planetId }, ground)] : []),
+        ...(Object.keys(built).length > 0 ? [structures.remove(who, planetId, built)] : []),
+      ];
+    });
+    events.push(tradeGoods(ctx.holder, planet.resources + planet.influence));
+    const technology = String(ctx.choices.technology ?? '');
+    if (technology && !ctx.my.holds(technology)) events.push(card.gain(ctx.holder, technology));
+    return events;
   },
 };

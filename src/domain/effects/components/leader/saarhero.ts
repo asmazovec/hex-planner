@@ -7,8 +7,10 @@
  * already purges a hero when it is played. A system that is not adjacent to one of my docks (a dock's own system is
  * not adjacent to itself, Saar note on the hero) is a breach still to be checked.
  */
-import { planetsOf } from '../../../replay/board';
 import type { ComponentEffect } from '../../types';
+import { removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { othersBy } from '../../helpers/cardPlay';
 
 export const id = 'leader:saarhero';
 
@@ -16,18 +18,22 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'system', kind: 'system' }],
-  play: ({ game, pack, states, player, choices }) => {
-    const slot = String(choices.system ?? '');
-    if (slot === '') return;
-    const planets = planetsOf(game, slot, pack);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const slot = String(ctx.choices.system ?? '');
+    if (slot === '') return [];
     // Every other player's infantry and fighters, in the space area and on the planets of the system.
-    for (const [who, other] of Object.entries(states)) {
-      if (who === player) continue;
-      for (const counts of [other.systems[slot], ...planets.map(planet => other.ground[planet])]) {
-        if (!counts) continue;
-        delete counts.infantry;
-        delete counts.fighter;
-      }
-    }
+    return othersBy(ctx).flatMap(who => {
+      const them = ctx.of(who);
+      const at = [{ slot } as const, ...ctx.planetsIn(slot).map(planet => ({ planet }) as const)];
+      return at.flatMap(place => {
+        const units = 'slot' in place ? them.unitsIn(place.slot) : them.unitsOn(place.planet);
+        const gone = { ...(units.infantry ? { infantry: units.infantry } : {}), ...(units.fighter ? { fighter: units.fighter } : {}) };
+        return Object.keys(gone).length > 0 ? [removeUnits(who, place, gone)] : [];
+      });
+    });
   },
 };

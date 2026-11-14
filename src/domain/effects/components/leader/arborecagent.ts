@@ -7,12 +7,13 @@
  * above the replaced ship is warned of. The replay exhausts the agent. Only my own ships are chosen here: another
  * player's board is not reached from my entry.
  */
-import { costOf } from '../../../replay/production';
 import replacementCost from '../../../rules/codes/replacementCost';
 import componentUnresolved from '../../../rules/codes/componentUnresolved';
 import { violation } from '../../../rules/registry';
 import type { UnitId } from '../../../types';
 import type { ComponentEffect } from '../../types';
+import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:arborecagent';
 
@@ -29,22 +30,22 @@ export const effect: ComponentEffect = {
     },
     { key: 'replacement', kind: 'unit', label: { ru: 'Новый корабль', en: 'Ship placed' }, options: ctx => Object.values(ctx.pack.units).filter(u => u.move != null && !u.ground && !u.fighter).map(u => u.id) },
   ],
-  play: ({ choices, state, game, pack, held, warnings }) => {
-    if (!held) return;
-    const systemId = String(choices.systemId ?? '');
-    const ship = String(choices.ship ?? '') as UnitId | '';
-    const replacement = String(choices.replacement ?? '') as UnitId | '';
-    if (systemId === '' || ship === '' || replacement === '') return;
-    const space = state.systems[systemId] ?? {};
-    if ((space[ship] ?? 0) < 1 || pack.units[ship]?.fighter) {
-      warnings.push(violation(componentUnresolved.code, { id, name: 'Letani Ospha', reason: 'no such non-fighter ship in the system' }));
-      return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held) return [];
+    const systemId = String(ctx.choices.systemId ?? '');
+    const ship = String(ctx.choices.ship ?? '') as UnitId | '';
+    const replacement = String(ctx.choices.replacement ?? '') as UnitId | '';
+    if (systemId === '' || ship === '' || replacement === '') return [];
+    if ((ctx.my.unitsIn(systemId)[ship] ?? 0) < 1 || ctx.pack.units[ship]?.fighter) {
+      ctx.warn(violation(componentUnresolved.code, { id, name: 'Letani Ospha', reason: 'no such non-fighter ship in the system' }));
+      return [];
     }
     // "costs up to 2 more than the replaced ship"
-    if (costOf(game, state, { [replacement]: 1 }, pack, false) - costOf(game, state, { [ship]: 1 }, pack, false) > 2) warnings.push(violation(replacementCost.code, {}));
-    const next = { ...space, [ship]: (space[ship] ?? 0) - 1 };
-    if (next[ship] === 0) delete next[ship];
-    next[replacement] = (next[replacement] ?? 0) + 1;
-    state.systems[systemId] = next;
+    if (ctx.unitCost({ [replacement]: 1 }) - ctx.unitCost({ [ship]: 1 }) > 2) ctx.warn(violation(replacementCost.code, {}));
+    return [removeUnits(ctx.holder, { slot: systemId }, { [ship]: 1 }), placeUnits(ctx.holder, { slot: systemId }, { [replacement]: 1 })];
   },
 };

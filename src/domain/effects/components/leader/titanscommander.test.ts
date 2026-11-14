@@ -46,6 +46,6 @@ describe('leader:titanscommander Tungstantus', () => {
   test('leader:titanscommander is played', () => {
     const { pack } = titans(build());
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).play).toBeDefined();
+    expect(effect(pack, id).nativePlay).toBeDefined();
   });
 });

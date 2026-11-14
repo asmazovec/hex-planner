@@ -14,12 +14,20 @@
  * own rule (51.12).
  */
 import { planetsOf, systemSlots } from '../../../replay/board';
-import { takeControl } from '../../../replay/invasion';
-import { add } from '../../../replay/state';
-import { inHomeSystem, othersOnPlanet } from '../../../stacks';
+import { inHomeSystem } from '../../../stacks';
+import type { AbilityContext } from '../../../../game/abilities/types';
 import type { ChoiceSpec, ComponentEffect } from '../../types';
+import { placeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { othersBy, takeControlBy } from '../../helpers/cardPlay';
 
 export const id = 'leader:yinhero';
+
+/** Whether a planet lies in a home system. */
+const inHome = (ctx: AbilityContext, planetId: string): boolean => {
+  const slot = ctx.systemOf(planetId);
+  return slot !== undefined && ctx.tileKind(slot) === 'home';
+};
 
 const SLOTS = ['planet', 'planet2', 'planet3'];
 const label = (n: number) => ({ ru: `Планета ${n}`, en: `Planet ${n}` });
@@ -35,20 +43,24 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [slot('planet', 1), slot('planet2', 2, 'planet'), slot('planet3', 3, 'planet2')],
-  play: ({ game, state, player, pack, choices, held }) => {
-    if (!held) return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held) return [];
     const committed: Record<string, number> = {};
-    for (const [key, value] of Object.entries(choices)) {
+    for (const [key, value] of Object.entries(ctx.choices)) {
       if (SLOTS.includes(key)) committed[String(value)] = (committed[String(value)] ?? 0) + 1;
-      else if (pack.planets[key] !== undefined) committed[key] = (committed[key] ?? 0) + Number(value);
+      else if (ctx.pack.planets[key] !== undefined) committed[key] = (committed[key] ?? 0) + Number(value);
     }
-    for (const [planetId, count] of Object.entries(committed)) {
-      if (pack.planets[planetId] === undefined || count <= 0 || inHomeSystem(game, planetId, pack)) continue;
-      add(state.ground, planetId, { infantry: count });
+    return Object.entries(committed).flatMap(([planetId, count]) => {
+      if (ctx.pack.planets[planetId] === undefined || count <= 0 || inHome(ctx, planetId)) return [];
+      const events = [placeUnits(ctx.holder, { planet: planetId }, { infantry: count })];
       // Taken only where nobody else stands: the outcome of a ground combat is entered by the player.
-      const defended = state.control[planetId] === 'enemy'
-        || othersOnPlanet(game, state, planetId).some(other => other.owner !== player);
-      if (!defended) takeControl(game, state, planetId, pack);
-    }
+      const owner = ctx.board.planets[planetId]?.owner;
+      const defended = (owner !== undefined && owner !== ctx.holder) || othersBy(ctx).some(who => Object.values(ctx.of(who).unitsOn(planetId)).some(each => (each ?? 0) > 0));
+      return defended ? events : [...events, ...takeControlBy(ctx, planetId)];
+    });
   },
 };

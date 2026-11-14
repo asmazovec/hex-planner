@@ -7,6 +7,8 @@
  * which the replay takes from my hand) and gains 2 trade goods. The agent is exhausted as every agent is.
  */
 import type { ComponentEffect } from '../../types';
+import { tokens, tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:nekroagent';
 
@@ -26,15 +28,20 @@ export const effect: ComponentEffect = {
       names: { tactic: { ru: 'Тактический', en: 'Tactic' }, fleet: { ru: 'Флот', en: 'Fleet' }, strategy: { ru: 'Стратегический', en: 'Strategy' } },
     },
   ],
-  play: ({ choices, states, held }) => {
-    if (!held) return;
-    const who = states[String(choices.player ?? 'me')];
-    if (!who) return;
-    if (choices.pay === 'token') {
-      const pool = POOLS.find(name => name === choices.pool);
-      if (!pool) return;
-      who[pool] -= 1;
-    } else if (choices.pay !== 'actionCard') return;
-    who.tradeGoods += 2;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held) return [];
+    const who = ctx.playerOf(String(ctx.choices.player ?? 'me'));
+    if (who === undefined) return [];
+    const events = [];
+    if (ctx.choices.pay === 'token') {
+      const pool = POOLS.find(name => name === ctx.choices.pool);
+      if (!pool) return [];
+      events.push(tokens(who, { [pool]: -1 }));
+    } else if (ctx.choices.pay !== 'actionCard') return [];
+    return [...events, tradeGoods(who, 2)];
   },
 };

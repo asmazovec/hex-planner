@@ -9,6 +9,8 @@
  * component used beside the action (the test is a todo).
  */
 import type { ComponentEffect } from '../../types';
+import { placeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:keleresherokuuasi';
 
@@ -16,9 +18,9 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   playAt: 'combat',
-  play: ({ entry, state }) => {
-    if (entry.type !== 'tactical' || entry.systemId === null) return;
-    const here = (state.systems[entry.systemId] ??= {});
-    here.flagship = (here.flagship ?? 0) + 1;
-  },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => (ctx.entry?.type !== 'tactical' || ctx.entry.systemId === null ? [] : [placeUnits(ctx.holder, { slot: ctx.entry.systemId }, { flagship: 1 })]),
 };

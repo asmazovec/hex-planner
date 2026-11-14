@@ -13,8 +13,10 @@
 import { componentById } from '../../../components';
 import componentCondition from '../../../rules/codes/componentCondition';
 import { violation } from '../../../rules/registry';
-import type { UnitCounts } from '../../../types';
 import type { ComponentEffect } from '../../types';
+import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { othersHaveShips } from '../../helpers/cardPlay';
 
 export const id = 'leader:mahacthero';
 
@@ -25,20 +27,17 @@ export const effect: ComponentEffect = {
     { key: 'from', kind: 'system', label: { ru: 'Откуда', en: 'From' } },
     { key: 'to', kind: 'system', label: { ru: 'Куда', en: 'To' } },
   ],
-  play: ({ state, states, player, pack, choices, warnings, held }) => {
-    const from = choices.from === undefined ? undefined : String(choices.from);
-    const to = choices.to === undefined ? undefined : String(choices.to);
-    if (from === undefined || to === undefined || from === to) return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const from = ctx.choices.from === undefined ? undefined : String(ctx.choices.from);
+    const to = ctx.choices.to === undefined ? undefined : String(ctx.choices.to);
+    if (from === undefined || to === undefined || from === to) return [];
     // The target must hold a different player's ships; whether it is adjacent is not checked.
-    const others = Object.entries(states).some(([owner, each]) => owner !== player && Object.values(each.systems[to] ?? {}).some(count => (count ?? 0) > 0));
-    if (held && !others) warnings.push(violation(componentCondition.code, { id, name: componentById(pack, id)?.name ?? id, condition: "a different player's ships" }));
-    const moving = state.systems[from];
-    if (!moving) return;
-    const arrived: UnitCounts = { ...(state.systems[to] ?? {}) };
-    for (const [unit, count] of Object.entries(moving) as [keyof UnitCounts, number][]) {
-      if (count > 0) arrived[unit] = (arrived[unit] ?? 0) + count;
-    }
-    state.systems[to] = arrived;
-    delete state.systems[from];
+    if (ctx.held && !othersHaveShips(ctx, to)) ctx.warn(violation(componentCondition.code, { id, name: componentById(ctx.pack, id)?.name ?? id, condition: "a different player's ships" }));
+    const moving = ctx.my.unitsIn(from);
+    return Object.values(moving).some(count => (count ?? 0) > 0) ? [removeUnits(ctx.holder, { slot: from }, moving), placeUnits(ctx.holder, { slot: to }, moving)] : [];
   },
 };

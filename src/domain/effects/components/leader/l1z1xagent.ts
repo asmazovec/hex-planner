@@ -10,9 +10,11 @@
  * later is not eligible). The infantry of the active system's space area goes first, else one on a planet of it; none
  * there is `unitsMissing`. Reinforcements of mechs are not counted.
  */
-import { planetsOf } from '../../../replay/board';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
+import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
+import type { GameEvent } from '../../../../game/events';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:l1z1xagent';
 
@@ -20,18 +22,22 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   playAt: 'activation',
-  play: ({ entry, game, pack, state, held, warnings }) => {
-    if (!held || entry.type !== 'tactical' || entry.systemId === null) return;
-    const swap = (units: Record<string, number | undefined>): boolean => {
-      if ((units.infantry ?? 0) <= 0) return false;
-      units.infantry = (units.infantry ?? 0) - 1;
-      if (units.infantry === 0) delete units.infantry;
-      units.mech = (units.mech ?? 0) + 1;
-      return true;
-    };
-    const here = state.systems[entry.systemId] ??= {};
-    if (swap(here)) return;
-    for (const planetId of planetsOf(game, entry.systemId, pack)) if (swap(state.ground[planetId] ??= {})) return;
-    warnings.push(violation('unitsMissing', { where: entry.systemId, unit: 'infantry', missing: 1 }));
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const entry = ctx.entry;
+    if (!ctx.held || entry?.type !== 'tactical' || entry.systemId === null) return [];
+    const swap = (at: { slot: string } | { planet: string }, units: Record<string, number | undefined>): GameEvent[] | undefined =>
+      (units.infantry ?? 0) > 0 ? [removeUnits(ctx.holder, at, { infantry: 1 }), placeUnits(ctx.holder, at, { mech: 1 })] : undefined;
+    const inSpace = swap({ slot: entry.systemId }, ctx.my.unitsIn(entry.systemId));
+    if (inSpace) return inSpace;
+    for (const planetId of ctx.planetsIn(entry.systemId)) {
+      const onPlanet = swap({ planet: planetId }, ctx.my.unitsOn(planetId));
+      if (onPlanet) return onPlanet;
+    }
+    ctx.warn(violation('unitsMissing', { where: entry.systemId, unit: 'infantry', missing: 1 }));
+    return [];
   },
 };
