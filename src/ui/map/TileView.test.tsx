@@ -8,8 +8,8 @@ import { createGame } from '../../domain/newGame';
 import type { Game, GameState } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { seatSlots } from '../../domain/mapBuilder';
-import { HexMap } from './HexMap';
-import { TileView } from './TileView';
+import { LegacyMap, LegacyTile } from '../testing/legacyMap';
+
 
 vi.mock('../../domain/hexLayout', async original => {
   const actual = await original<typeof import('../../domain/hexLayout')>();
@@ -33,14 +33,14 @@ const emptyState = (): GameState => ({
 
 function setup(
   mapValue: string | undefined, edit: (game: Game, state: GameState) => void = () => undefined,
-  props: Partial<Parameters<typeof TileView>[0]> = {},
+  props: Partial<Parameters<typeof LegacyTile>[0]> = {},
 ) {
   const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
   const state = emptyState();
   if (mapValue) game.map['1,0'] = mapValue; else delete game.map['1,0'];
   edit(game, state);
   return render(
-    <svg><TileView slotKey="1,0" pack={pack} game={game} state={state} {...props} /></svg>,
+    <svg><LegacyTile slotKey="1,0" pack={pack} game={game} state={state} {...props} /></svg>,
   );
 }
 
@@ -178,7 +178,8 @@ test('opponents stand in seat order, not list order', () => {
     g.opponents[0].seat = 3; g.opponents[1].seat = 2;
     g.enemyUnits['1,0'] = { [g.opponents[0].id]: { cruiser: 1 }, [g.opponents[1].id]: { carrier: 1 } };
   });
-  expect(xOf('Carrier ×1 (Player 3)')).toBeLessThan(xOf('Cruiser ×1 (Player 2)'));
+  // Named by their seat, as everywhere else.
+  expect(xOf('Carrier ×1 (Player 2)')).toBeLessThan(xOf('Cruiser ×1 (Player 3)'));
 });
 
 test('units under an id nobody has are not drawn', () => {
@@ -186,9 +187,9 @@ test('units under an id nobody has are not drawn', () => {
   expect(document.querySelectorAll('[data-stack]')).toHaveLength(0);
 });
 
-test('enemy ground units stand on the arc of the first planet, or on the comb without planets', () => {
+test('enemy ground units carried in the system stand in its space like mine, and on the comb without planets', () => {
   setup('26', (g) => { g.enemyUnits['1,0'] = { [g.opponents[0].id]: { infantry: 2 } }; });
-  expect(stackOf('Infantry ×2 (Player 2)')).toHaveAttribute('data-planet', '0');
+  expect(stackOf('Infantry ×2 (Player 2)')).not.toHaveAttribute('data-planet');
   cleanup();
   setup('39', (g) => { g.enemyUnits['1,0'] = { [g.opponents[0].id]: { mech: 1 } }; });
   expect(stackOf('Mech ×1 (Player 2)')).not.toHaveAttribute('data-planet');
@@ -199,7 +200,7 @@ test('Thunder\'s Edge beside three planets draws all four instead of breaking th
   const game = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, tePack);
   game.map['1,0'] = '16';
   game.expedition.thundersEdgeSystem = '1,0';
-  render(<svg><TileView slotKey="1,0" pack={tePack} game={game} state={emptyState()} /></svg>);
+  render(<svg><LegacyTile slotKey="1,0" pack={tePack} game={game} state={emptyState()} /></svg>);
   expect(tePack.tiles['16'].planetIds).toHaveLength(3);
   const discs = [...document.querySelectorAll('.planet')].map(placed);
   expect(discs).toHaveLength(4);
@@ -234,7 +235,7 @@ test('a command token only takes room while it is drawn', () => {
 test('the layout is worked out again only when the stacks change', () => {
   const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
   game.map['1,0'] = '25';
-  const view = (state: GameState) => <svg><TileView slotKey="1,0" pack={pack} game={game} state={state} /></svg>;
+  const view = (state: GameState) => <svg><LegacyTile slotKey="1,0" pack={pack} game={game} state={state} /></svg>;
   const { rerender } = render(view({ ...emptyState(), systems: { '1,0': { carrier: 1 } } }));
   const calls = vi.mocked(hexLayout).mock.calls.length;
   rerender(view({ ...emptyState(), tradeGoods: 9, systems: { '1,0': { carrier: 1 } } }));
@@ -267,7 +268,7 @@ test('stacks stay the same nodes when they move, new ones grow in and removed on
   try {
     const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
     game.map['1,0'] = '25';
-    const view = (systems: GameState['systems']) => <svg><TileView slotKey="1,0" pack={pack} game={game} state={{ ...emptyState(), systems }} /></svg>;
+    const view = (systems: GameState['systems']) => <svg><LegacyTile slotKey="1,0" pack={pack} game={game} state={{ ...emptyState(), systems }} /></svg>;
     const { rerender } = render(view({ '1,0': { carrier: 1 } }));
     const carrier = stackOf('Carrier ×1');
     expect(carrier).toHaveClass('tk');
@@ -297,7 +298,7 @@ test('a home system shows the seat number of its player in the colour of that pl
   game.map[seat1] = '1';
   game.map[seat2] = '2';
   game.map['1,0'] = '25';
-  render(<HexMap game={game} state={emptyState()} pack={pack} />);
+  render(<LegacyMap game={game} state={emptyState()} pack={pack} />);
   expect(within(document.querySelector(`[data-slot="${seat1}"]`)!).getByLabelText('Seat 1').querySelector('circle')!.style.fill).toBe('var(--player-1)');
   expect(within(document.querySelector(`[data-slot="${seat2}"]`)!).getByLabelText('Seat 2').querySelector('circle')!.style.fill).toBe('var(--player-7)');
   expect(within(document.querySelector('[data-slot="1,0"]')!).queryByLabelText(/^Seat/)).toBeNull();
@@ -330,7 +331,7 @@ test('a tap reports the slot key', async () => {
 
 test('the map draws every slot of a six-player template, even with no tiles placed', () => {
   const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
-  render(<HexMap game={game} state={emptyState()} pack={pack} />);
+  render(<LegacyMap game={game} state={emptyState()} pack={pack} />);
   expect(document.querySelectorAll('.tile')).toHaveLength(37);
 });
 
@@ -343,7 +344,7 @@ test('a PDS stands on its planet with its count, in the colour of its owner', ()
 test('an unknown tile does not break the map', () => {
   const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
   game.map['1,0'] = '9999';
-  render(<HexMap game={game} state={emptyState()} pack={pack} />);
+  render(<LegacyMap game={game} state={emptyState()} pack={pack} />);
   expect(document.querySelectorAll('.tile')).toHaveLength(37);
   expect(screen.getByLabelText('Unknown tile 9999')).toBeInTheDocument();
 });
@@ -401,7 +402,7 @@ test('a planet shows its name, and a system without planets says what it is', ()
 
 test('the wheel zooms without scrolling the page, and the reset button restores the view', async () => {
   const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
-  render(<HexMap game={game} state={emptyState()} pack={pack} />);
+  render(<LegacyMap game={game} state={emptyState()} pack={pack} />);
   const svg = screen.getByRole('group', { name: 'Map' });
   const wheel = new WheelEvent('wheel', { deltaY: -200, cancelable: true, bubbles: true });
   act(() => { svg.dispatchEvent(wheel); });
@@ -451,7 +452,7 @@ test('a lane of the tile is drawn through the hex, from the middle of one edge t
 test('a hyperlane without edge data shows its id and rotation as text', () => {
   const teGame = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, loadPack(['pok', 'te']));
   teGame.map['1,0'] = '119A@2';
-  render(<svg><TileView slotKey="1,0" pack={loadPack(['pok', 'te'])} game={teGame} state={emptyState()} /></svg>);
+  render(<svg><LegacyTile slotKey="1,0" pack={loadPack(['pok', 'te'])} game={teGame} state={emptyState()} /></svg>);
   expect(lanesOf()).toEqual([]);
   expect(screen.getByText('119A · 2')).toBeInTheDocument();
 });
@@ -484,7 +485,7 @@ test('two marks on one planet stay off the values and off each other', () => {
   const tile = Object.values(full.tiles).find(t => t.planetIds.includes(planet.id))!;
   const game = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, full);
   game.map['1,0'] = tile.id;
-  render(<svg><TileView slotKey="1,0" pack={full} game={game} state={emptyState()} /></svg>);
+  render(<svg><LegacyTile slotKey="1,0" pack={full} game={game} state={emptyState()} /></svg>);
   const group = screen.getByLabelText(new RegExp(`^${planet.name}:`));
   const marks = [...group.querySelectorAll('.planet-tech')].map(node => {
     const [x, y] = (node.getAttribute('transform')!.match(/-?[\d.]+/g) ?? []).map(Number);
@@ -504,7 +505,7 @@ function renderFull(tileId: string, edit: (state: GameState) => void = () => und
   game.map['1,0'] = tileId;
   const state = emptyState();
   edit(state);
-  return render(<svg><TileView slotKey="1,0" pack={full} game={game} state={state} /></svg>);
+  return render(<svg><LegacyTile slotKey="1,0" pack={full} game={game} state={state} /></svg>);
 }
 
 const markCentre = (node: Element): { x: number; y: number } => {
@@ -573,22 +574,22 @@ test('control stays on the rim and an exhausted planet keeps its look with the t
 });
 
 
-test('enemy ground units stand on the arc of their own planet, merged with any left in the system', () => {
+test('enemy ground units stand on the arc of their own planet, apart from any carried in the system', () => {
   const [first, second] = pack.tiles['71'].planetIds;
   setup('71', g => {
     const [{ id }] = g.opponents;
     g.enemyGround = { [second]: { [id]: { infantry: 3 } }, [first]: { [id]: { infantry: 1 } } };
     g.enemyUnits['1,0'] = { [id]: { infantry: 1 } };
   });
-  expect(stackOf('Infantry ×2 (Player 2)')).toHaveAttribute('data-planet', '0');
   expect(document.querySelectorAll('[data-stack$="|infantry|1"]')).toHaveLength(1);
   expect(document.querySelectorAll('[data-stack$="|infantry|0"]')).toHaveLength(1);
+  expect(document.querySelectorAll('[data-stack$="|infantry|-"]')).toHaveLength(1);
 });
 
 test('a new reset signal sends the camera back to the whole map, as the reset button does', () => {
   vi.stubGlobal('matchMedia', () => ({ matches: true }));
   const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
-  const { rerender } = render(<HexMap game={game} state={emptyState()} pack={pack} />);
+  const { rerender } = render(<LegacyMap game={game} state={emptyState()} pack={pack} />);
   const svg = document.querySelector('.hexmap')!;
   svg.getBoundingClientRect = () => ({ left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600, x: 0, y: 0, toJSON: () => undefined });
   const camera = () => svg.querySelector(':scope > g')!.getAttribute('transform');
@@ -597,7 +598,7 @@ test('a new reset signal sends the camera back to the whole map, as the reset bu
   fireEvent.pointerMove(svg, { pointerId: 1, clientX: 160, clientY: 100 });
   fireEvent.pointerUp(svg, { pointerId: 1, clientX: 160, clientY: 100 });
   expect(camera()).not.toBe(start);
-  rerender(<HexMap game={game} state={emptyState()} pack={pack} resetSignal={1} />);
+  rerender(<LegacyMap game={game} state={emptyState()} pack={pack} resetSignal={1} />);
   expect(camera()).toBe(start);
   vi.unstubAllGlobals();
 });

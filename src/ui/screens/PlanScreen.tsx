@@ -385,7 +385,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   /** The action the map speaks of: the one being edited or read. */
   const focusId = entry?.id ?? shownEntry?.id ?? flight.flying?.entryId;
   // Lines and flights need to know where the off-map homes stand before the map draws them.
-  const offMap = placeOffMap(game, pack);
+  const offMap = placeOffMap(shownTable, shownBoard, pack);
   /** A system ships can be in: a tile of the map or an off-map home beside it. */
   const onBoard = (slot: string): boolean => slot in offMap || isOnMap(game, slot);
   const arrows = planArrows(game, pack, tacticals, tacticalNumbers(game, round, pack), focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
@@ -421,7 +421,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     // Any system can be chosen; for a source those with ships are the ones lit.
     options: !choosing || !entryBefore ? [] : choosing === 'system' ? tileSystems(game, pack) : sourceSystems(game, pack, entryBefore),
   });
-  const { mapState, layer: flightLayer } = flight.scene(tacticals, shownState, arrows);
+  const { mapBoard, layer: flightLayer } = flight.scene(tacticals, shownBoard, arrows);
   const shownArea = shownEntry ? focusRect(entrySystems(game, pack, shownEntry)) : null;
 
   /**
@@ -707,7 +707,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         </div>
         <div className="plan-map">
           <HexMap
-            game={game} state={mapState} pack={pack} highlights={highlights} arrows={arrows}
+            table={shownTable} board={mapBoard} pack={pack} highlights={highlights} arrows={arrows}
             arrowPreview={draft} focusRect={shownArea} resetSignal={viewResets} onTileTap={onTileTap}
             overlay={flightLayer} still={flight.still} quietAll={flight.quiet} animateOnly={flight.animated}
             onTilePointerDown={(slot, e) => { if (startsArrow(slot)) arrow.onTilePointerDown(slot, e, tapPath ?? undefined); }} startsArrow={startsArrow} panRef={mapPan}

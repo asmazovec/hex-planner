@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { seenAfter, timelineOf } from '../../../state/projection';
+import { timelineOf } from '../../../state/projection';
 import { gameAs } from '../../../domain/players';
-import { entrySystems, flies, stateInFlight, type TacticalEntry } from '../../../domain/tactical';
-import type { DataPack, Entry, Game, GameState, Plan } from '../../../domain/types';
+import { entrySystems, flies, type TacticalEntry } from '../../../domain/tactical';
+import type { DataPack, Entry, Game, Plan } from '../../../domain/types';
+import { turnOf } from '../../../game/fromLegacy';
+import { activatedBoard, inFlight as boardInFlight } from '../../../game/flight';
+import type { Board } from '../../../game/types';
 import { useGame } from '../../../state/gameStore';
 import { playsFlights } from '../../common/motion';
 import { flightLoop } from '../../common/preferences';
@@ -29,15 +32,6 @@ const LOOP_PAUSE_MS = 750;
 const DEPART_HOLD_MS = 600;
 /** The same before the first flight of a reading: nothing steps back, the map only has to stand a moment. */
 const FIRST_HOLD_MS = 120;
-
-/**
- * The state before an action with its system already activated: the command token stands there while the units wait,
- * so the tokens of that system do not shift when they leave.
- */
-const activated = (entry: TacticalEntry, before: GameState): GameState =>
-  (entry.free || entry.systemId === null || before.tokensOnMap.includes(entry.systemId)
-    ? before
-    : { ...before, tokensOnMap: [...before.tokensOnMap, entry.systemId] });
 
 export interface FlightLoopInput {
   game: Game | null;
@@ -81,10 +75,11 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
   const waiting = airborne && !flying.departed;
   const restingEntry = !airborne && shown && shownEntry && loops && shown.plays > 0 && flightLoop.read() ? shownEntry : undefined;
   const restingId = restingEntry?.id;
-  const restingState = useMemo(
-    () => (restingId && game && plan ? seenAfter(timelineOf(game, plan, 'forecast', pack), restingId) : null),
-    [restingId, game, plan, pack],
-  );
+  const restingBoard = useMemo(() => {
+    if (!restingId || !game || !plan) return null;
+    const { kernel } = timelineOf(game, plan, 'forecast', pack);
+    return kernel.byTurn.get(restingId)?.after ?? kernel.end;
+  }, [restingId, game, plan, pack]);
 
   useEffect(() => {
     if (!shown || !loops || flying) return undefined;
@@ -102,17 +97,15 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
    * in the plan would blink in and out on every round. `shownState` is what the map shows otherwise; the arrows give the
    * flight its lines.
    */
-  const scene = (tacticals: TacticalEntry[], shownState: GameState, arrows: Arrow[]): { mapState: GameState; layer: ReactNode } => {
+  const scene = (tacticals: TacticalEntry[], shownBoard: Board, arrows: Arrow[]): { mapBoard: Board; layer: ReactNode } => {
     const flyingEntry = flying ? tacticals.find(item => item.id === flying.entryId) : undefined;
-    if (!game || !plan) return { mapState: shownState, layer: null };
-    const beforeFlight = flying && flyingEntry ? boards.before(flyingEntry.id, flying.filter) : null;
+    if (!game || !plan) return { mapBoard: shownBoard, layer: null };
+    const beforeFlight = flying && flyingEntry ? boards.boardOf(flyingEntry.id, flying.filter) : null;
+    const table = timelineOf(game, plan, flying?.filter ?? 'forecast', pack).kernel.table;
     const inFlight = airborne && flyingEntry && beforeFlight
-      ? (waiting ? activated(flyingEntry, beforeFlight) : stateInFlight(pack, flyingEntry, beforeFlight, flying.passed))
+      ? (waiting ? activatedBoard(beforeFlight, turnOf(table, flyingEntry, pack)) : boardInFlight(beforeFlight, turnOf(table, flyingEntry, pack), flying.passed))
       : null;
-    const resting = restingEntry;
-    const held = inFlight ?? restingState;
-    const owner = (flyingEntry ?? resting)?.owner;
-    const mapState = !held ? shownState : owner ? { ...shownState, rivals: { ...shownState.rivals, [owner]: held } } : held;
+    const mapBoard = inFlight ?? restingBoard ?? shownBoard;
     const flyingGame = gameAs(game, flyingEntry?.owner);
     const layer = flying && flyingEntry && beforeFlight && (
       <FlightLayer
@@ -125,7 +118,7 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
         onDone={stop}
       />
     );
-    return { mapState, layer };
+    return { mapBoard, layer };
   };
 
   /**

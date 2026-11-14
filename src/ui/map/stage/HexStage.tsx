@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { isOnMap, tileIdOf } from '../../../domain/project';
 import type { DataPack, GameState } from '../../../domain/types';
+import { mapSource } from '../../../game/space';
 import { HexRemove } from '../../primitives/Icon';
 import { PlayerChoice, playerTag, type PlayerOption } from '../../primitives/player';
 import { Modal } from '../../overlays/Modal';
@@ -69,7 +70,7 @@ export function HexStage(props: HexStageProps) {
   const { t } = useTranslation();
   const stage = useStage(props);
   if (!stage) return null;
-  const { game, state, shown, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours } = stage;
+  const { game, state, table, board, shown, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours } = stage;
 
   const seatName = (o: { name: string; faction: string }): string => shortName(pack, o.faction, o.name);
   /** An opponent in a player choice: the short name, and the tag for a crowded line. */
@@ -91,7 +92,7 @@ export function HexStage(props: HexStageProps) {
           <svg viewBox="-68 -62 136 124" role="group" aria-label={t('stage.hex')}>
             <g transform={`translate(${-x} ${-y})`}>
               <TileView
-                slotKey={slot} pack={pack} game={game} state={state} ingress={game.fracture.ingress.includes(slot)}
+                slotKey={slot} pack={pack} table={table} board={board} ingress={mapSource(table, board).fracture.ingress.includes(slot)}
                 stage={{ target, onPlanet: setPlanet, onToken: stage.onToken, ringed: item => stage.ringed(item.key) }}
               />
             </g>

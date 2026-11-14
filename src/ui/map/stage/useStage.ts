@@ -4,7 +4,7 @@ import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
 import { gameAs, opponentsBySeat } from '../../../domain/players';
 import { dockFighterRoom, fleetExcess, fleetLimit, standing, planetStructureWarnings, productionCost, productionDue, productionPlaces, readyResources, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
-import { projectionAtRound, seenBefore, systemWarningsAt, timelineOf } from '../../../state/projection';
+import { boardAtRound, projectionAtRound, seenBefore, systemWarningsAt, timelineOf } from '../../../state/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
 import { startingPds } from '../../../domain/strategy';
 import { unitStats } from '../../../domain/unitStats';
@@ -372,7 +372,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   ];
 
   return {
-    game, state, shown: shownState ?? state, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours, kindName,
+    game, state, table: line.kernel.table, board: boardAtRound(line, roundNo), shown: shownState ?? state, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours, kindName,
     adjusting, tapNote, handover, onToken, ringed: (key: string) => inBuild && (bought[key] ?? 0) > 0,
     shopItems, buy, boughtTotal, spent, meterRows, entryWarnings, boardWarnings, lossesFor, fights,
     productionRows, constructionRows, shopStock, buyAt, unbuyAt, fleetItems, removeShip, fleetOver,

@@ -2,11 +2,13 @@ import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, 
 import { useTranslation } from 'react-i18next';
 import { seatSlots, slotsFor } from '../../domain/mapBuilder';
 import { slotKeyOf } from '../../domain/newGame';
-import { playersOf } from '../../domain/players';
-import type { DataPack, Game, GameState } from '../../domain/types';
+import type { DataPack } from '../../domain/types';
+import { mapSource } from '../../game/space';
+import { seatCount } from '../../game/tile';
+import type { Board, PlayerId, Table } from '../../game/types';
 import { animates } from '../common/motion';
 import { RowIcon } from '../primitives/Icon';
-import { prepareSprites, tokenColours } from '../units/sprites';
+import { prepareSprites, tableColours } from '../units/sprites';
 import type { MapPan } from './edgePan';
 import { HEX_SIZE, hexToPixel, mapBounds, placeOffMapHomes, type Rect } from './geometry';
 import { offMapSpots } from './offMapHomes';
@@ -18,8 +20,10 @@ import { usePanZoom, type View } from './usePanZoom';
 import { capFit, fitBox } from './viewLimits';
 
 export interface HexMapProps {
-  game: Game;
-  state: GameState;
+  table: Table;
+  board: Board;
+  /** Whose eyes the map looks through; the viewer of the table by default. */
+  viewer?: PlayerId;
   pack: DataPack;
   highlights?: Record<string, Highlight>;
   arrows?: Arrow[];
@@ -127,34 +131,35 @@ const parseKey = (key: string): { q: number; r: number } => {
 };
 
 export function HexMap({
-  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow, still = false, quietAll = false, animateOnly = null, clearOf = '.drawer-rail', panRef,
+  table, board, viewer = table.viewer, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow, still = false, quietAll = false, animateOnly = null, clearOf = '.drawer-rail', panRef,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
 
   // The off-map homes stand beside the map; where, is told to the drawing before any tile or line asks.
-  const offMap = useMemo(() => offMapSpots(game, pack), [game, pack]);
+  const source = mapSource(table, board);
+  const playerCount = seatCount(table);
+  const offMap = useMemo(() => offMapSpots(table, board, pack), [table, board, pack]);
   placeOffMapHomes(offMap);
   const homes = useMemo(() => Object.keys(offMap), [offMap]);
 
   const slotKeys = useMemo(() => {
-    const keys = new Set(slotsFor(game.playerCount, pack, game.layout).map(s => slotKeyOf(s.q, s.r)));
-    for (const key of Object.keys(game.map)) keys.add(key);
+    const keys = new Set(slotsFor(playerCount, pack, table.layout).map(s => slotKeyOf(s.q, s.r)));
+    for (const key of Object.keys(table.map)) keys.add(key);
     return [...keys, ...homes];
-  }, [pack, game.playerCount, game.layout, game.map, homes]);
+  }, [pack, playerCount, table.layout, table.map, homes]);
 
-  const colours = tokenColours(game);
+  const colours = tableColours(table, viewer);
   const palette = Object.values(colours).join();
   useEffect(() => { void prepareSprites(palette.split(',')); }, [palette]);
 
   /** Home slots by slot key, with the player sitting there. */
   const seats = useMemo(() => {
-    const players = playersOf(game);
-    return new Map(seatSlots(game.playerCount, pack, game.layout).flatMap((key, i) => {
-      const player = players.find(p => p.seat === i + 1);
+    return new Map(seatSlots(playerCount, pack, table.layout).flatMap((key, i) => {
+      const player = table.players.find(p => p.seat === i + 1);
       return player ? [[key, { number: i + 1, color: player.color }] as const] : [];
     }));
-  }, [game, pack]);
+  }, [table, playerCount, pack]);
 
   const mapSlots = useMemo(() => slotKeys.filter(key => !homes.includes(key)).map(parseKey), [slotKeys, homes]);
   // The frame holds the off-map homes too, drawn beside the map.
@@ -170,7 +175,7 @@ export function HexMap({
     const rect = mapBounds(mapSlots);
     return homeRect ? joined(rect, homeRect) : rect;
   }, [mapSlots, homeRect]);
-  const { fractureAt, fracture, leaving, opening, flyRun, flyStyle, leftGone } = useFractureFlight(game, pack, mapSlots);
+  const { fractureAt, fracture, leaving, opening, flyRun, flyStyle, leftGone } = useFractureFlight(table, board, pack, mapSlots);
   // The map opens whole in its area, clear of the edges and of the tabs over them. Without a size (no layout yet) it is the plain frame.
   const wrapRef = useRef<HTMLDivElement>(null);
   const [area, setArea] = useState<MapArea | null>(null);
@@ -248,12 +253,12 @@ export function HexMap({
   // The tiles stay as they are on every frame of a movement; only the transform around them changes.
   const content = useMemo(() => slotKeys.map(key => (
     <TileView
-      key={key} slotKey={key} pack={pack} game={game} state={state}
-      highlight={highlights?.[key]} ingress={game.fracture.ingress.includes(key)} seat={seats.get(key)}
+      key={key} slotKey={key} pack={pack} table={table} board={board} viewer={viewer}
+      highlight={highlights?.[key]} ingress={source.fracture.ingress.includes(key)} seat={seats.get(key)}
       onTap={onTileTap} onPointerDown={onTilePointerDown} quiet={quietAll || (animateOnly !== null && !animateOnly.has(key))}
       liftInto={animateOnly?.has(key) ? liftLayer : null}
     />
-  )), [slotKeys, pack, game, state, seats, highlights, onTileTap, onTilePointerDown, animateOnly, quietAll, liftLayer]);
+  )), [slotKeys, pack, table, board, viewer, source, seats, highlights, onTileTap, onTilePointerDown, animateOnly, quietAll, liftLayer]);
 
   return (
     <div className="hexmap-frame">
@@ -283,7 +288,7 @@ export function HexMap({
           <g key={`left-${flyRun}`} className="fracture-group fracture-closing" aria-hidden="true" onAnimationEnd={e => { if (e.target === e.currentTarget) leftGone(); }}>
             <text x={leaving.labelX} y={leaving.labelY} className="fracture-label">{t('map.fractureLabel')}</text>
             {leaving.spots.map((spot, i) => (
-              <TileView key={spot.tileId} slotKey={`left-${spot.tileId}`} pack={pack} game={game} state={state} fracture={{ tileId: spot.tileId, index: i, x: spot.x, y: spot.y }} />
+              <TileView key={spot.tileId} slotKey={`left-${spot.tileId}`} pack={pack} table={table} board={board} viewer={viewer} fracture={{ tileId: spot.tileId, index: i, x: spot.x, y: spot.y }} />
             ))}
           </g>
         )}
@@ -292,9 +297,9 @@ export function HexMap({
             <text x={fracture.labelX} y={fracture.labelY} className="fracture-label">{t('map.fractureLabel')}</text>
             {fracture.spots.map((spot, i) => (
               <g key={spot.tileId} className="fracture-fly" style={opening ? flyStyle(i) : undefined}>
-              <TileView slotKey={slotKeyOf(fractureAt[i].q, fractureAt[i].r)} pack={pack} game={game} state={state}
+              <TileView slotKey={slotKeyOf(fractureAt[i].q, fractureAt[i].r)} pack={pack} table={table} board={board} viewer={viewer}
                 fracture={{ tileId: spot.tileId, index: i, x: spot.x, y: spot.y }}
-                highlight={highlights?.[slotKeyOf(fractureAt[i].q, fractureAt[i].r)]} ingress={game.fracture.ingress.includes(slotKeyOf(fractureAt[i].q, fractureAt[i].r))}
+                highlight={highlights?.[slotKeyOf(fractureAt[i].q, fractureAt[i].r)]} ingress={source.fracture.ingress.includes(slotKeyOf(fractureAt[i].q, fractureAt[i].r))}
                 onTap={onTileTap} onPointerDown={onTilePointerDown}
                 quiet={quietAll || (animateOnly !== null && !animateOnly.has(slotKeyOf(fractureAt[i].q, fractureAt[i].r)))}
               />

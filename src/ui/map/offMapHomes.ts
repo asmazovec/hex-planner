@@ -2,7 +2,10 @@ import { slotsFor } from '../../domain/mapBuilder';
 import { slotKeyOf } from '../../domain/newGame';
 import { parseSlot } from '../../domain/route';
 import { offMapHomes } from '../../domain/strategy';
-import type { DataPack, Game } from '../../domain/types';
+import type { DataPack } from '../../domain/types';
+import { mapSource } from '../../game/space';
+import { seatCount } from '../../game/tile';
+import type { Board, Table } from '../../game/types';
 import { HEX_SIZE, hexToPixel, placeOffMapHomes, type Point } from './geometry';
 
 /** Between the centres of the outermost ring and an off-map home: a hex across and a little air. */
@@ -12,19 +15,20 @@ const OFF_MAP_REACH = HEX_SIZE * Math.sqrt(3) + 14;
  * Where each off-map home (the Creuss home, LRR 6 note 2) is drawn: beside the map, one hex beyond its outermost ring,
  * on the bearing of the gate it is joined to.
  */
-export function offMapSpots(game: Game, pack: DataPack): Record<string, Point> {
-  const homes = offMapHomes(game, pack);
+export function offMapSpots(table: Table, board: Board, pack: DataPack): Record<string, Point> {
+  const map = table.map;
+  const homes = offMapHomes(mapSource(table, board), pack);
   if (homes.length === 0) return {};
-  const keys = new Set(slotsFor(game.playerCount, pack, game.layout).map(s => slotKeyOf(s.q, s.r)));
-  for (const key of Object.keys(game.map)) keys.add(key);
+  const keys = new Set(slotsFor(seatCount(table), pack, table.layout).map(s => slotKeyOf(s.q, s.r)));
+  for (const key of Object.keys(map)) keys.add(key);
   const radius = Math.max(...[...keys].flatMap(key => {
     const at = parseSlot(key);
     return at ? [Math.hypot(hexToPixel(at.q, at.r).x, hexToPixel(at.q, at.r).y)] : [];
   }));
   const spots: Record<string, Point> = {};
   homes.forEach((home, n) => {
-    const gate = Object.keys(game.map).find(slot => {
-      const id = game.map[slot].split('@')[0];
+    const gate = Object.keys(map).find(slot => {
+      const id = map[slot].split('@')[0];
       return Object.values(pack.factions).some(f => f.homeTile === home && f.gateTile === id);
     });
     const at = gate ? parseSlot(gate) : null;
@@ -40,8 +44,8 @@ export function offMapSpots(game: Game, pack: DataPack): Record<string, Point> {
 }
 
 /** Tells the drawing where the off-map homes of this game stand; the same game always puts them in the same places. */
-export function placeOffMap(game: Game, pack: DataPack): Record<string, Point> {
-  const spots = offMapSpots(game, pack);
+export function placeOffMap(table: Table, board: Board, pack: DataPack): Record<string, Point> {
+  const spots = offMapSpots(table, board, pack);
   placeOffMapHomes(spots);
   return spots;
 }

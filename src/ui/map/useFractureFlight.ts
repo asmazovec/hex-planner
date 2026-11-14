@@ -1,6 +1,9 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { fractureSlots } from '../../domain/thundersEdge';
-import type { DataPack, Game } from '../../domain/types';
+import type { DataPack } from '../../domain/types';
+import { mapSource } from '../../game/space';
+import { seatCount } from '../../game/tile';
+import type { Board, Table } from '../../game/types';
 import { animates } from '../common/motion';
 import { fractureFrame } from './geometry';
 
@@ -14,26 +17,29 @@ const FLY_STEP_MS = 55;
  * seat it left fades. Only opening it or moving it plays: coming back to a map where it stands open does not.
  * `mapSlots` are the slots of the map without the Fracture.
  */
-export function useFractureFlight(game: Game, pack: DataPack, mapSlots: { q: number; r: number }[]) {
-  const fractureAt = useMemo(() => (game.fracture.active ? fractureSlots(game.fracture.seat, game.playerCount, pack, game.layout) : []), [pack, game.fracture.active, game.fracture.seat, game.playerCount, game.layout]);
+export function useFractureFlight(table: Table, board: Board, pack: DataPack, mapSlots: { q: number; r: number }[]) {
+  const { active, seat } = mapSource(table, board).fracture;
+  const playerCount = seatCount(table);
+  const layout = table.layout;
+  const fractureAt = useMemo(() => (active ? fractureSlots(seat, playerCount, pack, layout) : []), [pack, active, seat, playerCount, layout]);
   const fracture = useMemo(() => (fractureAt.length === 0 ? null : fractureFrame(mapSlots, fractureAt)), [fractureAt, mapSlots]);
   // A new run starts the animation anew.
-  const [seenPlace, setSeenPlace] = useState({ active: game.fracture.active, seat: game.fracture.seat });
+  const [seenPlace, setSeenPlace] = useState({ active, seat });
   const [opening, setOpening] = useState(false);
   const [flyRun, setFlyRun] = useState(0);
   /** The seat the Fracture has just left: it stays there a moment, fading, and no longer counts for the frame of the map. */
   const [leftSeat, setLeftSeat] = useState<{ seat: number | null } | null>(null);
-  if (seenPlace.active !== game.fracture.active || seenPlace.seat !== game.fracture.seat) {
-    setSeenPlace({ active: game.fracture.active, seat: game.fracture.seat });
-    setOpening(game.fracture.active);
+  if (seenPlace.active !== active || seenPlace.seat !== seat) {
+    setSeenPlace({ active, seat });
+    setOpening(active);
     setLeftSeat(seenPlace.active && animates() ? { seat: seenPlace.seat } : null);
     setFlyRun(flyRun + 1);
   }
   const leaving = useMemo(() => {
     if (!leftSeat) return null;
-    const slots = fractureSlots(leftSeat.seat, game.playerCount, pack, game.layout);
+    const slots = fractureSlots(leftSeat.seat, playerCount, pack, layout);
     return slots.length === 0 ? null : fractureFrame(mapSlots, slots);
-  }, [leftSeat, game.playerCount, pack, game.layout, mapSlots]);
+  }, [leftSeat, playerCount, pack, layout, mapSlots]);
   /** How a Fracture tile comes to its place. */
   const flyStyle = (index: number): CSSProperties | undefined => {
     if (!fracture) return undefined;

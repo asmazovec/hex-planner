@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next';
 import { loadPack } from '../../data/loadPack';
 import type { DataPack, Game } from '../../domain/types';
+import type { Table } from '../../game/types';
 
 /** Where the rule below would pick the wrong word. */
 const SHORT_NAMES: Record<string, string> = {
@@ -36,6 +37,12 @@ export function opponentName(game: Pick<Game, 'opponents'>, pack: DataPack, id: 
   if (index < 0) return t('players.opponent');
   return playerName(pack, game.opponents[index].faction, index + 2, t);
 }
+
+/** How the interface names a player of a table: the faction, or the player number (the seat) when no faction is set. */
+export const nameOfPlayer = (table: Table, pack: DataPack, id: string, t: TFunction): string => {
+  const player = table.players.find(p => p.id === id);
+  return player ? playerName(pack, player.faction, player.seat, t) : t('players.opponent');
+};
 
 /** How a narrow place names an opponent: the short name of the faction, or the player number when no faction is set. */
 export function opponentShortName(game: Pick<Game, 'opponents'>, pack: DataPack, id: string, t: TFunction): string {

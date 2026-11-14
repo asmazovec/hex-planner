@@ -3,18 +3,19 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { HEX_INNER, hexLayout, type HexLayout, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack } from '../../domain/hexLayout';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
-import { opponentsBySeat } from '../../domain/players';
-import { holderIn, stacksOf } from '../../domain/stacks';
 import { rotateLanes } from '../../domain/lanes';
-import { isOnMap, systemPlanets, tileIdOf } from '../../domain/project';
-import { shownPlanetValues, type PlanetValues } from '../../domain/payment';
-import type { DataPack, Game, GameState, PlanetDef } from '../../domain/types';
-import { tokenColours } from '../units/sprites';
+import { isOnMap, tileIdOf } from '../../domain/project';
+import type { PlanetValues } from '../../domain/payment';
+import type { DataPack, PlanetDef } from '../../domain/types';
+import { mapSource, planetsIn } from '../../game/space';
+import { othersOf, ownerKey, playerOfOwner, shownPlanetValues, tileStacks } from '../../game/tile';
+import type { Board, PlayerId, Table } from '../../game/types';
+import { tableColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
 import { hexPoints, slotToPixel } from './geometry';
 import { CommandTokenMark, IngressMark, LEGENDARY_SHAPE, TECH_SHAPES } from './marks';
 import { playerStyle } from '../primitives/player';
-import { opponentName } from '../players/names';
+import { nameOfPlayer } from '../players/names';
 import { WORMHOLE_SIGNS } from './systemName';
 
 export type Highlight = 'valid' | 'dim' | 'active' | 'source' | 'path';
@@ -22,8 +23,10 @@ export type Highlight = 'valid' | 'dim' | 'active' | 'source' | 'path';
 export interface TileViewProps {
   slotKey: string;
   pack: DataPack;
-  game: Game;
-  state: GameState;
+  table: Table;
+  board: Board;
+  /** Whose eyes the tile looks through: their units are `me`, the others stand after them by seat. The viewer of the table by default. */
+  viewer?: PlayerId;
   highlight?: Highlight;
   selected?: boolean;
   /** A Fracture system sits beside the map, not in a slot: its tile id and centre are given here. */
@@ -176,21 +179,22 @@ export function PlanetMark({ planet, control, holderColor, exhausted, values }: 
 }
 
 export function TileView({
-  slotKey, pack, game, state, highlight, selected, fracture, ingress, seat, onTap, onPointerDown, quiet = false, liftInto = null, stage,
+  slotKey, pack, table, board, viewer = table.viewer, highlight, selected, fracture, ingress, seat, onTap, onPointerDown, quiet = false, liftInto = null, stage,
 }: TileViewProps) {
   const { t } = useTranslation();
   const { x, y } = fracture ?? slotToPixel(slotKey);
-  const mapValue = game.map[slotKey];
+  const mapValue = table.map[slotKey];
+  const source = mapSource(table, board);
   // An off-map home is opened by its tile's own id.
-  const tileId = fracture ? fracture.tileId : isOnMap(game, slotKey) ? tileIdOf(game, slotKey) : pack.tiles[slotKey] ? slotKey : '';
+  const tileId = fracture ? fracture.tileId : isOnMap(source, slotKey) ? tileIdOf(source, slotKey) : pack.tiles[slotKey] ? slotKey : '';
   const tile = pack.tiles[tileId];
   const unknown = !fracture && mapValue !== undefined && !tile;
 
   const planets = fracture
     ? (tile?.planetIds ?? []).map(id => pack.planets[id]).filter((p): p is PlanetDef => p !== undefined)
-    : systemPlanets(game, slotKey, pack);
+    : planetsIn(table, board, pack, slotKey).map(id => pack.planets[id]).filter((p): p is PlanetDef => p !== undefined);
   // A wormhole token put on the system (Creuss, Gamma Wormhole) shows like a printed wormhole (6.1).
-  const placed = Object.entries(state.wormholeTokens ?? {}).filter(([, at]) => at === slotKey).map(([type]) => type);
+  const placed = board.common.wormholeTokens[slotKey] ?? [];
   const worm = [...new Set([...(tile?.wormholes ?? []), ...placed])].map(w => WORMHOLE_SIGNS[w] ?? w).join(' ');
   const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(a => a !== undefined);
   const hexKind = !tile ? 'hex-free' : tile.planetIds.some(id => MECATOL_PLANETS.includes(id)) ? 'hex-mecatol' : tile.kind !== 'system' ? `hex-${tile.kind}`
@@ -206,18 +210,17 @@ export function TileView({
         : tile.wormholes.length > 0 ? t('map.wormhole') : tile.kind === 'system' ? t('map.emptySystem') : null;
 
   const stackLabel = ({ kind, count, owner }: PlacedStack): string => {
-    const whose = owner === 'me' ? '' : ` (${opponentName(game, pack, owner, t)})`;
+    const whose = owner === 'me' ? '' : ` (${nameOfPlayer(table, pack, playerOfOwner(table, viewer, owner) ?? owner, t)})`;
     if (kind === 'spacedock') return `${t('map.spaceDock')}${whose}`;
     return `${kind === 'pds' ? t('map.pds') : t(`unit.${kind}`)} ×${count}${whose}`;
   };
-  const colours = tokenColours(game);
-  const seated = opponentsBySeat(game);
-  /** The opponent a planet belongs to in the state shown; undefined when it is mine or free. */
-  const holderOf = (planetId: string) => holderIn(game, state, planetId);
-  const { space, ground } = stacksOf(game, state, slotKey, planets, pack);
-  const hasCommandToken = state.tokensOnMap.includes(slotKey);
+  const colours = tableColours(table, viewer);
+  const seated = othersOf(table, viewer);
+  const { space, ground } = tileStacks(table, board, viewer, slotKey, planets);
+  const tokens = board.systems[slotKey]?.tokens ?? [];
+  const hasCommandToken = tokens.includes(viewer);
   const seatX = tile && seat ? NUMBER_X + (String(tile.number).length + (worm ? worm.length + 1 : 0)) * NUMBER_CHAR + SEAT_RADIUS + 1.5 : 0;
-  const rivalTokens = seated.filter(o => state.rivals?.[o.id]?.tokensOnMap.includes(slotKey));
+  const rivalTokens = seated.filter(o => tokens.includes(o.id));
   // The tokens form a pile leftwards from the corner: apart while they fit, overlapping more as they crowd, never over
   // the tile number or its seat badge.
   const numberText = tile ? `${tile.kind === 'fracture' ? `F${tile.id.replace(/\D/g, '')}` : tile.number}${worm ? ` ${worm}` : ''}` : unknown ? tileId : '';
@@ -230,7 +233,7 @@ export function TileView({
   if (hasCommandToken) obstacles.push(COMMAND_SPOT);
   if (ingress) obstacles.push({ x: INGRESS_SPOT.x, y: INGRESS_SPOT.y, r: INGRESS_RADIUS });
   if (tile && seat) obstacles.push({ x: seatX, y: SEAT_Y, r: SEAT_RADIUS });
-  const layout = useHexLayout({ planets: planets.length, space, ground, obstacles, opponents: seated.map(o => o.id) });
+  const layout = useHexLayout({ planets: planets.length, space, ground, obstacles, opponents: seated.map(o => ownerKey(table, viewer, o.id)) });
 
   const label = fracture ? t('map.fractureTile', { n: fracture.index + 1 }) : unknown
     ? t('map.unknownTile', { id: tileId })
@@ -245,15 +248,17 @@ export function TileView({
     <>
       {planets.map((planet, i) => {
         const spot = layout.planets[i];
-        const control = state.control[planet.id];
-        const holder = holderOf(planet.id);
-        const holderColor = game.opponents.find(o => o.id === holder)?.color;
-        const exhausted = state.exhausted.includes(planet.id);
-        const values = shownPlanetValues(pack, state, planet.id, game.faction);
+        const held = board.planets[planet.id];
+        // The owner, as the viewer sees it: mine, an enemy's (the holder is that player), or no one's.
+        const control = held?.owner === undefined ? undefined : held.owner === viewer ? 'me' as const : 'enemy' as const;
+        const holder = control === 'enemy' ? held?.owner : undefined;
+        const holderColor = seated.find(o => o.id === holder)?.color;
+        const exhausted = (held?.exhausted ?? false) && (held?.owner === undefined || held.owner === viewer);
+        const values = shownPlanetValues(table, board, pack, viewer, planet.id);
         const parts = [`${planet.name}: ${values.resources}/${values.influence}`];
         for (const tech of planet.tech ?? []) parts.push(t(`map.tech.${tech}`));
         if (planet.legendary) parts.push(t('map.legendary'));
-        if (control) parts.push(`${t(`map.control.${control}`)}${holder ? ` (${opponentName(game, pack, holder, t)})` : ''}`);
+        if (control) parts.push(`${t(`map.control.${control}`)}${holder ? ` (${nameOfPlayer(table, pack, holder, t)})` : ''}`);
         if (exhausted) parts.push(t('map.exhausted'));
         return (
           <g
@@ -311,7 +316,7 @@ export function TileView({
 
         {/* A pile: the leftmost token at the bottom, each next one over it, mine on top in the corner. */}
         {rivalTokens.map((o, i) => ({ o, i })).reverse().map(({ o, i }) => (
-          <g key={o.id} role="img" aria-label={t('map.commandTokenOf', { name: opponentName(game, pack, o.id, t) })} transform={`translate(${rivalTokenAt(i).x} ${rivalTokenAt(i).y}) scale(${COMMAND_SPOT.r / 7})`}>
+          <g key={o.id} role="img" aria-label={t('map.commandTokenOf', { name: nameOfPlayer(table, pack, o.id, t) })} transform={`translate(${rivalTokenAt(i).x} ${rivalTokenAt(i).y}) scale(${COMMAND_SPOT.r / 7})`}>
             <CommandTokenMark color={o.color} />
           </g>
         ))}

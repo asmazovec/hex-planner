@@ -15,7 +15,7 @@ import { offMapHomes } from '../../domain/strategy';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
-import { TileView } from './TileView';
+import { LegacyTile } from '../testing/legacyMap';
 
 const all = loadPack(['pok', 'te']);
 const game = () => useGame.getState().game!;
@@ -66,6 +66,6 @@ test('a wormhole token put on a tile is drawn on it', () => {
   const plain = (key: string) => all.tiles[game().map[key].split('@')[0]];
   const slot = Object.keys(game().map).find(key => plain(key)?.wormholes.length === 0 && plain(key).planetIds.length > 0)!;
   const state = { ...project(game(), game().plans[0], 'forecast', all).state, wormholeTokens: { alpha: slot } };
-  render(<svg><TileView slotKey={slot} pack={all} game={game()} state={state} /></svg>);
+  render(<svg><LegacyTile slotKey={slot} pack={all} game={game()} state={state} /></svg>);
   expect(tile(slot).textContent).toContain('α');
 });

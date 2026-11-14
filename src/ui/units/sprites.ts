@@ -1,4 +1,6 @@
 import type { TokenKind } from '../../domain/hexLayout';
+import { ownerKey } from '../../game/tile';
+import type { Table } from '../../game/types';
 import type { Game } from '../../domain/types';
 import { UNIT_ART } from './unitArt';
 
@@ -8,6 +10,12 @@ export const PLAYER_COLOURS = ['#7fb2ff', '#e8c56a', '#ea7f76', '#74d09a', '#b89
 export const playerColour = (color: number): string => PLAYER_COLOURS[(color - 1 + PLAYER_COLOURS.length) % PLAYER_COLOURS.length];
 
 /** The colour of every stack owner: `me` and each opponent id. */
+/** The colours of a table's tokens as a tile draws them: the viewer's under `me`, each other player's under their id. */
+export const tableColours = (table: Table, viewer: string = table.viewer): Record<string, string> => ({
+  me: playerColour(table.players.find(p => p.id === viewer)?.color ?? 0),
+  ...Object.fromEntries(table.players.filter(p => p.id !== viewer).map(p => [ownerKey(table, viewer, p.id), playerColour(p.color)])),
+});
+
 export const tokenColours = (game: Pick<Game, 'color' | 'opponents'>): Record<string, string> => ({
   me: playerColour(game.color),
   ...Object.fromEntries(game.opponents.map(o => [o.id, playerColour(o.color)])),

@@ -87,3 +87,10 @@ export function inFlight(board: Board, turn: Turn, passed: number[]): Board {
   return next;
 }
 
+
+/** The map while the units wait to leave: the system of the action holds its token already, so that the tokens there do not shift when they go. */
+export function activatedBoard(board: Board, turn: Turn): Board {
+  const action = turn.action;
+  if (action.kind !== 'tactical' || action.free || action.system === null || (board.systems[action.system]?.tokens.includes(turn.player) ?? false)) return board;
+  return apply(board, { type: 'SystemActivated', player: turn.player, system: action.system });
+}

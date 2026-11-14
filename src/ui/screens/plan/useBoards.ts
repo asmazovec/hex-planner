@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { boardBefore, timelineOf } from '../../../state/projection';
 import { playerState } from '../../../domain/stacks';
 import type { DataPack, Game, GameState, Plan } from '../../../domain/types';
+import type { Board } from '../../../game/types';
 
 type Filter = 'now' | 'forecast';
 
@@ -10,6 +11,8 @@ export interface Boards {
   board: (entryId: string, filter?: Filter) => GameState;
   /** The state of the entry's owner just before it: what that entry can move and pay with. */
   before: (entryId: string, filter?: Filter) => GameState;
+  /** The kernel's board just before an entry, whoever it belongs to: the whole table. */
+  boardOf: (entryId: string, filter?: Filter) => Board;
 }
 
 /**
@@ -29,6 +32,10 @@ export function useBoards(game: Game | null, plan: Plan | undefined, pack: DataP
       return found;
     };
     const ownerOf = (entryId: string) => plan?.rounds.flatMap(r => r.entries).find(e => e.id === entryId)?.owner;
-    return { board, before: (entryId, filter) => playerState(board(entryId, filter), ownerOf(entryId)) };
+    const boardOf = (entryId: string, filter: Filter = 'forecast'): Board => {
+      const { kernel } = timelineOf(game!, plan!, filter, pack);
+      return kernel.byTurn.get(entryId)?.before ?? kernel.end;
+    };
+    return { board, boardOf, before: (entryId, filter) => playerState(board(entryId, filter), ownerOf(entryId)) };
   }, [game, plan, pack]);
 }
