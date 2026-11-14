@@ -9,7 +9,8 @@
  */
 import placeNotControlled from '../../../rules/codes/placeNotControlled';
 import { planetsOf, systemSlots } from '../../../replay/board';
-import { add } from '../../../replay/state';
+import { placeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
 
@@ -22,11 +23,19 @@ export const effect: ComponentEffect = {
     key: 'planet', kind: 'planet',
     options: ({ game, pack, state }) => [...new Set(systemSlots(game).flatMap(slot => planetsOf(game, slot, pack)))].filter(planetId => state.control[planetId] === 'me'),
   }],
-  play: ({ game, state, entry, pack, choices, warnings, held }) => {
-    if (!held || game.faction !== 'yssaril' || entry.type !== 'component' || entry.componentId !== 'ability:stall_tactics') return;
-    const planet = choices.planet ?? entry.choices?.planet;
-    if (planet === undefined || pack.planets[String(planet)] === undefined) return;
-    if (state.control[String(planet)] !== 'me') warnings.push(violation(placeNotControlled.code, { planetId: String(planet) }));
-    else add(state.ground, String(planet), { mech: 1 });
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const entry = ctx.entry;
+    if (!ctx.held || ctx.my.faction !== 'yssaril' || entry?.type !== 'component' || entry.componentId !== 'ability:stall_tactics') return [];
+    const planet = ctx.choices.planet ?? entry.choices?.planet;
+    if (planet === undefined || ctx.pack.planets[String(planet)] === undefined) return [];
+    if (ctx.board.planets[String(planet)]?.owner !== ctx.holder) {
+      ctx.warn(violation(placeNotControlled.code, { planetId: String(planet) }));
+      return [];
+    }
+    return [placeUnits(ctx.holder, { planet: String(planet) }, { mech: 1 })];
   },
 };

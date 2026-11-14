@@ -16,7 +16,7 @@ import type { GameState, UnitCounts, UnitId } from '../../types';
 import type { AbilityContext } from '../../../game/abilities/types';
 import componentUnresolved from '../../rules/codes/componentUnresolved';
 import type { GameEvent } from '../../../game/events';
-import { tokens, tradeGoods as tradeGoodsOf } from '../../../game/abilities/emit';
+import { planet as planetEvents, tokens } from '../../../game/abilities/emit';
 import { MECATOL_PLANET, MECATOL_PLANET_TE, MECATOL_TILE_TE } from '../../mecatol';
 import type { EffectTurn } from '../types';
 
@@ -183,9 +183,7 @@ export function missingBy(ctx: AbilityContext, slot: string, units: UnitCounts):
   return found;
 }
 
-/** The holder takes control of a planet as a landing does: it comes exhausted, and the trade goods `tradeGoodsOnControl` asks come with it. A planet already theirs changes nothing. */
+/** The holder takes control of a planet and it comes exhausted. The resolver does the rest for every planet a play gains, as a landing does: the hooks of the gain run and the trade goods `tradeGoodsOnControl` asks come. A planet already theirs changes nothing. */
 export function takeControlBy(ctx: AbilityContext, planetId: string): GameEvent[] {
-  if (ctx.board.planets[planetId]?.owner === ctx.holder) return [];
-  const goods = ctx.applied('tradeGoodsOnControl', 0, { planetId });
-  return [{ type: 'PlanetGained', player: ctx.holder, planet: planetId }, { type: 'PlanetExhausted', player: ctx.holder, planet: planetId }, ...(goods > 0 ? [tradeGoodsOf(ctx.holder, goods)] : [])];
+  return ctx.board.planets[planetId]?.owner === ctx.holder ? [] : [planetEvents.gain(ctx.holder, planetId), planetEvents.exhaust(ctx.holder, planetId)];
 }

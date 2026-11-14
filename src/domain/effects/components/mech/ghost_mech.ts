@@ -7,7 +7,9 @@
  * Creuss wormhole token they chose (`token`, alpha or beta) is placed or moved into the system the mech was in (Creuss
  * notes, Icarus Drive 2). A mech on a planet is taken from the planet. No token is moved when none is chosen.
  */
-import { systemOfPlanet } from '../../../stacks';
+import { removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import type { GameEvent } from '../../../../game/events';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'mech:ghost_mech';
@@ -22,20 +24,30 @@ export const effect: ComponentEffect = {
     { key: 'token', kind: 'option', options: () => TOKENS, names: NAMES, label: { ru: 'Жетон', en: 'Token' } },
     { key: 'systemId', kind: 'system', label: { ru: 'Система меха', en: 'System of the mech' }, options: ({ state }) => Object.entries(state.systems).filter(([, units]) => (units.mech ?? 0) > 0).map(([slot]) => slot) },
   ],
-  play: ({ game, pack, state, shared, choices, held }) => {
-    if (!held || game.faction !== 'ghost') return;
-    const chosen = typeof choices.systemId === 'string' ? choices.systemId : undefined;
-    let slot = chosen !== undefined && (state.systems[chosen]?.mech ?? 0) > 0 ? chosen : Object.keys(state.systems).find(key => (state.systems[key].mech ?? 0) > 0);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held || ctx.my.faction !== 'ghost') return [];
+    const chosen = typeof ctx.choices.systemId === 'string' ? ctx.choices.systemId : undefined;
+    const mechsIn = (slot: string): number => ctx.board.systems[slot]?.ships[ctx.holder]?.mech ?? 0;
+    const events: GameEvent[] = [];
+    let slot = chosen !== undefined && mechsIn(chosen) > 0 ? chosen : Object.keys(ctx.board.systems).find(key => mechsIn(key) > 0);
     if (slot !== undefined) {
-      state.systems[slot] = { ...state.systems[slot], mech: (state.systems[slot].mech ?? 0) - 1 };
+      events.push(removeUnits(ctx.holder, { slot }, { mech: 1 }));
     } else {
       // On a planet: the mech is taken from it, and its system is the one the token goes into.
-      const planetId = Object.keys(state.ground).find(key => (state.ground[key].mech ?? 0) > 0);
-      if (planetId === undefined) return;
-      state.ground[planetId] = { ...state.ground[planetId], mech: (state.ground[planetId].mech ?? 0) - 1 };
-      slot = systemOfPlanet(game, planetId, pack);
+      const planetId = Object.keys(ctx.board.planets).find(key => (ctx.my.unitsOn(key).mech ?? 0) > 0);
+      if (planetId === undefined) return [];
+      events.push(removeUnits(ctx.holder, { planet: planetId }, { mech: 1 }));
+      slot = ctx.systemOf(planetId);
     }
-    const token = String(choices.token);
-    if (slot !== undefined && TOKENS.includes(token)) shared.wormholeTokens = { ...shared.wormholeTokens, [token]: slot };
+    const token = String(ctx.choices.token);
+    if (slot !== undefined && TOKENS.includes(token)) {
+      const from = Object.keys(ctx.board.common.wormholeTokens).find(key => ctx.board.common.wormholeTokens[key].includes(token));
+      if (from !== slot) events.push(from === undefined ? { type: 'WormholeTokenPlaced', system: slot, wormhole: token } : { type: 'WormholeTokenMoved', from, to: slot, wormhole: token });
+    }
+    return events;
   },
 };

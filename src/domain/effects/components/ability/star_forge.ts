@@ -10,9 +10,9 @@
  */
 import warSunAbsent from '../../../rules/codes/warSunAbsent';
 import { violation } from '../../../rules/registry';
-import { adjacentTo } from '../../../movement';
-import { planetsOf } from '../../../replay/board';
-import { spendStrategyTokens } from '../../../replay/status';
+import { placeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { spendStrategyBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:star_forge';
@@ -24,26 +24,29 @@ export const effect: ComponentEffect = {
     { key: 'systemId', kind: 'system', label: { ru: 'Система', en: 'System' } },
     { key: 'unit', kind: 'unit', options: () => ['fighter', 'destroyer'], label: { ru: 'Юниты', en: 'Units' } },
   ],
-  play: turn => {
-    const { game, state, choices, warnings, held } = turn;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
     // Printed on the Muaat sheet only: another faction's play of it does nothing.
-    if (game.faction !== 'muaat' || !held) return;
-    const slot = choices.systemId;
-    const unit = choices.unit;
-    if (typeof slot !== 'string' || (unit !== 'fighter' && unit !== 'destroyer')) return;
-    spendStrategyTokens(turn);
-    const there = state.systems[slot] ?? {};
-    if (!(there.warsun && there.warsun > 0)) warnings.push(violation(warSunAbsent.code, {}));
-    state.systems[slot] = { ...there, [unit]: (there[unit] ?? 0) + (unit === 'fighter' ? 2 : 1) };
+    if (ctx.my.faction !== 'muaat' || !ctx.held) return [];
+    const slot = ctx.choices.systemId;
+    const unit = ctx.choices.unit;
+    if (typeof slot !== 'string' || (unit !== 'fighter' && unit !== 'destroyer')) return [];
+    const events = spendStrategyBy(ctx);
+    if (!((ctx.my.unitsIn(slot).warsun ?? 0) > 0)) ctx.warn(violation(warSunAbsent.code, {}));
+    events.push(placeUnits(ctx.holder, { slot }, { [unit]: unit === 'fighter' ? 2 : 1 }));
     // Ember Colossus (mech:muaat_mech): "you may place 1 infantry from your reinforcements with this unit", for each
     // of my mechs in this system or an adjacent one, in its space area or on its planet.
-    for (const near of [slot, ...adjacentTo(game, slot, turn.pack)]) {
-      const space = state.systems[near];
-      if (space?.mech) space.infantry = (space.infantry ?? 0) + space.mech;
-      for (const planetId of planetsOf(game, near, turn.pack)) {
-        const ground = state.ground[planetId];
-        if (ground?.mech) ground.infantry = (ground.infantry ?? 0) + ground.mech;
+    for (const near of [slot, ...ctx.adjacent(slot)]) {
+      const space = ctx.my.unitsIn(near).mech ?? 0;
+      if (space > 0) events.push(placeUnits(ctx.holder, { slot: near }, { infantry: space }));
+      for (const planetId of ctx.planetsIn(near)) {
+        const ground = ctx.my.unitsOn(planetId).mech ?? 0;
+        if (ground > 0) events.push(placeUnits(ctx.holder, { planet: planetId }, { infantry: ground }));
       }
     }
+    return events;
   },
 };

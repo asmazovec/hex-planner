@@ -6,7 +6,8 @@
  * round) and one infantry is placed there, but only where my infantry already stands. The replay exhausts the card
  * ("Exhaust this card").
  */
-import { planetsOf } from '../../../replay/board';
+import { commandToken, placeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import componentCondition from '../../../rules/codes/componentCondition';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
@@ -17,19 +18,21 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'systemId', kind: 'system' }],
-  play: ({ choices, state, game, pack, held, warnings }) => {
-    if (!held) return;
-    const systemId = String(choices.systemId ?? '');
-    if (systemId === '') return;
-    const planet = planetsOf(game, systemId, pack).find(p => state.control[p] === 'me' && (state.ground[p]?.infantry ?? 0) > 0);
-    const inSpace = (state.systems[systemId]?.infantry ?? 0) > 0;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held) return [];
+    const systemId = String(ctx.choices.systemId ?? '');
+    if (systemId === '') return [];
+    const planet = ctx.planetsIn(systemId).find(p => ctx.board.planets[p]?.owner === ctx.holder && (ctx.my.unitsOn(p).infantry ?? 0) > 0);
+    const inSpace = (ctx.my.unitsIn(systemId).infantry ?? 0) > 0;
     if (planet === undefined && !inSpace) {
-      warnings.push(violation(componentCondition.code, { id, name: 'Psychospore', condition: 'the system holds none of my infantry' }));
-      return;
+      ctx.warn(violation(componentCondition.code, { id, name: 'Psychospore', condition: 'the system holds none of my infantry' }));
+      return [];
     }
     // The command token goes back to the reinforcements; the infantry comes from them too and stands where mine does.
-    state.tokensOnMap = state.tokensOnMap.filter(slot => slot !== systemId);
-    if (planet !== undefined) state.ground[planet] = { ...state.ground[planet], infantry: (state.ground[planet]?.infantry ?? 0) + 1 };
-    else state.systems[systemId] = { ...state.systems[systemId], infantry: (state.systems[systemId]?.infantry ?? 0) + 1 };
+    return [commandToken.remove(ctx.holder, systemId), placeUnits(ctx.holder, planet !== undefined ? { planet } : { slot: systemId }, { infantry: 1 })];
   },
 };

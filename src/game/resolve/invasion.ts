@@ -11,6 +11,7 @@ import { checkStationLandings } from '../../domain/thundersEdge';
 import { violation } from '../../domain/rules/registry';
 import type { StructureKind, UnitCounts } from '../../domain/types';
 import type { GameEvent } from '../events';
+import type { Board, PlayerId } from '../types';
 import { legacyKey } from '../legacyViews';
 import { groundOn, ownerOf } from '../queries';
 import { planetsIn } from '../space';
@@ -64,6 +65,20 @@ export function landUnits(ctx: Ctx, target: string): Landed {
 }
 
 /**
+ * What follows a planet taken, for a landing and for a play alike (one path): the components hooked
+ * on the gain run (the structures of its old owner that went with it are told to them: 49.5.1), and what the components
+ * of the player add with it (Scavenge) is gained. `before` is the board as it stood before the planet was gained.
+ */
+export function gainedPlanet(ctx: Ctx, planetId: string, before: Board, player: PlayerId): void {
+  const was = ownerOf(before, planetId);
+  const fromPlayer = was !== undefined;
+  const lost = was === undefined ? [] : KINDS.map(kind => ({ kind, owner: legacyKey(ctx.table, was), count: before.planets[planetId]?.structures[kind] ?? 0 })).filter(s => s.count > 0);
+  controlHooks(ctx, { planetId, fromPlayer, explores: !fromPlayer, lost }, player);
+  const goods = tradeGoodsOnControl(ctx.table, ctx.board, ctx.pack, player, planetId);
+  if (goods !== 0) emit(ctx, [{ type: 'TradeGoodsChanged', player, delta: goods }], { quiet: true });
+}
+
+/**
  * Each planet landed on that still holds the active player's ground forces is theirs (49.5): the structures of the old
  * owner go with it, it is exhausted, and the components hooked on the gain run. A planet of the viewer's lost to a
  * rival is told to the `onControlLost` hook, once the action is over.
@@ -72,20 +87,11 @@ export function gainControl(ctx: Ctx, landed: Landed): void {
   for (const planetId of landed.on) {
     if (!some(groundOf(groundOn(ctx.board, planetId, ctx.player), ctx))) continue;
     if (ctx.board.planets[planetId]?.owner === ctx.player) continue;
-    const was = ownerOf(ctx.board, planetId);
-    const fromPlayer = was !== undefined;
-    // The structures of the old owner go with the change (49.5.1).
-    const lost = was === undefined ? [] : KINDS.map(kind => ({ kind, owner: legacyKey(ctx.table, was), count: ctx.board.planets[planetId]?.structures[kind] ?? 0 })).filter(s => s.count > 0);
     const viewerLoses = ctx.board.planets[planetId]?.owner === ctx.table.viewer && ctx.player !== ctx.table.viewer;
     if (viewerLoses && landed.lost.hooked.length === 0) landed.lost.hooked = inForce(ctx.table, ctx.board, ctx.pack, ctx.table.viewer).filter(id => effectOf(ctx.pack, id)?.on?.onControlLost !== undefined);
-    emit(ctx, [
-      { type: 'PlanetGained', player: ctx.player, planet: planetId },
-      { type: 'PlanetExhausted', player: ctx.player, planet: planetId },
-    ], { quiet: true });
-    controlHooks(ctx, { planetId, fromPlayer, explores: !fromPlayer, lost });
-    // What the components of the player add with a planet gained (Scavenge): the rules themselves bring none.
-    const goods = tradeGoodsOnControl(ctx.table, ctx.board, ctx.pack, ctx.player, planetId);
-    if (goods !== 0) emit(ctx, [{ type: 'TradeGoodsChanged', player: ctx.player, delta: goods }], { quiet: true });
+    const before = ctx.board;
+    emit(ctx, [{ type: 'PlanetGained', player: ctx.player, planet: planetId }, { type: 'PlanetExhausted', player: ctx.player, planet: planetId }], { quiet: true });
+    gainedPlanet(ctx, planetId, before, ctx.player);
     if (viewerLoses) landed.lost.planets.push({ planetId, to: ctx.table.players.find(p => p.id === ctx.player)?.legacyId ?? ctx.player });
   }
 }

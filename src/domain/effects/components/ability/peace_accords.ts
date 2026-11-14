@@ -9,13 +9,12 @@
  */
 import { componentById } from '../../../components';
 import { isMecatol } from '../../../mecatol';
-import { adjacentTo } from '../../../movement';
-import { planetsOf, sourceSlot } from '../../../replay/board';
 import { CARD } from '../../../replay/cards/ids';
-import { takeControl } from '../../../replay/invasion';
+import type { Hooked } from '../../../../game/abilities/types';
 import componentCondition from '../../../rules/codes/componentCondition';
 import planetNotGainable from '../../../rules/codes/planetNotGainable';
 import { violation } from '../../../rules/registry';
+import { takeControlBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:peace_accords';
@@ -24,20 +23,25 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-  play: ({ game, state, states, pack, entry, choices, warnings, held }) => {
-    if (!held || game.faction !== 'xxcha') return;
-    const diplomacy = (entry.type === 'strategic' || entry.type === 'secondary') && entry.card === CARD.diplomacy;
-    if (!diplomacy) warnings.push(violation(componentCondition.code, { id, name: componentById(pack, id)?.name ?? id, condition: 'Diplomacy' }));
-    const planet = typeof choices.planet === 'string' ? choices.planet : undefined;
-    if (planet === undefined) return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held || ctx.my.faction !== 'xxcha') return [];
+    const entry = ctx.entry;
+    const diplomacy = (entry?.type === 'strategic' || entry?.type === 'secondary') && entry.card === CARD.diplomacy;
+    if (!diplomacy) ctx.warn(violation(componentCondition.code, { id, name: componentById(ctx.pack, id)?.name ?? id, condition: 'Diplomacy' }));
+    const planet = typeof ctx.choices.planet === 'string' ? ctx.choices.planet : undefined;
+    if (planet === undefined) return [];
     const holds = (units: Record<string, number | undefined> | undefined): boolean => Object.values(units ?? {}).some(n => (n ?? 0) > 0);
-    const occupied = Object.values(states).some(each => holds(each.ground[planet]) || each.docks.includes(planet) || (each.pds[planet] ?? 0) > 0)
-      || Object.values(game.enemyGround[planet] ?? {}).some(units => holds(units));
-    const slot = sourceSlot(game, pack, planet);
+    const here = ctx.board.planets[planet];
+    const occupied = Object.values(here?.ground ?? {}).some(holds) || holds(here?.structures);
+    const slot = ctx.systemOf(planet);
     // In a system adjacent to one that holds a planet of the player's.
-    const near = slot !== null && adjacentTo(game, slot, pack).some(next => planetsOf(game, next, pack).some(id => state.control[id] === 'me'));
-    if (isMecatol(planet) || occupied || !near) warnings.push(violation(planetNotGainable.code, { planet }));
-    // Ruling 3: gained exhausted, which `takeControl` does.
-    takeControl(game, state, planet, pack);
+    const near = slot !== undefined && ctx.adjacent(slot).some(next => ctx.planetsIn(next).some(each => ctx.board.planets[each]?.owner === ctx.holder));
+    if (isMecatol(planet) || occupied || !near) ctx.warn(violation(planetNotGainable.code, { planet }));
+    // Ruling 3: gained exhausted, which the resolver does for every planet gained.
+    return takeControlBy(ctx, planet);
   },
 };

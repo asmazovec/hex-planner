@@ -10,6 +10,7 @@ import { effectOf, orderOf } from '../../domain/effects/registry';
 import { playedBy } from '../../domain/effects/waivers';
 import { anyInForce, inForce } from '../abilities/registry';
 import type { HookPayloads } from '../abilities/types';
+import type { PlayerId } from '../types';
 import type { Ctx } from './context';
 import { hook } from './hooks';
 
@@ -33,8 +34,8 @@ export function gainHooks(ctx: Ctx): void {
 }
 
 /** The components hooked on a planet gained, once it is the player's: the passive ones in force, and the play ones the entry names. */
-export function controlHooks(ctx: Ctx, payload: HookPayloads['onGainControl']): void {
-  const { table, board, pack, player, entry } = ctx;
+export function controlHooks(ctx: Ctx, payload: HookPayloads['onGainControl'], player: PlayerId = ctx.player): void {
+  const { table, board, pack, entry } = ctx;
   const has = (id: string): boolean => effectOf(pack, id)?.on?.onGainControl !== undefined;
   const named = [...playedBy(entry), ...(entry.gains ?? [])].filter(id => effectOf(pack, id)?.tier === 'play' && has(id));
   if (named.length === 0 && !anyInForce(table, board, pack, e => e.on?.onGainControl !== undefined)) return;

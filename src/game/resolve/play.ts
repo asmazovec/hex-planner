@@ -13,6 +13,7 @@ import { applyChecked } from '../apply';
 import type { GameEvent } from '../events';
 import type { Board, DataPack, PlayerId, Table } from '../types';
 import { warn, type Ctx } from './context';
+import { gainedPlanet } from './invasion';
 import { contextOf, poolWarnings, type HookOptions, type HookResult } from './hooks';
 
 /** Plays the component `id` for `player`: what it does is applied one event at a time, its warnings are listed. */
@@ -49,10 +50,13 @@ function revise(ctx: Ctx, found: Warning, to?: Warning): void {
 /** One component the entry names, played on the turn's board: its events and warnings join the step. */
 export function playOne(ctx: Ctx, id: string): GameEvent[] {
   const lacking = ctx.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
+  const before = ctx.board;
   const result = runPlay(ctx.table, ctx.board, ctx.pack, id, ctx.player, { actor: ctx.player, step: ctx.cur.step, entry: ctx.entry, choices: choicesFor(ctx.entry, id), held: !lacking, warned: ctx.warnings, revise: (found, to) => revise(ctx, found, to) });
   ctx.board = result.board;
   ctx.cur.events.push(...result.events);
   if (result.violations.length > 0) warn(ctx, result.violations);
+  // A planet a play gains is taken as a landing takes it: with the hooks of the gain and what the components add (a play that gains it exhausted says so itself).
+  for (const event of result.events) if (event.type === 'PlanetGained' && before.planets[event.planet]?.owner !== event.player) gainedPlanet(ctx, event.planet, before, event.player);
   return result.events;
 }
 

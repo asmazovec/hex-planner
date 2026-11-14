@@ -8,6 +8,8 @@
  * their purge is not counted (Naaz-Rokha, Fabrication note 2: the fragment may be purged even with no token in the
  * reinforcements).
  */
+import { tokens } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:fabrication';
@@ -27,10 +29,14 @@ export const effect: ComponentEffect = {
       label: { ru: 'Куда положить', en: 'Pool' },
     },
   ],
-  play: ({ game, state, choices }) => {
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
     // A sheet ability is not checked by `holds`: another faction's play does nothing.
-    if (game.faction !== 'naaz' || choices.gain !== 'token') return;
-    const pool = choices.pool;
-    if (pool === 'tactic' || pool === 'fleet' || pool === 'strategy') state[pool] += 1;
+    if (ctx.my.faction !== 'naaz' || ctx.choices.gain !== 'token') return [];
+    const pool = ctx.choices.pool;
+    return pool === 'tactic' || pool === 'fleet' || pool === 'strategy' ? [tokens(ctx.holder, { [pool]: 1 })] : [];
   },
 };

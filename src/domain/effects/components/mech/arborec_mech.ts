@@ -6,7 +6,8 @@
  * planet becomes a mech. Only the Arborec have Mitosis to hang the deploy on, so another faction's play does nothing.
  * Its PRODUCTION and SUSTAIN DAMAGE are those of a unit, not of this card.
  */
-import { planetsOf, systemSlots } from '../../../replay/board';
+import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import componentCondition from '../../../rules/codes/componentCondition';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
@@ -16,16 +17,17 @@ export const id = 'mech:arborec_mech';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ game, state, pack, warnings }) => {
-    if (game.faction !== 'arborec') return;
-    const planets = systemSlots(game).flatMap(slot => planetsOf(game, slot, pack));
-    const planet = planets.find(p => state.control[p] === 'me' && (state.ground[p]?.infantry ?? 0) > 0);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (ctx.my.faction !== 'arborec') return [];
+    const planet = ctx.my.planets().find(p => (p.ground.infantry ?? 0) > 0);
     if (planet === undefined) {
-      warnings.push(violation(componentCondition.code, { id, name: 'Letani Behemoth', condition: 'none of my infantry stands on a planet I control' }));
-      return;
+      ctx.warn(violation(componentCondition.code, { id, name: 'Letani Behemoth', condition: 'none of my infantry stands on a planet I control' }));
+      return [];
     }
-    const { infantry = 0, ...rest } = state.ground[planet] ?? {};
-    const units = { ...rest, mech: (rest.mech ?? 0) + 1, ...(infantry > 1 ? { infantry: infantry - 1 } : {}) };
-    state.ground[planet] = units;
+    return [removeUnits(ctx.holder, { planet: planet.id }, { infantry: 1 }), placeUnits(ctx.holder, { planet: planet.id }, { mech: 1 })];
   },
 };
