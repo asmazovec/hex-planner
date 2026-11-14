@@ -5,11 +5,11 @@
 import { describe, expect, test } from 'vitest';
 import { genericNotes, startForFaction } from '../../holdings';
 import { passageBarredOf, shipBlockersOf } from '../../../testing/old/domain/movement';
-import type { Opponent } from '../../types';
+import type { Player } from '../../players';
 import { bench, endOf, FAR, NEAR, TARGET, tactical } from '../components/kit';
 import { notesInPlay } from './rivals';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const ALLIANCE = 'promissory:<color>_an@me';
 
 describe('stopsPassage: a system a component bars to the ships of other players', () => {

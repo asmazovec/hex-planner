@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { emptyHoldings, holdingsOf } from '../holdings';
 import { forecast, rulesGame, rulesPack, tech } from '../rules/kit';
-import type { Entry, Opponent } from '../types';
+import type { Entry } from '../types';
+import type { Player } from '../players';
 import { applied, stacked } from './apply';
 import { effectOf, stepsOfWindow } from './registry';
 import { hintsAt } from '../../testing/old/domain/effects/registry';
@@ -102,7 +103,7 @@ describe('hints: where a component the app does not count is shown', () => {
   });
 
   describe('hintsAt', () => {
-    const RIVAL: Opponent = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
+    const RIVAL: Player = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
     const combatCard = pok.components.find(c => c.kind === 'actionCard' && effectOf(pok, c.id)?.hintAt?.includes('combat'))!.id;
     const invasionCard = pok.components.find(c => c.kind === 'actionCard' && effectOf(pok, c.id)?.hintAt?.join() === 'invasion')!.id;
     const draw = (ids: string[], owner?: string): Entry =>

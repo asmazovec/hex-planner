@@ -2,11 +2,12 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { createGame } from '../../../testing/old/domain/newGame';
-import type { Act, Entry, Goods, Opponent } from '../../types';
+import type { Act, Entry, Goods } from '../../types';
+import type { Player } from '../../players';
 import { FACTION, NEAR, codesOf, forecast, rulesGame, rulesPack, tactical } from '../kit';
 
 const pack = rulesPack();
-const RIVAL: Opponent = { id: 'o1', faction: FACTION, vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: FACTION, vp: 0, seat: 2, color: 2 };
 const A = 'promissory:war_funding';
 const B = 'promissory:ragh';
 const deal = (give: Goods, get: Goods = {}): Act => ({ kind: 'transaction', with: 'o1', give, get });

@@ -1,12 +1,12 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, HOME, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './arbiters';
 
 uiBench();
 
-const RIVAL: Opponent = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 const CARD_IN_HAND = 'actionCard:sabo1';
 /** The warnings of a turn in which I give a neighbour an action card. */
 const turn = (faction: string) => {

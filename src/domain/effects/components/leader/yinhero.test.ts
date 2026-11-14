@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Game, Opponent } from '../../../types';
+import type { Entry, Game } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, quote, warningsOf } from '../kit';
 import { id } from './yinhero';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 /** The hero's component action; its choices are the infantry committed, by planet id. */
 const commit = (choices: Record<string, number>): Entry => componentAction(id, { choices });
 const table = (entries: Entry[], game: Partial<Game> = {}) =>

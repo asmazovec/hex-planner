@@ -1,7 +1,9 @@
-import { applied } from '../../../../domain/effects/apply';
 import { holderOf } from '../../../../domain/effects/registry';
-import type { DataPack, Game, GameState, Warning, UnitCounts } from '../../../../domain/types';
-import { type Stacks, capacity, checkSystemOf, dockFighterRoom, fleetCount, checkPickupsOf, checkGroupsOf, overflowLeftOf, checkLeftBehindOf } from '../../../../domain/replay/transport';
+import type { DataPack, Game, Warning, UnitCounts } from '../../../../domain/types';
+import type { GameState } from '../types';
+import { planetsOf } from '../../../../domain/replay/board';
+import { dockRoom, type Stacks, capacity, checkSystemOf, fleetCount, checkPickupsOf, checkGroupsOf, overflowLeftOf, checkLeftBehindOf } from '../../../../domain/replay/transport';
+import { applied } from '../../../../domain/effects/apply';
 import { type Move, unitIds, take } from '../../../../domain/replay/state';
 import type { Blockers } from '../../../../domain/movement';
 import { blockersOf } from '../movement';
@@ -60,3 +62,11 @@ export const checkSystem = (game: Game, state: GameState, target: string, pack: 
 /** The ships a system of the player may hold: the fleet pool, after what they hold changed it. */
 export const fleetLimit = (game: Game, state: GameState, pack: DataPack): number =>
   applied(pack, holderOf(game, state), 'fleetLimit', state.fleet, { faction: game.faction }).value;
+
+/**
+ * The fighters a player's space docks keep in a system: 3 for each of their docks on its planets. They count only for
+ * what stands in the system after movement: a moving group keeps its fighters on board (79 note 2, 2.1).
+ */
+export const dockFighterRoom = (game: Game, state: Pick<GameState, 'docks'> & Partial<Pick<GameState, 'holdings' | 'control' | 'laws'>>, systemId: string, pack: DataPack): number =>
+  dockRoom(game.faction, planetsOf(game, systemId, pack).filter(planetId => state.docks.includes(planetId)), systemId,
+    state.holdings ? holderOf(game, { holdings: state.holdings, control: state.control ?? {}, laws: state.laws }) : undefined, pack);

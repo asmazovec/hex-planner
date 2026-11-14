@@ -1,6 +1,7 @@
 /** LRR 60 Neighbors. Source: tirules2 rules-reference/neighbors.md. My home planets on HOME make me present there. */
 import { describe, expect, test } from 'vitest';
-import type { Act, Entry, Opponent } from '../../types';
+import type { Act, Entry } from '../../types';
+import type { Player } from '../../players';
 import { FAR, FARTHER, HOME, NEAR, TARGET, adjust, codesOf, forecast, rulesGame, rulesPack, tactical } from '../kit';
 import { areNeighbors } from '../../../testing/old/domain/neighbors';
 
@@ -8,7 +9,7 @@ import { areNeighbors } from '../../../testing/old/domain/neighbors';
 const pack = rulesPack(p => {
   p.factions['rules-rival'] = { id: 'rules-rival', name: 'Rules Rival', homeTile: 'r-empty', startUnits: {}, startingTech: [], commodities: 3, abilities: [] };
 });
-const RIVAL: Opponent = { id: 'o1', faction: 'rules-rival', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'rules-rival', vp: 0, seat: 2, color: 2 };
 
 /** Me with my home, the rival with a carrier where given, and the map row of the kit unless a map is given. */
 const withRival = (rivalAt: string, extra: { map?: Record<string, string>; units?: Record<string, Record<string, number>>; entries?: Entry[] } = {}) =>

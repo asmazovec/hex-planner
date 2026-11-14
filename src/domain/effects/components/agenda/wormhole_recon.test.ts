@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Act, DataPack, Entry, Opponent } from '../../../types';
+import type { Act, DataPack, Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, effect, endOf, expectNone, expectStanding, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './wormhole_recon';
 
@@ -7,7 +8,7 @@ import { id } from './wormhole_recon';
 const resolved = (outcome: 'for' | 'against'): Entry => ({ ...adjust({}, 'agenda'), gains: [id], choices: { outcome } } as Entry);
 
 /** A rival whose faction has an empty home off this row: they are only where their carrier stands. */
-const RIVAL: Opponent = { id: 'o1', faction: 'rules-rival', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'rules-rival', vp: 0, seat: 2, color: 2 };
 const withRival = (pack: DataPack) => {
   pack.factions['rules-rival'] = { id: 'rules-rival', name: 'Rules Rival', homeTile: 'r-empty', startUnits: {}, startingTech: [], commodities: 3, abilities: [] };
 };

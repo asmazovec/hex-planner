@@ -1,4 +1,5 @@
-import type { DataPack, Game, GameState, RuleStep, ComponentDef } from '../../../../domain/types';
+import type { DataPack, Game, RuleStep, ComponentDef } from '../../../../domain/types';
+import type { GameState } from '../types';
 import { holderOf, inForceOf, registryOf, SHEET_KIND, readyComponents, effectOf, holderRuleOf } from '../../../../domain/effects/registry';
 import { noteAddress, noteBase, componentById } from '../../../../domain/components';
 import { speaksIn } from '../../../../domain/effects/holder';

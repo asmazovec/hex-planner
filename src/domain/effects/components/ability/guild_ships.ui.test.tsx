@@ -1,12 +1,12 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, FAR, HOME, NEAR, quote, tactical } from '../kit';
 import { id } from './guild_ships';
 
 uiBench();
 
-const RIVAL: Opponent = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 /** The warnings of a turn with a transaction with a player two systems away. */
 const turn = (faction: string) => {
   const move = tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }], acts: [{ kind: 'transaction', with: 'o1', give: { tradeGoods: 1 }, get: {} }] });

@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import type { ExtensionCode, Opponent, UnitCounts } from '../../../types';
+import type { ExtensionCode, UnitCounts } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, quote, TARGET, warningsOf } from '../kit';
 import { id } from './tactical';
 
 /** The code pass 2 adds for a played card whose own condition is not met (see the report of batch 21). */
 const PLAY_CONDITION = 'playCondition' as ExtensionCode;
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 
 /** The Hacan hold both planets of the target, where my ship stands; Tactical Bombardment names the target. */
 const bombard = () => componentAction(id, { choices: { systemId: TARGET } });

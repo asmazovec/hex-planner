@@ -1,6 +1,7 @@
 import { legacyGame, blankViews, legacyEvents } from './legacyViews';
 import { playerOfLegacy } from '../../../game/entry';
-import type { Game, GameState, DataPack, UnitCounts, Entry, Plan } from '../../../domain/types';
+import type { Game, DataPack, UnitCounts, Entry, Plan } from '../../../domain/types';
+import type { GameState } from '../domain/types';
 import type { Table, Board, PlayerId } from '../../../game/types';
 import { playersOf } from '../../../domain/players';
 import { SOURCES } from '../../../game/source';

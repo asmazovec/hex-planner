@@ -15,7 +15,8 @@ vi.mock('../../../storage/db', () => ({
 import { loadPack } from '../../../data/loadPack';
 import { holdingsOf } from '../../../domain/holdings';
 import { initialState } from '../../../testing/old/domain/replay/state';
-import type { Entry, GameState, StartHoldings } from '../../../domain/types';
+import type { Entry, StartHoldings } from '../../../domain/types';
+import type { GameState } from '../../../testing/old/domain/types';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { PlanScreen } from '../../screens/PlanScreen';

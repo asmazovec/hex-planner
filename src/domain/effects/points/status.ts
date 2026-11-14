@@ -8,7 +8,6 @@
  *  - `strategyCost`: how many strategy tokens a card's primary (as a token play) or secondary costs (83.3, 83.4, 20.5); base 1.
  *  - `tokensGained` (step `status`), `handLimit` and `vp` were declared before; the first two are asked now.
  */
-import type { CardRound } from '../../replay/cards/index';
 import objectiveUnmet from '../../rules/codes/objectiveUnmet';
 import { violation } from '../../rules/registry';
 import type { DataPack, Entry, UnitCounts, Warning } from '../../types';
@@ -52,11 +51,6 @@ declare module '../types' {
     secretLimit: { faction: string };
     /** The strategy tokens a card's primary played for a token, or its secondary, costs: 0 for none. */
     strategyCost: { card: number | undefined; secondary: boolean };
-  }
-
-  interface EffectTurn {
-    /** The round's cards: who holds and has played which, and `freeSecondary` and `states` of every player. Set on the entries of a round. */
-    cards?: CardRound;
   }
 
   interface Ability {

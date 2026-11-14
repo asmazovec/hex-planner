@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import type { Act, AnyWarningCode, Entry, Holdings, Opponent } from '../../../types';
+import type { Act, AnyWarningCode, Entry } from '../../../types';
+import type { Player } from '../../../players';
+import type { Holdings } from '../../../../testing/old/domain/types';
 import { adjust, before, bench, componentAction, effect, endOf, expectNone, expectStanding, NEAR, quote, tactical, warningsOf } from '../kit';
 import { id } from './irf1';
 
@@ -64,7 +66,7 @@ describe('exploration:irf1 Industrial Relic Fragment', () => {
   // Checks: a fragment given to a neighbour is no transactionKind breach.
   // Why the check is redundant here: LRR 94.3 lists what changes hands, and relic fragments are among them.
   test('exploration:irf1 is given in a transaction without a warning of its kind', () => {
-    const rival: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+    const rival: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
     const deal: Act = { kind: 'transaction', with: 'o1', give: { components: [id] }, get: {} };
     const turn = tactical(NEAR, { acts: [deal] });
     const trade = table([found(1), turn], { opponents: [rival], enemyUnits: { [NEAR]: { o1: { carrier: 1 } } } });

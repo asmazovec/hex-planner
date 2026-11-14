@@ -19,7 +19,7 @@ export interface HexLayoutInput {
   planets: number;
   ground: GroundStack[];
   space: SpaceStack[];
-  /** Opponent ids in seat order. Any other owner follows them in order of appearance. */
+  /** Rival ids in seat order. Any other owner follows them in order of appearance. */
   opponents?: string[];
   /** Markers drawn on this tile: the command token, the ingress, the seat badge. */
   obstacles?: LayoutObstacle[];

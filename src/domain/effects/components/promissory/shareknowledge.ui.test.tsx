@@ -1,13 +1,13 @@
 import { expect, test } from 'vitest';
 import { choose, showTurn, uiBench } from '../../../../ui/testing/effects';
 import { componentById } from '../../../components';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, endOf, quote } from '../kit';
 import { id } from './shareknowledge';
 
 uiBench();
 
-const DEEPWROUGHT: Opponent = { id: 'o1', faction: 'deepwrought', vp: 0, seat: 2, color: 2 };
+const DEEPWROUGHT: Player = { id: 'o1', faction: 'deepwrought', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@o1`;
 const GRAVITY_DRIVE = 'technology:gd';
 

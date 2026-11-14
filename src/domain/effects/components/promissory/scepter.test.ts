@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, quote } from '../kit';
 import { id } from './scepter';
 
-const MAHACT: Opponent = { id: 'mah', faction: 'mahact', vp: 0, seat: 2, color: 2 };
+const MAHACT: Player = { id: 'mah', faction: 'mahact', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@mah`;
 
 describe('promissory:scepter Scepter of Dominion', () => {

@@ -1,13 +1,13 @@
 /** Transport (LRR 95, 16): pickups, the capacity of each moving group and of a system, and what a system holds against the fleet pool. */
 import { applied } from '../effects/apply';
 import '../effects/points/production';
-import { holderFor, holderOf, type Who } from '../effects/registry';
+import { holderFor, type Who } from '../effects/registry';
 import { fullPath, shipSpeed, type Blockers } from '../movement';
 import { violation } from '../rules/registry';
 import { unitStats } from '../unitStats';
-import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
+import type { DataPack, Game, UnitCounts, Warning } from '../types';
 import type { TokensOn } from '../readers';
-import { planetsOf, sourceSlot, type MapSource } from './board';
+import { sourceSlot, type MapSource } from './board';
 import { unitIds, type Move } from './state';
 
 /** A move that only picks units up, so no route to check: from a planet, from the active system itself, or marked as a pickup. */
@@ -49,14 +49,6 @@ export const fightersFly = (game: Pick<Game, 'faction'>, holdings: Who, pack: Da
 
 /** Fighters each space dock keeps in its system apart from the ships' capacity (Space Dock I and II). */
 export const DOCK_FIGHTERS = 3;
-
-/**
- * The fighters a player's space docks keep in a system: 3 for each of their docks on its planets. They count only for
- * what stands in the system after movement: a moving group keeps its fighters on board (79 note 2, 2.1).
- */
-export const dockFighterRoom = (game: Game, state: Pick<GameState, 'docks'> & Partial<Pick<GameState, 'holdings' | 'control' | 'laws'>>, systemId: string, pack: DataPack): number =>
-  dockRoom(game.faction, planetsOf(game, systemId, pack).filter(planetId => state.docks.includes(planetId)), systemId,
-    state.holdings ? holderOf(game, { holdings: state.holdings, control: state.control ?? {}, laws: state.laws }) : undefined, pack);
 
 /** The same from the docks' planets themselves: what each keeps is the point `dockFighters` (Dimensional Tear II: 12). */
 export const dockRoom = (faction: string, docked: readonly string[], systemId: string, holder: Who | undefined, pack: DataPack): number =>

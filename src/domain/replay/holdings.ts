@@ -5,7 +5,8 @@
  */
 import { componentById, componentsOf, noteAddress, ownedBy } from '../components';
 import { HOLDING_FIELD, staysInPlay } from '../holdings';
-import type { ComponentDef, DataPack, GameState } from '../types';
+import type { ComponentDef, DataPack } from '../types';
+import type { ControlOf } from '../readers';
 import type { Shelf } from '../shelf';
 
 export const removeOne = (list: string[], id: string): void => {
@@ -45,7 +46,7 @@ export function isExhausted(holdings: Shelf, def: ComponentDef): boolean {
  * counts for that faction only, and the card of a legendary planet for the player who controls the planet (`control`
  * is that player's own, by planet id).
  */
-export function readyToPlay(pack: DataPack, holdings: Shelf, factionId: string, control: GameState['control'] = {}): Set<string> {
+export function readyToPlay(pack: DataPack, holdings: Shelf, factionId: string, control: ControlOf['control'] = {}): Set<string> {
   const mine = (def: ComponentDef) => (def.kind === 'legendary'
     ? control[def.id.slice(def.id.indexOf(':') + 1)] === 'me'
     : HOLDING_FIELD[def.kind] !== undefined || def.faction === undefined || ownedBy(def, factionId));

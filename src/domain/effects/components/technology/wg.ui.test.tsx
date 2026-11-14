@@ -1,13 +1,14 @@
 import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showFlight, showWarnings, take, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, ExtensionCode, Opponent } from '../../../types';
+import type { Entry, ExtensionCode } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, FAR, FARTHER, quote, tactical, TARGET } from '../kit';
 import { id } from './wg';
 
 uiBench();
 
 const PLACE = 'wormholeTokenPlace' as ExtensionCode;
-const RIVAL: Opponent = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 const generate = (systemId: string) => componentAction(id, { choices: { token: 'alpha', systemId } } as Partial<Entry>);
 
 // "ACTION: Exhaust this card to place or move a Creuss wormhole token into either a system that contains a planet you

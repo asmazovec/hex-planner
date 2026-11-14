@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import type { ExtensionCode, Opponent } from '../../../types';
+import type { ExtensionCode } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, HOME, NEAR, quote, TARGET, warningsOf } from '../kit';
 import { id } from './jamming';
 
 /** The code pass 2 adds for a played card whose own condition is not met (see the report of batch 21). */
 const PLAY_CONDITION = 'playCondition' as ExtensionCode;
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 
 /** My cruiser stands in my home system; Signal Jamming names a system and the Hacan. */
 const jam = (systemId: string) => componentAction(id, { choices: { systemId, player: RIVAL.id } });

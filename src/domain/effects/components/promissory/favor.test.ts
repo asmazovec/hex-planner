@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, quote } from '../kit';
 import { id } from './favor';
 
-const HACAN: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const HACAN: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@me`;
 
 describe('promissory:favor Political Favor', () => {

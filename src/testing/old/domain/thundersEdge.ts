@@ -1,9 +1,10 @@
-import type { Game, DataPack, GameState, Plan } from '../../../domain/types';
+import type { Game, DataPack, Plan } from '../../../domain/types';
+import type { GameState } from './types';
 import { fractureSlots, type SliceOwners } from '../../../domain/thundersEdge';
 import { slotKeyOf } from '../../../domain/layouts';
 import { withSlotsMoved } from './slotRename';
 import { planetsOf, isStation } from '../../../domain/replay/board';
-import { othersIn } from '../../../domain/replay/production';
+import { othersIn } from './replay/production';
 
 /**
  * The Fracture's systems take other slots when it moves, and what the game says about them follows: plans speak of a

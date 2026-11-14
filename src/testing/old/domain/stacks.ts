@@ -1,4 +1,5 @@
-import type { GameState, Game, PlanetDef, DataPack, UnitId, StructureKind, UnitCounts } from '../../../domain/types';
+import type { Game, PlanetDef, DataPack, UnitId, StructureKind, UnitCounts } from '../../../domain/types';
+import type { GameState } from './types';
 import { planetHolder } from '../../../domain/players';
 import { type SpaceStack, type GroundStack, UNIT_ORDER } from '../../../domain/hexLayout';
 import { unitsOf } from '../../../domain/stacks';

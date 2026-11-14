@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, effect, endOf, expectNone, expectStanding, HOME, NEAR, planned, quote, warningsOf } from '../kit';
 import { id } from './council_patronage';
 
-const NEIGHBOUR: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const NEIGHBOUR: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 
 /** A turn of the action phase that only gives `commodities` to the neighbour o1, whose cruiser stands next to my carrier. */
 const giving = (commodities: number): Entry =>

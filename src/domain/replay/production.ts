@@ -1,16 +1,13 @@
 /** Step 89.5 Production (and the production of cards): which units produce, where built units stand, and what they cost. */
 import { violation } from '../rules/registry';
-import { homeSlot } from '../strategy';
 import { applied } from '../effects/apply';
 import { appliedFor } from '../effects/entryApply';
 import '../effects/points/production';
-import { holderOf, type Holder } from '../effects/registry';
+import { type Holder } from '../effects/registry';
 import dockInfantry from '../rules/codes/dockInfantry';
 import warSunLocked from '../rules/codes/warSunLocked';
-import { planetValue } from '../payment';
-import { wormholesOf } from '../movement';
 import { productionCost, unitStats } from '../unitStats';
-import type { DataPack, Entry, Game, GameState, RuleStep, UnitCounts, UnitId, Warning, WarningCode } from '../types';
+import type { DataPack, Entry, RuleStep, UnitCounts, UnitId, Warning, WarningCode } from '../types';
 import { hasAnomaly, isStation, planetsOf, tileAt, type MapSource } from './board';
 import { unitIds } from './state';
 
@@ -68,24 +65,6 @@ export interface Ground {
   onBoard(unit: UnitId): number;
   /** The player's home system. */
   home(): string | null;
-}
-
-/** The old per-player state as a `Ground`. */
-export function groundOf(game: Game, state: GameState, pack: DataPack): Ground {
-  return {
-    faction: game.faction, map: game, holder: holderOf(game, state),
-    mine: planetId => state.control[planetId] === 'me',
-    dock: planetId => state.docks.includes(planetId),
-    pds: planetId => state.pds[planetId] ?? 0,
-    attached: planetId => state.attachments?.[planetId] ?? [],
-    ground: planetId => state.ground[planetId] ?? {},
-    ships: systemId => state.systems[systemId] ?? {},
-    wormholes: systemId => wormholesOf(game, pack, systemId, state.wormholeTokens),
-    resources: planetId => planetValue(pack, state, planetId, 'resources', { faction: game.faction, shared: state }),
-    othersIn: (systemId, withGround) => othersIn(game, state, systemId, pack, withGround),
-    onBoard: unit => unitsOnBoard(state, unit),
-    home: () => homeSlot(game, pack),
-  };
 }
 
 /** What the ships standing in a system produce by their own text (`PRINTED_SHIP_PRODUCTION`). */
@@ -160,20 +139,8 @@ export function systemProductionOn(g: Ground, systemId: string, pack: DataPack, 
 /** Where my ground forces may stand: a planet I control, and not a space station (space stations 4). */
 const holdsGround = (g: Ground, planetId: string, pack: DataPack): boolean => g.mine(planetId) && !isStation(pack, planetId);
 
-const hasShips = (units: UnitCounts | undefined, pack: DataPack): boolean =>
+export const hasShips = (units: UnitCounts | undefined, pack: DataPack): boolean =>
   unitIds(units ?? {}).some(id => !pack.units[id]?.ground);
-
-/**
- * Whether other players have ships in a system (with `ground`, any units there, on its planets too): the opponents'
- * replayed state, or what stands on the map for them when they are not counted.
- */
-export function othersIn(game: Game, state: GameState, systemId: string, pack: DataPack, ground = false): boolean {
-  const planets = ground ? planetsOf(game, systemId, pack) : [];
-  const stacks = state.rivals
-    ? Object.values(state.rivals).flatMap(r => [r.systems[systemId], ...planets.map(p => r.ground[p])])
-    : [...Object.values(game.enemyUnits[systemId] ?? {}), ...planets.flatMap(p => Object.values(game.enemyGround[p] ?? {}))];
-  return stacks.some(units => (ground ? unitIds(units ?? {}).length > 0 : hasShips(units, pack)));
-}
 
 export interface ProductionPlace { unit: UnitId; /** Null for the space area. */ planetId: string | null; count: number }
 
@@ -199,9 +166,6 @@ export function placesOn(g: Ground, target: string, units: UnitCounts, pack: Dat
   return places;
 }
 
-/** How many of a unit stand on the board in this state, ships and ground forces. */
-export const unitsOnBoard = (state: GameState, unit: UnitId): number =>
-  [...Object.values(state.systems), ...Object.values(state.ground)].reduce((sum, counts) => sum + (counts[unit] ?? 0), 0);
 const limitWarnings = (onBoardOf: (unit: UnitId) => number, units: UnitCounts, pack: DataPack, step?: RuleStep): Warning[] => {
   const warnings: Warning[] = [];
   for (const unit of unitIds(units)) {

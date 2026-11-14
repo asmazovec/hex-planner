@@ -1,12 +1,13 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showUses, uiBench, use } from '../../../../ui/testing/effects';
-import type { Act, Entry, Opponent } from '../../../types';
+import type { Act, Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, FARTHER, HOME, quote, tactical } from '../kit';
 import { id } from './tcs';
 
 uiBench();
 
-const RIVAL: Opponent = { id: 'o1', faction: 'naaz', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'naaz', vp: 0, seat: 2, color: 2 };
 const deal: Act = { kind: 'transaction', with: 'o1', give: { tradeGoods: 1 }, get: {} };
 /** A turn with a transaction with a rival far down the row, who is not my neighbour. */
 const table = (turn: Entry) => bench({

@@ -8,7 +8,8 @@ import { describe, expect, test } from 'vitest';
 import { componentsOf } from '../../components';
 import { CARD } from '../../strategy';
 import { adjust, codesOf, forecast, mutable, planned, rulesGame, rulesPack, secondary, statusTokens } from '../../rules/kit';
-import type { Entry, EntryBody, ExpansionId, Opponent } from '../../types';
+import type { Entry, EntryBody, ExpansionId } from '../../types';
+import type { Player } from '../../players';
 import { holderOf, inForceOf } from '../registry';
 import { hintsAt } from '../../../testing/old/domain/effects/registry';
 import { gain, tokens } from '../../../game/abilities/emit';
@@ -19,7 +20,7 @@ import { appliedFor } from '../entryApply';
 import { objectiveNotMet } from './status';
 import { withEffect } from './status.kit';
 
-const R1: Opponent = { id: 'r1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const R1: Player = { id: 'r1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 const TECH = 'technology:hm';
 const start = (me: Record<string, string[]>) => ({ start: { me, opponents: {} } });
 const passive = (id: string, modify: Ability['modify']): Ability => ({ tier: 'passive', rule: id, modify });

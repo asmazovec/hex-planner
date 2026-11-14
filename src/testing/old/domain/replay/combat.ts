@@ -1,10 +1,12 @@
 import { holderOf } from '../../../../domain/effects/registry';
 import { violation } from '../../../../domain/rules/registry';
-import type { DataPack, Game, GameState, Warning } from '../../../../domain/types';
+import type { DataPack, Game, Warning } from '../../../../domain/types';
+import type { GameState } from '../types';
 import { take, unitIds, type TacticalEntry } from '../../../../domain/replay/state';
-import { capacity, dockFighterRoom, checkArrivalOf } from '../../../../domain/replay/transport';
+import { capacity, checkArrivalOf } from '../../../../domain/replay/transport';
 import { planetsOf } from '../../../../domain/replay/board';
 import { stacksOfState } from './transport';
+import { dockFighterRoom } from './transport';
 /**
  * Whether anything can destroy ships in the active system once they arrived: another player's ships (a space combat),
  * or planets (space cannon). Losses where nothing can were taken on the way, in a gravity rift (37 note 4).

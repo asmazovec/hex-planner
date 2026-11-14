@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { adjust, bench, componentAction, HOME, NEAR } from '../../domain/effects/components/kit';
-import type { Entry, Opponent } from '../../domain/types';
+import type { Entry } from '../../domain/types';
+import type { Player } from '../../domain/players';
 import { timelineOf } from '../../testing/projection';
 import { turnOf } from '../../testing/old/game/fromLegacy';
 import { choicesOf } from './choices';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 
 /** The choices of component `id` that `entry` is asked, from the board just before it. */
 function asked(entry: Entry, id: string, extra: Entry[] = []) {

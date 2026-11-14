@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent, StartHoldings } from '../../../types';
+import type { Entry, StartHoldings } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, endOf, expectStanding, expectWaived, FAR, FARTHER, HOME, planned, quote, TARGET, warningsOf } from '../kit';
 import { id } from './keleresbt';
 
 const MECATOL_TILE = '18';
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 
 /** A turn whose only act is a transaction of nothing with o1. */
 const deal = (): Entry => planned({ type: 'pass', acts: [{ kind: 'transaction', with: 'o1', give: {}, get: {} }] }, 'action');

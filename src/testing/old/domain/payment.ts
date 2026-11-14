@@ -1,6 +1,7 @@
 import { applied } from '../../../domain/effects/apply';
 import { holderOf } from '../../../domain/effects/registry';
-import type { DataPack, GameState, Payment } from '../../../domain/types';
+import type { DataPack, Payment } from '../../../domain/types';
+import type { GameState } from './types';
 import { type PayView, type PaymentKind, PLANET_CARDS, type PlanetValues, planetValue, choosePayment, slicePlanetCost, EXPEDITION_SLICES } from '../../../domain/payment';
 import { specialtiesOf } from '../../../domain/specialties';
 /** Planets that can pay the technology part of the expedition: ready, mine, with a technology specialty. */

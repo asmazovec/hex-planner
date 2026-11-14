@@ -1,12 +1,13 @@
 import { expect, test } from 'vitest';
 import { choose, play, showTurn, uiBench } from '../../../../ui/testing/effects';
-import type { EntryBody, Opponent } from '../../../types';
+import type { EntryBody } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, endOf, FAR, planned, quote } from '../kit';
 import { id } from './qdn';
 
 uiBench();
 
-const RIVAL: Opponent = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 
 // "... spend 1 token from your strategy pool and give another player 3 of your trade goods."
 // Checks: I name the node at the end of the strategy phase, choose the player, and the entry keeps the choice.

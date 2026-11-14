@@ -1,4 +1,5 @@
-import type { Game, DataPack, ComponentDef, Holdings, StartHoldings, ComponentKind, LeaderState } from '../../../domain/types';
+import type { Game, DataPack, ComponentDef, StartHoldings, ComponentKind, LeaderState } from '../../../domain/types';
+import type { Holdings } from './types';
 import { noteAddress, textOf, componentById, noteId } from '../../../domain/components';
 import { type NotePlace, genericNotes, factionNotes, kindOf, HOLDING_FIELD, COPIED } from '../../../domain/holdings';
 

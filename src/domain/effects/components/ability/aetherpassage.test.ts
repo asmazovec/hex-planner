@@ -1,10 +1,11 @@
 import { describe, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, expectNone, expectStanding, expectWaived, HOME, NEAR, quote, TARGET, tactical, using, warningsOf } from '../kit';
 import { id } from './aetherpassage';
 
-const EMPYREAN: Opponent = { id: 'emp', faction: 'empyrean', vp: 0, seat: 2, color: 2 };
-const LETNEV: Opponent = { id: 'let', faction: 'letnev', vp: 0, seat: 3, color: 3 };
+const EMPYREAN: Player = { id: 'emp', faction: 'empyrean', vp: 0, seat: 2, color: 2 };
+const LETNEV: Player = { id: 'let', faction: 'letnev', vp: 0, seat: 3, color: 3 };
 
 /** My Sol cruiser flies from home to the target through the system next to it, where `owner`'s destroyer stands. */
 const table = (move: Entry, owner = 'emp') => ({

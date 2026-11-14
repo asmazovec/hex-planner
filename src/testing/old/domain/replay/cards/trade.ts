@@ -1,7 +1,8 @@
 import { applied } from '../../../../../domain/effects/apply';
 import { holderOf } from '../../../../../domain/effects/registry';
 import { linksOf } from '../../../../../domain/movement';
-import type { DataPack, Game, GameState } from '../../../../../domain/types';
+import type { DataPack, Game } from '../../../../../domain/types';
+import type { GameState } from '../../types';
 import { areNeighbors } from '../../neighbors';
 /** Gains commodities, no more than the commodity value allows (21.2); returns what was gained. */
 export function gainCommodities(game: Pick<Game, 'faction'>, state: GameState, pack: DataPack, amount: number, shared: GameState = state): number {

@@ -5,7 +5,8 @@ import { beforeEach, expect, test, vi } from 'vitest';
 import { throwaway } from '../../../domain/effects/points/throwaway';
 import { bench, NEAR, tactical } from '../../../domain/effects/components/kit';
 import { stateBeforeEntry } from '../../../testing/old/domain/project';
-import type { Act, Game, Opponent } from '../../../domain/types';
+import type { Act, Game } from '../../../domain/types';
+import type { Player } from '../../../domain/players';
 import { uiBench } from '../../testing/effects';
 import { TransactionStep } from './TransactionStep';
 import { transactionProps } from '../../testing/turnProps';
@@ -15,7 +16,7 @@ vi.mock('../../../domain/effects/registry', async original => (await import('../
 
 uiBench();
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const RELIC = 'relic:dynamiscore';
 const SECRET = 'secretObjective:ans';
 const MARKET = 'actionCard:blackmarketdealing';

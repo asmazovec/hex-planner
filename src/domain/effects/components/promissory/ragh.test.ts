@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, endOf, expectNone, expectStanding, NEAR, quote, tactical, TARGET, using, warningsOf } from '../kit';
 import { id } from './ragh';
 
-const SAAR: Opponent = { id: 'o1', faction: 'saar', vp: 0, seat: 2, color: 2 };
+const SAAR: Player = { id: 'o1', faction: 'saar', vp: 0, seat: 2, color: 2 };
 
 /** I land an infantry on t1 from a carrier next to it, naming Ragh's Call `note` in the action. */
 const invade = (note: string) => using(tactical(TARGET, {

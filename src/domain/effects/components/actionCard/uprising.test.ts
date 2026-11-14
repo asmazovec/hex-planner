@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, ExtensionCode, Game, Opponent } from '../../../types';
+import type { Entry, ExtensionCode, Game } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, HOME, quote, tactical, warningsOf } from '../kit';
 import { id } from './uprising';
 
 /** The code pass 2 adds for a played card whose own condition is not met (see the report of batch 21). */
 const PLAY_CONDITION = 'playCondition' as ExtensionCode;
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 
 /** The Hacan hold Target One (2 resources) unless `game` says otherwise; Uprising names a planet. */
 const uprising = (planetId: string) => componentAction(id, { choices: { planetId } });

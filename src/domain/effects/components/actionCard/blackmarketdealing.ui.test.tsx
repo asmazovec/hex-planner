@@ -5,14 +5,15 @@ import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showUses, use, uiBench } from '../../../../ui/testing/effects';
 import { TransactionStep } from '../../../../ui/plan/editors/TransactionStep';
 import { project, stateBeforeEntry } from '../../../../testing/old/domain/project';
-import type { Act, Entry, Game, Opponent } from '../../../types';
+import type { Act, Entry, Game } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, NEAR, quote, tactical, using } from '../kit';
 import { id } from './blackmarketdealing';
 import { transactionProps } from '../../../../ui/testing/turnProps';
 
 uiBench();
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const RELIC = 'relic:dynamiscore';
 type Transaction = Extract<Act, { kind: 'transaction' }>;
 

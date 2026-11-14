@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectStanding, NEAR, quote, warningsOf } from '../kit';
 import { id } from './saarhero';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 
 /** My dock is on Home One; the system next to home holds the opponent's cruiser, fighters and infantry, and my own. */
 const relay = (entries: Entry[]) => bench({

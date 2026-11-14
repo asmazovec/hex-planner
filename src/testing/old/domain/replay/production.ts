@@ -1,6 +1,12 @@
-import type { DataPack, Game, GameState, UnitCounts, Entry, RuleStep, Warning } from '../../../../domain/types';
-import { type ProductionPlace, groundOf, placesOn, productionDueOn, type ProductionSource, type Producer, producersOn, producerPlanets, checkProductionOn, costOn } from '../../../../domain/replay/production';
-import { add, type TacticalEntry } from '../../../../domain/replay/state';
+import type { DataPack, Game, UnitId, UnitCounts, Entry, RuleStep, Warning } from '../../../../domain/types';
+import type { GameState } from '../types';
+import { planetsOf } from '../../../../domain/replay/board';
+import { unitIds, add, type TacticalEntry } from '../../../../domain/replay/state';
+import { hasShips, type Ground, type ProductionPlace, placesOn, productionDueOn, type ProductionSource, type Producer, producersOn, producerPlanets, checkProductionOn, costOn } from '../../../../domain/replay/production';
+import { homeSlot } from '../../../../domain/strategy';
+import { holderOf } from '../../../../domain/effects/registry';
+import { planetValue } from '../../../../domain/payment';
+import { wormholesOf } from '../../../../domain/movement';
 import { pay } from './payment';
 import { violation } from '../../../../domain/rules/registry';
 /**
@@ -69,4 +75,38 @@ export function placesOf(
   game: Game, state: GameState, target: string, units: UnitCounts, pack: DataPack, onPlanets: Record<string, UnitCounts> = {},
 ): ProductionPlace[] {
   return placesOn(groundOf(game, state, pack), target, units, pack, onPlanets);
+}
+
+/** The old per-player state as a `Ground`. */
+export function groundOf(game: Game, state: GameState, pack: DataPack): Ground {
+  return {
+    faction: game.faction, map: game, holder: holderOf(game, state),
+    mine: planetId => state.control[planetId] === 'me',
+    dock: planetId => state.docks.includes(planetId),
+    pds: planetId => state.pds[planetId] ?? 0,
+    attached: planetId => state.attachments?.[planetId] ?? [],
+    ground: planetId => state.ground[planetId] ?? {},
+    ships: systemId => state.systems[systemId] ?? {},
+    wormholes: systemId => wormholesOf(game, pack, systemId, state.wormholeTokens),
+    resources: planetId => planetValue(pack, state, planetId, 'resources', { faction: game.faction, shared: state }),
+    othersIn: (systemId, withGround) => othersIn(game, state, systemId, pack, withGround),
+    onBoard: unit => unitsOnBoard(state, unit),
+    home: () => homeSlot(game, pack),
+  };
+}
+
+/** How many of a unit stand on the board in this state, ships and ground forces. */
+export const unitsOnBoard = (state: GameState, unit: UnitId): number =>
+  [...Object.values(state.systems), ...Object.values(state.ground)].reduce((sum, counts) => sum + (counts[unit] ?? 0), 0);
+
+/**
+ * Whether other players have ships in a system (with `ground`, any units there, on its planets too): the opponents'
+ * replayed state, or what stands on the map for them when they are not counted.
+ */
+export function othersIn(game: Game, state: GameState, systemId: string, pack: DataPack, ground = false): boolean {
+  const planets = ground ? planetsOf(game, systemId, pack) : [];
+  const stacks = state.rivals
+    ? Object.values(state.rivals).flatMap(r => [r.systems[systemId], ...planets.map(p => r.ground[p])])
+    : [...Object.values(game.enemyUnits[systemId] ?? {}), ...planets.flatMap(p => Object.values(game.enemyGround[p] ?? {}))];
+  return stacks.some(units => (ground ? unitIds(units ?? {}).length > 0 : hasShips(units, pack)));
 }

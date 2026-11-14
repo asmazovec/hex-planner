@@ -2,11 +2,11 @@
 import { describe, expect, test } from 'vitest';
 import { MECATOL_PLANET, MECATOL_TILE } from '../../mecatol';
 import { CARD } from '../../strategy';
-import type { Opponent } from '../../types';
+import type { Player } from '../../players';
 import { codesOf, FACTION, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();
-const RIVAL: Opponent = { id: 'o1', faction: FACTION, vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: FACTION, vp: 0, seat: 2, color: 2 };
 /** h1, h2 and t1 spent by one action, t1 being mine. */
 const spendThree = () => tactical(TARGET, { payment: { planets: ['h1', 'h2', 't1'], tradeGoods: 0 } });
 

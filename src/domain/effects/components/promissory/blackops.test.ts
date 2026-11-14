@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, GameState, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
+import type { GameState } from '../../../../testing/old/domain/types';
 import { bench, endOf, NEAR, quote, tactical } from '../kit';
 import { id } from './blackops';
 
 /** A rival with a ship beside mine: we are neighbours (LRR 60), so we may make a transaction. */
-const rival = (faction: string): Opponent => ({ id: 'o1', faction, vp: 0, seat: 2, color: 2 });
+const rival = (faction: string): Player => ({ id: 'o1', faction, vp: 0, seat: 2, color: 2 });
 /** In my tactical action I get `got` from the rival and give nothing. */
 const deal = (got: string[]): Entry => tactical(NEAR, { acts: [{ kind: 'transaction', with: 'o1', give: {}, get: { components: got } }] });
 

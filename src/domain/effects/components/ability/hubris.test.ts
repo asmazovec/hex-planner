@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { genericNotes, startForFaction } from '../../../holdings';
-import type { AnyWarningCode, Entry, Opponent } from '../../../types';
+import type { AnyWarningCode, Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, expectStanding, NEAR, quote, tactical, warningsOf } from '../kit';
 import { id } from './hubris';
 
 const ALLIANCE = 'promissory:<color>_an';
-const SOL: Opponent = { id: 'sol1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const SOL: Player = { id: 'sol1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 /** The code pass 2 adds to the transaction step for a note its receiver may not take (Hubris). */
 const REFUSED = 'noteRefused' as AnyWarningCode;
 

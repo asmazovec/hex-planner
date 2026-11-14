@@ -1,12 +1,13 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, Opponent, StartHoldings } from '../../../types';
+import type { Entry, StartHoldings } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, FAR, FARTHER, HOME, planned, quote, TARGET } from '../kit';
 import { id } from './keleresbt';
 
 uiBench();
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const table = (start: StartHoldings, deal: Entry) => bench({
   faction: 'keleresm', expansions: ['pok', 'te'], units: { [HOME]: { carrier: 1 } }, start, entries: [deal],
   game: { opponents: [RIVAL], enemyUnits: { [FAR]: { o1: { cruiser: 1 } } }, map: { [HOME]: 'r-home', '1,0': 'r-empty', [TARGET]: '18', [FAR]: 'r-empty', [FARTHER]: 'r-empty' } },

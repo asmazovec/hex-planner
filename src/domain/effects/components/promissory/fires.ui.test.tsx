@@ -1,13 +1,14 @@
 import { expect, test } from 'vitest';
 import { upgradeTech } from '../../../holdings';
-import type { EntryBody, Opponent } from '../../../types';
+import type { EntryBody } from '../../../types';
+import type { Player } from '../../../players';
 import { play, showTurn, uiBench } from '../../../../ui/testing/effects';
 import { bench, endOf, FAR, planned, quote } from '../kit';
 import { id } from './fires';
 
 uiBench();
 
-const MUAAT: Opponent = { id: 'o1', faction: 'muaat', vp: 0, seat: 2, color: 2 };
+const MUAAT: Player = { id: 'o1', faction: 'muaat', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@o1`;
 
 // "ACTION: ... gain your war sun unit upgrade technology card."

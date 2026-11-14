@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Act, Opponent } from '../../../types';
+import type { Act } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, effect, expectNone, expectStanding, expectWaived, FAR, HOME, NEAR, quote, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './guild_ships';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 const deal = (): Act => ({ kind: 'transaction', with: 'o1', give: { tradeGoods: 1 }, get: {} });
 /** My carrier flies next to home and I trade with the rival, whose carrier stands at `rivalAt`. */
 const table = (faction: string, acts: Act[] = [deal()], rivalAt = FAR) => {
@@ -56,7 +57,7 @@ describe('ability:guild_ships with the Hacan on the other side', () => {
   // Checks: a Sol player trades with the Hacan two systems away; the warning is listed and lifted by the Hacan's ability.
   // Why the check is NOT redundant for a neighbour: only the distance is lifted (the test above).
   test('ability:guild_ships lifts the neighbour warning of a non-Hacan who trades with the Hacan', () => {
-    const hacan: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+    const hacan: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
     const move = tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }], acts: [deal()] });
     const sol = bench({ faction: 'sol', units: { [HOME]: { carrier: 1 } }, entries: [adjust({ tradeGoods: 2 }), move], game: { opponents: [hacan], enemyUnits: { [FAR]: { o1: { carrier: 1 } } } } });
     expectWaived(warningsOf(sol, move), 'notNeighbor', id);

@@ -1,4 +1,4 @@
-import type { Game, Opponent, DataPack, MapLayout, Entry, Plan, CardEffects, ExpansionId } from '../../../domain/types';
+import type { Game, DataPack, MapLayout, Entry, Plan, CardEffects, ExpansionId } from '../../../domain/types';
 import { planetHolder, playersOf, homeTileOnMap, type Player, maxPlayers, COLORS, MIN_PLAYERS, homePlanets } from '../../../domain/players';
 import { seatSlots, slotsFor, ownHomeSlots, templateFor, defaultLayout, moveToTemplate, withPlacedTiles } from '../../../domain/mapBuilder';
 import { splitStartUnits } from '../../../domain/strategy';
@@ -7,7 +7,7 @@ import { slotKeyOf, type IdMaker, timeIdMaker, makeId } from '../../../domain/ne
 import { genericNotes, withoutNotesOf, startForFaction } from '../../../domain/holdings';
 import { noteAddress } from '../../../domain/components';
 import { createGame } from './newGame';
-export const opponentsBySeat = (game: Pick<Game, 'opponents'>): Opponent[] => [...game.opponents].sort((a, b) => a.seat - b.seat);
+export const opponentsBySeat = (game: Pick<Game, 'opponents'>): Player[] => [...game.opponents].sort((a, b) => a.seat - b.seat);
 export const planetsHeldBy = (game: Game, opponentId: string): string[] =>
   Object.keys(game.planetControl).filter(id => game.planetControl[id] === 'enemy' && planetHolder(game, id) === opponentId);
 /** What an opponent has on the map: units across all systems and enemy planets. */
@@ -241,29 +241,29 @@ export function draftWithExpansions(draft: Game, expansions: ExpansionId[], pack
   return withPlacedTiles(seatedGame, draft.map, pack);
 }
 
-/**
- * The game as an opponent plays it: they are the player, what they hold is theirs, what I hold is an enemy's, and their
- * opponents are the others, me among them under the id `me`. My units are not in the game: the replay gives their routes
- * my ships (`blockersOf`). For me, or for someone gone, it is the game itself.
- */
-export function gameAs(game: Game, owner: string | undefined): Game {
-  const rival = game.opponents.find(o => o.id === owner);
-  if (!rival) return game;
-  const without = (record: Game['enemyUnits']): Game['enemyUnits'] => Object.fromEntries(Object.entries(record).flatMap(([place, byOwner]) => {
-    const { [rival.id]: mine, ...others } = byOwner;
-    void mine;
-    return Object.keys(others).length > 0 ? [[place, others]] : [];
-  }));
-  const holderOf = (id: string): string => (game.planetControl[id] === 'enemy' ? planetHolder(game, id) ?? 'me' : 'me');
-  const enemyPlanets = Object.keys(game.planetControl).filter(id => holderOf(id) !== rival.id);
-  return {
-    ...game,
-    faction: rival.faction, seat: rival.seat, color: rival.color, vp: rival.vp,
-    opponents: playersOf(game).filter(p => p.id !== rival.id),
-    start: { me: game.start.opponents[rival.id] ?? {}, opponents: { ...Object.fromEntries(Object.entries(game.start.opponents).filter(([id]) => id !== rival.id)), me: game.start.me } },
-    planetControl: Object.fromEntries(Object.keys(game.planetControl).map(id => [id, enemyPlanets.includes(id) ? 'enemy' as const : 'me' as const])),
-    planetOwner: { ...game.planetOwner, ...Object.fromEntries(enemyPlanets.map(id => [id, holderOf(id)])) },
-    enemyUnits: without(game.enemyUnits),
-    enemyGround: without(game.enemyGround),
-  };
-}
+/**
+ * The game as an opponent plays it: they are the player, what they hold is theirs, what I hold is an enemy's, and their
+ * opponents are the others, me among them under the id `me`. My units are not in the game: the replay gives their routes
+ * my ships (`blockersOf`). For me, or for someone gone, it is the game itself.
+ */
+export function gameAs(game: Game, owner: string | undefined): Game {
+  const rival = game.opponents.find(o => o.id === owner);
+  if (!rival) return game;
+  const without = (record: Game['enemyUnits']): Game['enemyUnits'] => Object.fromEntries(Object.entries(record).flatMap(([place, byOwner]) => {
+    const { [rival.id]: mine, ...others } = byOwner;
+    void mine;
+    return Object.keys(others).length > 0 ? [[place, others]] : [];
+  }));
+  const holderOf = (id: string): string => (game.planetControl[id] === 'enemy' ? planetHolder(game, id) ?? 'me' : 'me');
+  const enemyPlanets = Object.keys(game.planetControl).filter(id => holderOf(id) !== rival.id);
+  return {
+    ...game,
+    faction: rival.faction, seat: rival.seat, color: rival.color, vp: rival.vp,
+    opponents: playersOf(game).filter(p => p.id !== rival.id),
+    start: { me: game.start.opponents[rival.id] ?? {}, opponents: { ...Object.fromEntries(Object.entries(game.start.opponents).filter(([id]) => id !== rival.id)), me: game.start.me } },
+    planetControl: Object.fromEntries(Object.keys(game.planetControl).map(id => [id, enemyPlanets.includes(id) ? 'enemy' as const : 'me' as const])),
+    planetOwner: { ...game.planetOwner, ...Object.fromEntries(enemyPlanets.map(id => [id, holderOf(id)])) },
+    enemyUnits: without(game.enemyUnits),
+    enemyGround: without(game.enemyGround),
+  };
+}

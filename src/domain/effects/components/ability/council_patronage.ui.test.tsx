@@ -1,12 +1,13 @@
 import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, HOME, NEAR, planned, quote } from '../kit';
 import { id } from './council_patronage';
 
 uiBench();
 
-const NEIGHBOUR: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const NEIGHBOUR: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const giving = (): Entry => planned({ type: 'pass', acts: [{ kind: 'transaction', with: 'o1', give: { commodities: 2 }, get: {} }] }, 'action');
 const table = (faction: string, deal: Entry) => bench({
   faction, expansions: ['pok'], units: { [HOME]: { carrier: 1 } }, entries: [adjust({}, 'strategy'), deal],

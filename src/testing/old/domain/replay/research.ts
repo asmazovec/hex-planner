@@ -5,7 +5,8 @@ import prerequisitesMissing from '../../../../domain/rules/codes/prerequisitesMi
 import researchForeign from '../../../../domain/rules/codes/researchForeign';
 import researchUnavailable from '../../../../domain/rules/codes/researchUnavailable';
 import { violation } from '../../../../domain/rules/registry';
-import type { DataPack, Game, GameState, TechType, Warning } from '../../../../domain/types';
+import type { DataPack, Game, TechType, Warning } from '../../../../domain/types';
+import type { GameState } from '../types';
 import { type ResearchResult, countSymbols, describe, symbolsLacking, techOf, unresearchable } from '../../../../domain/replay/research';
 import { gain } from './holdings';
 /** The tokens the technologies of an entry give instead of being researched, for the card's free tokens. */

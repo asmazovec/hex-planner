@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, endOf, expectNone, expectStanding, NEAR, quote, tactical, using, warningsOf } from '../kit';
 import { id } from './spynet';
 
-const YSSARIL: Opponent = { id: 'o1', faction: 'yssaril', vp: 0, seat: 2, color: 2 };
+const YSSARIL: Player = { id: 'o1', faction: 'yssaril', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@o1`;
 const CARD = 'actionCard:abs';
 /**

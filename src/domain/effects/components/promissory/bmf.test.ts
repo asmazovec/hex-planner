@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectStanding, quote, warningsOf } from '../kit';
 import { id } from './bmf';
 
-const NAAZ: Opponent = { id: 'o1', faction: 'naaz', vp: 0, seat: 2, color: 2 };
+const NAAZ: Player = { id: 'o1', faction: 'naaz', vp: 0, seat: 2, color: 2 };
 
 describe('promissory:bmf Black Market Forgery', () => {
   // "ACTION: Purge 2 of your relic fragments of the same type to gain 1 relic."

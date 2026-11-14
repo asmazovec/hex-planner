@@ -1,4 +1,4 @@
-import type { GameState } from '../../../../../domain/types';
+import type { GameState } from '../../types';
 import { type Spent } from '../../../../../domain/effects/points/status';
 import type { EffectTurn } from '../types';
 import { violation } from '../../../../../domain/rules/registry';

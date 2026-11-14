@@ -1,12 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../strategy';
-import type { Entry, ExtensionCode, Opponent } from '../../../types';
+import type { Entry, ExtensionCode } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, endOf, expectStanding, NEAR, planned, quote, tactical, TARGET, using, warningsOf } from '../kit';
 import { id } from './salvage';
 
 /** The code pass 2 adds for a played card whose own condition is not met (see the report of batch 21). */
 const PLAY_CONDITION = 'playCondition' as ExtensionCode;
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 
 /** The Hacan replenish their commodities to 6 by the secondary of Trade, then my two cruisers attack their cruiser in the target. */
 const replenish = () => planned({ type: 'secondary', card: CARD.trade, effects: {} }, 'action', { owner: RIVAL.id });

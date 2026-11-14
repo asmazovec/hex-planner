@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, ExtensionCode, Opponent } from '../../../types';
+import type { Entry, ExtensionCode } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, quote, warningsOf } from '../kit';
 import { id } from './ms';
 
@@ -9,7 +10,7 @@ import { id } from './ms';
  */
 const PLACE = 'placeNotControlled' as ExtensionCode;
 
-const SOL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const SOL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 /** The note of the Sol opponent, as I hold it. */
 const NOTE = `${id}@o1`;
 

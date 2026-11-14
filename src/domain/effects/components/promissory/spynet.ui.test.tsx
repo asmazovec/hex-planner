@@ -2,13 +2,14 @@ import { screen } from '@testing-library/react';
 import { expect, test } from 'vitest';
 import { choose, showUses, uiBench } from '../../../../ui/testing/effects';
 import { componentById } from '../../../components';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, endOf, NEAR, quote, tactical, using } from '../kit';
 import { id } from './spynet';
 
 uiBench();
 
-const YSSARIL: Opponent = { id: 'o1', faction: 'yssaril', vp: 0, seat: 2, color: 2 };
+const YSSARIL: Player = { id: 'o1', faction: 'yssaril', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@o1`;
 const CARD = 'actionCard:abs';
 
@@ -36,7 +37,7 @@ test('promissory:spynet offers the Yssaril hand in «Used» and moves the chosen
 // Yssaril) in «Used» of its own entry: the choice offers MY hand, not the rival's own.
 // Why the check is NOT redundant here: the note's address is `me`, which for a rival's entry is not the rival's board.
 test('promissory:spynet named in «Used» of a rival\'s entry offers the Yssaril hand', async () => {
-  const rival: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+  const rival: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
   const mine = 'actionCard:abs';
   const theirs = 'actionCard:bribery';
   const entry = { ...using(tactical(NEAR), `${id}@me`), owner: 'o1' } as Entry;

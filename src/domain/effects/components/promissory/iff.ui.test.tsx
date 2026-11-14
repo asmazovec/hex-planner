@@ -1,13 +1,14 @@
 import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, ExtensionCode, Opponent } from '../../../types';
+import type { Entry, ExtensionCode } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, FAR, NEAR, quote } from '../kit';
 import { id } from './iff';
 
 uiBench();
 
 const PLACE = 'wormholeTokenPlace' as ExtensionCode;
-const CREUSS: Opponent = { id: 'o1', faction: 'ghost', vp: 0, seat: 2, color: 2 };
+const CREUSS: Player = { id: 'o1', faction: 'ghost', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@o1`;
 const show = (systemId: string) => {
   const entry = componentAction(NOTE, { choices: { token: 'alpha', systemId } } as Partial<Entry>);

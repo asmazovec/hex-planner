@@ -5,7 +5,7 @@
 import { describe, expect, test } from 'vitest';
 import { fleetCount } from '../../replay/transport';
 import { adjacentTo, fleetSpeed, joined, linksOf, routeDistances, routeReach, shipSpeed, wormholesOf, type MoveView } from '../../movement';
-import type { GameState } from '../../types';
+import type { GameState } from '../../../testing/old/domain/types';
 import { bench, endOf, FAR, FARTHER, HOME, NEAR, TARGET, tactical, using, warningsOf, type Bench } from '../components/kit';
 import { tech } from '../../rules/kit';
 import { effectsOf } from '../registry';

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Opponent, Warning } from '../../../types';
+import type { Warning } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, expectNone, expectStanding, HOME, NEAR, quote, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './keleres_mech';
 
@@ -9,7 +10,7 @@ const invade = (faction: string, rival: string, ground: Record<string, number>) 
     moves: [{ from: HOME, units: { carrier: 1, infantry: 2 }, via: [NEAR] }],
     landings: [{ planetId: 't1', units: { infantry: 2 } }],
   });
-  const opponent: Opponent = { id: 'o1', faction: rival, vp: 0, seat: 2, color: 2 };
+  const opponent: Player = { id: 'o1', faction: rival, vp: 0, seat: 2, color: 2 };
   return {
     move,
     ...bench({

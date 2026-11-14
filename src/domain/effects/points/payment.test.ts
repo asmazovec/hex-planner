@@ -8,7 +8,9 @@ import { pay } from '../../../testing/old/domain/replay/payment';
 import { autoPay, paymentValue } from '../../../testing/old/domain/payment';
 import { gainCommodities } from '../../../testing/old/domain/replay/cards/trade';
 import { forecast, mutable, rulesGame, rulesPack, tactical } from '../../rules/kit';
-import type { Entry, GameState, Opponent, Warning } from '../../types';
+import type { Entry, Warning } from '../../types';
+import type { Player } from '../../players';
+import type { GameState } from '../../../testing/old/domain/types';
 import { componentAction } from '../components/kit';
 import { alwaysInForce, throwaway } from './throwaway';
 import { gain } from '../../../game/abilities/emit';
@@ -128,7 +130,7 @@ describe('payment: the commodity value', () => {
   });
 });
 
-const RIVAL: Opponent = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
 
 describe('transactions: the hook of a deal', () => {
   test('dealt is asked of the components in force of both sides, with what moved', () => {

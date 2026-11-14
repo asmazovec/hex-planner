@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Game, Opponent } from '../../../types';
+import type { Game } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, quote, warningsOf } from '../kit';
 import { id } from './cripple';
 
-const rival: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const rival: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 /** The rival holds t1 with two PDS on it and t2 with one; I hold my home planets, h1 with one PDS. */
 const board: Partial<Game> = {
   opponents: [rival], planetControl: { t1: 'enemy', t2: 'enemy' }, planetOwner: { t1: 'o1', t2: 'o1' }, pds: { t1: 2, t2: 1, h1: 1 },

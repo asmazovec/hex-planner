@@ -1,4 +1,5 @@
-import type { GameState, StructureKind, Warning, Game, DataPack } from '../../../../domain/types';
+import type { StructureKind, Warning, Game, DataPack } from '../../../../domain/types';
+import type { GameState } from '../types';
 import { violation } from '../../../../domain/rules/registry';
 import { PER_PLANET, kindsOf } from '../../../../domain/replay/structures';
 import { planetsOf, sourceSlot } from '../../../../domain/replay/board';

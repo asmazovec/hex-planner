@@ -1,12 +1,13 @@
 /** LRR 94 Transactions. Source: tirules2 rules-reference/transactions.md. A transaction is an act of the active player's turn. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import type { Act, Entry, Game, Goods, Opponent } from '../../types';
+import type { Act, Entry, Game, Goods } from '../../types';
+import type { Player } from '../../players';
 import { FACTION, NEAR, adjust, codesOf, forecast, rulesGame, rulesPack, secondary, tactical, tech } from '../kit';
 
 const pack = rulesPack();
-const RIVAL: Opponent = { id: 'o1', faction: FACTION, vp: 0, seat: 2, color: 2 };
-const OTHER: Opponent = { id: 'o2', faction: FACTION, vp: 0, seat: 3, color: 3 };
+const RIVAL: Player = { id: 'o1', faction: FACTION, vp: 0, seat: 2, color: 2 };
+const OTHER: Player = { id: 'o2', faction: FACTION, vp: 0, seat: 3, color: 3 };
 
 /** Me and both rivals with a ship in one system: all neighbours (60). */
 const table = (entries: Entry[], start: Game['start'] = { me: {}, opponents: {} }) => rulesGame({

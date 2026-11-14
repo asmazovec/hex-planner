@@ -1,11 +1,11 @@
 /** LRR 49 Invasion. Source: tirules2 rules-reference/invasion.md. */
 import { describe, expect, test } from 'vitest';
 import { MECATOL_PLANET, MECATOL_TILE } from '../../mecatol';
-import type { Opponent } from '../../types';
+import type { Player } from '../../players';
 import { adjust, codesOf, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();
-const rival: Opponent = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
+const rival: Player = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
 
 describe('LRR 49 Invasion', () => {
   const invasion = (extra: Parameters<typeof tactical>[1] = {}) => tactical(TARGET, {

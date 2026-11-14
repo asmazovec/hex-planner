@@ -8,7 +8,8 @@ import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction } from '
 import { forgetTimelines, project, readyToPlay, timelineOf } from '../testing/old/domain/project';
 import { CARD } from './strategy';
 import { codesOf, forecast, primary, rulesGame, rulesPack, statusTokens, tech } from './rules/kit';
-import type { Entry, Game, Opponent } from './types';
+import type { Entry, Game } from './types';
+import type { Player } from './players';
 import { fleetSpeed } from './movement';
 import { capacity } from './replay/transport';
 import { productionCost } from './unitStats';
@@ -16,7 +17,7 @@ import { gameAs } from '../testing/old/domain/players';
 
 const pack = rulesPack();
 const pok = loadPack(['pok']);
-const RIVAL: Opponent = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
 const withRival = { opponents: [RIVAL], playerCount: 3 };
 
 let next = 0;

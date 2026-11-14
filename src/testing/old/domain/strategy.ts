@@ -1,4 +1,5 @@
-import type { CardPlay, Round, Entry, Game, GameState, DataPack, Holdings, Payment, CardEffects } from '../../../domain/types';
+import type { CardPlay, Round, Entry, Game, DataPack, Payment, CardEffects } from '../../../domain/types';
+import type { GameState, Holdings } from './types';
 import { type CardEntry, heldCards, primaryForToken, strategyTokensOwedOf, cardCostOf, type HomeNote } from '../../../domain/strategy';
 import { holderOf, type Holder, effectOf } from '../../../domain/effects/registry';
 import { type PaymentKind } from '../../../domain/payment';

@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent, StartHoldings } from '../../../types';
+import type { Entry, StartHoldings } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, quote, warningsOf } from '../kit';
 import { id } from './mi';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const CARD = 'actionCard:abs';
 /** The component action of Mageon Implants; its choices: whose hand, and the card taken. */
 const look = (): Entry => componentAction(id, { choices: { from: 'o1', card: CARD } });

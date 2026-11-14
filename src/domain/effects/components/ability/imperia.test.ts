@@ -1,9 +1,10 @@
 import { describe, test } from 'vitest';
-import type { LeaderState, Opponent } from '../../../types';
+import type { LeaderState } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, expectStanding, expectWaived, NEAR, quote, tactical, using, warningsOf } from '../kit';
 import { id } from './imperia';
 
-const SOL: Opponent = { id: 'sol1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const SOL: Player = { id: 'sol1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const COMMANDER = 'leader:solcommander';
 
 /** My action names a leader of the Sol player in «Used»; the Sol player's leaders are `theirs`. */

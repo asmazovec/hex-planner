@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Act, Entry, Goods, Opponent, StartHoldings } from '../../../types';
+import type { Act, Entry, Goods, StartHoldings } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectStanding, expectWaived, NEAR, quote, tactical, warningsOf } from '../kit';
 import { id } from './thesilverflame';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 const deal = (give: Goods, get: Goods = {}, withId = 'o1'): Act => ({ kind: 'transaction', with: withId, give, get });
 /** A turn with a ship in the system where the rival has one too: neighbours (60). */
 const turn = (acts: Act[], extra: Partial<Entry> = {}): Entry => ({ ...tactical(NEAR, { acts }), ...extra } as Entry);

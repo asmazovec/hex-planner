@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, componentAction, effect, endOf, expectStanding, FAR, quote, warningsOf } from '../kit';
 import { id } from './pm';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 const biomes = () => componentAction(id, { choices: { player: 'o1' } });
 const table = (entries: Entry[]) =>
   bench({ faction: 'hacan', start: { technologies: [id] }, entries, game: { opponents: [RIVAL], enemyUnits: { [FAR]: { o1: { carrier: 1 } } } } });

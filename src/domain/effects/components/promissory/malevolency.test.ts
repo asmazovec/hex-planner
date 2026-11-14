@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, before, bench, endOf, expectNone, expectStanding, HOME, NEAR, quote, statusTokens, tactical, warningsOf } from '../kit';
 import { id } from './malevolency';
 
-const OBSIDIAN: Opponent = { id: 'o1', faction: 'obsidian', vp: 0, seat: 2, color: 2 };
+const OBSIDIAN: Player = { id: 'o1', faction: 'obsidian', vp: 0, seat: 2, color: 2 };
 /** The Obsidian's note, given to me: its address is its owner. */
 const THEIRS = `${id}@o1`;
 /** The same note still with the Obsidian, when I am the Obsidian. */

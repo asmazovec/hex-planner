@@ -6,5 +6,5 @@ export { fleetSpeed, routeDistances, routeMove, routeSteps, shipSpeed } from '..
 export { readyToPlay } from './holdings';
 export { productionCost, type ProductionPlace } from './production';
 export { START_TOKENS } from './state';
-export { dockFighterRoom, fightersFly, pickupAllowed, systemMeters } from './transport';
+export { fightersFly, pickupAllowed, systemMeters } from './transport';
 export { isWaived, standing } from '../rules/registry';

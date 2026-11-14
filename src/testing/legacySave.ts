@@ -3,7 +3,8 @@
  * itself. Only the storage and the file go through here; goes with the old `Game`.
  */
 import { loadPack } from '../data/loadPack';
-import type { Game, Opponent, Plan, StartHoldings } from '../domain/types';
+import type { Game, Plan, StartHoldings } from '../domain/types';
+import type { Player } from '../domain/players';
 import { SAVE_FORMAT } from '../domain/types';
 import { legacyEntry, legacyPlayer, playerOfLegacy } from '../game/entry';
 import { nestedEntries } from './old/game/entry';
@@ -117,7 +118,7 @@ function viewOf(saved: SavedGame): Game {
   const legacy = (player: string): string => legacyPlayer(table, player);
   const real = table.players.filter(p => p.seat < GHOST_SEAT);
   const me = real.find(p => p.id === table.viewer) ?? real[0];
-  const opponents: Opponent[] = real.filter(p => p !== me).map(p => ({ id: legacy(p.id), faction: p.faction, vp: start.points[p.id] ?? 0, seat: p.seat, color: p.color }));
+  const opponents: Player[] = real.filter(p => p !== me).map(p => ({ id: legacy(p.id), faction: p.faction, vp: start.points[p.id] ?? 0, seat: p.seat, color: p.color }));
   const byLegacy = (record: Record<string, Record<string, UnitCounts>>): Record<string, Record<string, UnitCounts>> =>
     Object.fromEntries(Object.entries(record).map(([place, byOwner]) => [place, Object.fromEntries(Object.entries(byOwner).map(([owner, units]) => [legacy(owner), units]))]));
   const planetControl: Game['planetControl'] = {};

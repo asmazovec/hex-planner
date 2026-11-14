@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, endOf, expectNone, expectStanding, quote, statusTokens, using, warningsOf } from '../kit';
 import { id } from './ce';
 
 /** The L1Z1X at the table, whose note I hold under its address. */
-const L1Z1X: Opponent = { id: 'o1', faction: 'l1z1x', vp: 0, seat: 2, color: 2 };
+const L1Z1X: Player = { id: 'o1', faction: 'l1z1x', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@o1`;
 
 /** I play the Arborec (not the Sol: its Versatile already gives a third token) and hold the L1Z1X note; the status entry gives out `tokens` command tokens. */

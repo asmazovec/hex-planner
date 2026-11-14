@@ -8,10 +8,11 @@ import { place } from '../../game/abilities/emit';
 import type { HookPayloads } from '../../game/abilities/types';
 import type { Ability } from '../effects/types';
 import { bench, endOf, expectStanding, NEAR, TARGET, adjust, tactical, using, warningsOf, type Bench } from '../effects/components/kit';
-import type { AnyWarningCode, Entry, Opponent } from '../types';
+import type { AnyWarningCode, Entry } from '../types';
+import type { Player } from '../players';
 import { attachCard, exploreCondition, placeOnPlanet } from '../../testing/old/domain/replay/invasion';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const code = (name: string) => name as AnyWarningCode;
 
 /** Gives the pack of a bench a throwaway effect for a component. */

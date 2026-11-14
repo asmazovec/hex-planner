@@ -1,10 +1,10 @@
 /** LRR 25 Control. Source: tirules2 rules-reference/control.md. */
 import { describe, expect, test } from 'vitest';
-import type { Opponent } from '../../types';
+import type { Player } from '../../players';
 import { adjust, FACTION, forecast, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();
-const RIVAL: Opponent = { id: 'o1', faction: FACTION, vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: FACTION, vp: 0, seat: 2, color: 2 };
 
 const invasion = (extra: Parameters<typeof tactical>[1] = {}) => tactical(TARGET, {
   moves: [{ from: NEAR, units: { carrier: 1, infantry: 2 } }],

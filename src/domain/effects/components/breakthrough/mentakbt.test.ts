@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import type { Game, Opponent, UnitCounts } from '../../../types';
+import type { Game, UnitCounts } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, expectNone, expectStanding, expectWaived, HOME, NEAR, quote, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './mentakbt';
 
 const CRUISER_II = 'technology:cr2';
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 
 /** Ships of the rival in the system on the way (NEAR) and, with `defended`, a non-fighter ship in the active system. */
 const enemies = (defended: UnitCounts | null): Partial<Game> => ({

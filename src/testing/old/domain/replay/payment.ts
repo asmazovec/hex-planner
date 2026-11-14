@@ -1,6 +1,7 @@
 import { isPlanetCard, planetValue, type PayView, type PaymentKind } from '../../../../domain/payment';
 import { violation } from '../../../../domain/rules/registry';
-import type { DataPack, GameState, Payment, Warning, RuleStep, Game, Entry } from '../../../../domain/types';
+import type { DataPack, Payment, Warning, RuleStep, Game, Entry } from '../../../../domain/types';
+import type { GameState } from '../types';
 import { playedCost } from '../../../../domain/effects/playedCost';
 import { effectOf } from '../../../../domain/effects/registry';
 import { readyPlanetIds } from '../payment';

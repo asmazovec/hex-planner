@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectStanding, quote, warningsOf } from '../kit';
 import { id } from './ra';
 
-const JOLNAR: Opponent = { id: 'o1', faction: 'jolnar', vp: 0, seat: 2, color: 2 };
+const JOLNAR: Player = { id: 'o1', faction: 'jolnar', vp: 0, seat: 2, color: 2 };
 
 describe('promissory:ra Research Agreement', () => {
   // "After the Jol-Nar player researches a technology that is not a faction technology: Gain that technology."

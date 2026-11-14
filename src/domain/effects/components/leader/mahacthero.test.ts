@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, Entry, Opponent } from '../../../types';
+import type { AnyWarningCode, Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, endOf, expectStanding, FAR, HOME, NEAR, quote, warningsOf } from '../kit';
 import { id } from './mahacthero';
 
 const CONDITION = 'componentCondition' as AnyWarningCode;
-const SOL: Opponent = { id: 'sol1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const SOL: Player = { id: 'sol1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const table = (entries: Entry[]) => bench({
   faction: 'mahact', expansions: ['pok'], units: { [HOME]: { cruiser: 2, fighter: 1 } }, start: { leaders: { [id]: 'unlocked' } }, entries,
   game: { opponents: [SOL], enemyUnits: { [NEAR]: { sol1: { destroyer: 1 } } } },

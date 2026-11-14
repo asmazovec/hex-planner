@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Game, Opponent } from '../../../types';
+import type { Entry, Game } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, quote, TARGET, tactical, using, warningsOf } from '../kit';
 import { id } from './nav_suite';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 
 /** The test row with `near` in place of the empty system between home and target. */
 const row = (near: string, target = 'r-target'): Game['map'] =>

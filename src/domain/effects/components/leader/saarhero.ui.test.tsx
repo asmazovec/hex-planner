@@ -2,13 +2,13 @@ import { expect, test } from 'vitest';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { play, showTurn, uiBench } from '../../../../ui/testing/effects';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, endOf, NEAR, quote } from '../kit';
 import { id } from './saarhero';
 
 uiBench();
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 
 // "ACTION: Choose 1 system that is adjacent to 1 of your space docks. Destroy all other players' infantry and
 //  fighters in that system. Then, purge this card."

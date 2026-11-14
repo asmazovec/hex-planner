@@ -9,7 +9,8 @@
 import { loadPack } from '../../data/loadPack';
 import { upgradeTech } from '../holdings';
 import { forgetTimelines, project, stateBeforeEntry } from '../../testing/old/domain/project';
-import { SAVE_FORMAT, type ExpansionId, type CardEffects, type CardPlay, type DataPack, type Entry, type EntryBody, type Game, type GameState, type Phase, type TileDef, type UnitCounts, type UpgradeId, type Warning } from '../types';
+import { SAVE_FORMAT, type ExpansionId, type CardEffects, type CardPlay, type DataPack, type Entry, type EntryBody, type Game, type Phase, type TileDef, type UnitCounts, type UpgradeId, type Warning } from '../types';
+import { type GameState } from '../../testing/old/domain/types';
 
 export const HOME = '0,0';
 export const NEAR = '1,0';

@@ -1,4 +1,5 @@
 import type { Shelf } from './shelf';
+import type { Player } from './players';
 
 export type ExpansionId = 'pok' | 'te';
 
@@ -275,9 +276,9 @@ export interface CardEffects {
   systemId?: string;
   /** Planet ids. */
   readied?: string[];
-  /** Opponent id. */
+  /** Rival id. */
   speaker?: string;
-  /** Opponent ids. */
+  /** Rival ids. */
   freeSecondary?: string[];
   mecatol?: boolean;
   /** `ground` holds where ground forces of `units` were bought, by planet id; what is not listed goes to the first planet I control. */
@@ -345,7 +346,7 @@ export type EntryBody = (
       /** An agenda of the agenda phase: its outcome (`for` or `against`) and what was elected (`elect`: a planet id, a law id, `me` or an opponent id), the strategy card elected (`card`, its initiative as text or number). */ choices?: Record<string, string | number> }
   | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number;
       /** My points gained this round. */ vp?: number;
-      /** Opponent id to the points they gained this round. */ opponentVp?: Record<string, number>;
+      /** Rival id to the points they gained this round. */ opponentVp?: Record<string, number>;
       /** Objectives the owner scored, by component id: a secret one leaves the hand for the scored ones, a public one joins them. */ scored?: string[];
       /** What scoring them cost, when an objective is scored by spending (61.10): tokens from the pools, trade goods, planets paying resources or influence. */ spend?: StatusSpend }
 ) & {
@@ -375,19 +376,9 @@ export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus;
 export interface Round { number: number; strategyCard: number | null; backupCard: number | null; entries: Entry[]; }
 export interface Plan { id: string; name: string; rounds: Round[]; }
 
-export interface Opponent {
-  /** Stable: survives seat swaps, faction changes and the removal of other opponents. */
-  id: string;
-  faction: string;
-  vp: number;
-  seat: number;
-  color: number;
-}
-
-export type Holdings = Shelf;
 export type { LeaderState } from './shelf';
 /** What a player held when the plan begins: the faction's starting technologies, and what was marked by hand. */
-export type StartHoldings = Partial<Pick<Holdings, 'technologies' | 'hand' | 'relics' | 'promissory' | 'leaders' | 'breakthrough' | 'scored' | 'secrets' | 'found'>>;
+export type StartHoldings = Partial<Pick<Shelf, 'technologies' | 'hand' | 'relics' | 'promissory' | 'leaders' | 'breakthrough' | 'scored' | 'secrets' | 'found'>>;
 
 /** The mark of a save this app reads. A save without it comes from an earlier version and is not read. */
 export const SAVE_FORMAT = 'ti4-planner/3';
@@ -413,7 +404,7 @@ export interface Game {
   vp: number;
   /** Slot key to `<tileId>` or `<tileId>@<rotation 0-5>`. Slot keys are the system ids used everywhere else. */
   map: Record<string, string>;
-  opponents: Opponent[];
+  opponents: Player[];
   /** What each player holds before the plan: the starting technologies of the faction, the rest set by hand. Entries of a plan add to it. */
   start: { me: StartHoldings; opponents: Record<string, StartHoldings> };
   /** Slot key to opponent id to that opponent's units in space; ground forces only in a system without planets. */
@@ -432,51 +423,6 @@ export interface Game {
     /** While open: slot key beside the map to its Fracture tile, so ships fly there like to any system. Absent until the Fracture first opens. */ tiles?: Record<string, string> };
   plans: Plan[];
   activePlanId: string;
-}
-
-export interface GameState {
-  /** The faction of the player this state is, set by the replay: what a faction sheet brings (abilities, mech) is asked of it without a `Game`. */
-  faction?: string;
-  /** The player's units in each system's space, by slot key. */
-  systems: Record<string, UnitCounts>;
-  /** The player's ground forces on each planet, by planet id. */
-  ground: Record<string, UnitCounts>;
-  exhausted: string[];
-  control: Record<string, 'me' | 'enemy'>;
-  tokensOnMap: string[];
-  tradeGoods: number;
-  /** Commodities on the faction sheet: none at the start, a replenish fills them up to the faction's value (21.2, 21.3). */
-  commodities: number;
-  tactic: number;
-  fleet: number;
-  strategy: number;
-  vp: number;
-  /** Each opponent's starting points plus their gains in the status entries replayed so far, by opponent id. */
-  opponentVp: Record<string, number>;
-  /** What this player holds: the game's start plus the entries replayed so far. */
-  holdings: Holdings;
-  /** Laws in play, for the whole game: on my state only, whoever's entry brought them. */
-  laws?: string[];
-  /** Public objectives revealed, for the whole game: on my state only. */
-  revealed?: string[];
-  /** Law id to the faction of the player an `Elect Player` law binds (Censure, the ministers): on my state only; a law not listed binds everyone. */
-  lawOwners?: Record<string, string>;
-  /** Planet id to the cards attached to it, for the whole game: on my state only. */
-  attachments?: Record<string, string[]>;
-  /** This player's space docks: the game's on their planets, plus those built by the entries replayed so far, less those lost with a planet. */
-  docks: string[];
-  /** Planet id to this player's PDS count, the same way. */
-  pds: Record<string, number>;
-  /** This player's structures in the space area of a system, by slot key: carried there by an entry (`moves[].structures`) and not put on a planet yet. */
-  afloat?: Record<string, StructureCounts>;
-  /** Someone landed on Mecatol Rex in the entries replayed so far, so the custodians token is gone. */
-  custodiansRemoved?: boolean;
-  /** Each opponent counted the same way, from what stands on the map for them and their entries replayed so far. */
-  rivals?: Record<string, GameState>;
-  /** Planet id to the opponent whose entries landed there, ahead of the owner set by hand. */
-  rivalHolds?: Record<string, string>;
-  /** What waits on a component's card, by the component id as held: units placed on it (Crimson Legionnaire II), a technology lent with it (Share Knowledge). */
-  onCard?: Record<string, { units?: UnitCounts; technology?: string }>;
 }
 
 /** Every warning the replay can give; the rule registry (src/domain/rules/registry.ts) maps each to its rules and step. */

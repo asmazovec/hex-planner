@@ -1,7 +1,7 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { CARD } from '../../../strategy';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, quote, secondary } from '../kit';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import { id } from './yincommander';
@@ -10,7 +10,7 @@ uiBench();
 
 /** The check of prerequisites pass 2 adds (LRR 90.12). */
 const PREREQUISITES = prerequisitesMissing.code;
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const research = () => secondary(CARD.technology, { researched: ['technology:bio'], payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
 
 // "When you research a tech owned by another player, you may return 1 of your infantry to reinforcements to ignore its

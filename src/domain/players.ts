@@ -1,7 +1,15 @@
-import type { DataPack, Game, Opponent } from './types';
+import type { DataPack, Game } from './types';
 
 /** An opponent, or me under the id `me`. */
-export type Player = Opponent;
+export interface Player {
+  /** Stable: survives seat swaps, faction changes and the removal of other opponents. */
+  id: string;
+  faction: string;
+  vp: number;
+  seat: number;
+  color: number;
+}
+
 
 export const MIN_PLAYERS = 3;
 export const COLORS = 8;

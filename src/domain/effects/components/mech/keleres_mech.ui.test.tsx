@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { expectNotShown, expectShownStanding, land, showTactical, uiBench } from '../../../../ui/testing/effects';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, HOME, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './keleres_mech';
 
@@ -8,7 +8,7 @@ uiBench();
 
 const table = (rival: string) => {
   const move = tactical(TARGET, { moves: [{ from: HOME, units: { carrier: 1, infantry: 2 }, via: [NEAR] }] });
-  const opponent: Opponent = { id: 'o1', faction: rival, vp: 0, seat: 2, color: 2 };
+  const opponent: Player = { id: 'o1', faction: rival, vp: 0, seat: 2, color: 2 };
   return {
     move,
     ...bench({

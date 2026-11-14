@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../strategy';
-import type { Entry, Opponent, StartHoldings } from '../../../types';
+import type { Entry, StartHoldings } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, expectNone, expectStanding, expectWaived, quote, secondary, warningsOf } from '../kit';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import { id } from './yincommander';
@@ -13,7 +14,7 @@ const ONE_GREEN = 'technology:it';
 const TWO_GREEN = 'technology:bio';
 const research = (technology: string): Entry =>
   secondary(CARD.technology, { researched: [technology], payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 
 const table = (entries: Entry[], start: StartHoldings = { leaders: { [id]: 'unlocked' } }, rival: StartHoldings | null = null) =>
   bench({

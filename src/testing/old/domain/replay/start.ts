@@ -1,4 +1,5 @@
-import type { Game, DataPack, GameState } from '../../../../domain/types';
+import type { Game, DataPack } from '../../../../domain/types';
+import type { GameState } from '../types';
 import { initialState } from './state';
 import { keepOwnStructures } from './structures';
 import { gameAs } from '../players';

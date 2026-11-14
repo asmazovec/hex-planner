@@ -13,7 +13,8 @@ import { effectOf, holderFor, holderOf, inForceOf, type Holder, type Who } from 
 import './effects/points/movement';
 import './effects/points/rivals';
 import { noteBase } from './components';
-import type { DataPack, Game, GameState, UnitCounts, UnitId } from './types';
+import type { DataPack, Game, UnitCounts, UnitId } from './types';
+import type { Moving, MoveShared } from './readers';
 
 /** What a move is counted over: the map and the faction of the mover. */
 export type Mover = MapSource & Pick<Game, 'faction'>;
@@ -30,8 +31,8 @@ export interface MoveView {
   /** Whose components answer; the holdings of `state` and the faction of the game when only that is given. */
   holder?: Holder;
   /** The mover's state before the move, and my state, which holds the laws and the wormhole tokens. */
-  state?: GameState;
-  shared?: GameState;
+  state?: Moving;
+  shared?: MoveShared;
   /** The start slot and the active system of the move. */
   from?: string;
   target?: string;
@@ -60,7 +61,7 @@ export interface MoveAt {
 }
 
 /** The same reads over the old per-player state (the route editor and the first replay). */
-export const atOfState = (game: Game, pack: DataPack, state: GameState, shared?: GameState): MoveAt => ({
+export const atOfState = (game: Game, pack: DataPack, state: Moving, shared?: MoveShared): MoveAt => ({
   map: game, tokens: (shared ?? state).wormholeTokens,
   get home() { return homeSlot(game, pack); },
   dockIn: slot => planetsOf(game, slot, pack).some(planetId => state.docks.includes(planetId)),
@@ -77,7 +78,7 @@ export type Blockers = ReadonlySet<string>;
 
 /**
  * Route graphs by what they are made of: the map, the Fracture, the pack and the factions at the table. The game as an
- * opponent plays it (`gameAs`) is a new object with the same map, so it shares the graph of the game.
+ * opponent plays it is a new object with the same map, so it shares the graph of the game.
  */
 const routeGraphs = new WeakMap<MapSource['map'], WeakMap<MapSource['fracture'], WeakMap<DataPack, Map<string, Map<string, string[]>>>>>();
 
@@ -159,22 +160,22 @@ function routeGraph(game: MapSource, pack: DataPack, links: readonly Link[] = []
 export const boardSlots = (game: MapSource, pack: DataPack): string[] => [...systemSlots(game), ...offMapHomes(game, pack)];
 
 /** The wormholes of a system: its tile's and the tokens put there (Creuss, Gamma Wormhole). */
-export function wormholesOf(game: MapSource, pack: DataPack, slot: string, tokens: GameState['wormholeTokens'] = {}): string[] {
+export function wormholesOf(game: MapSource, pack: DataPack, slot: string, tokens: Record<string, string> | undefined = {}): string[] {
   const own = tileAt(game, slot, pack)?.wormholes ?? [];
   return [...new Set([...own, ...Object.entries(tokens).flatMap(([type, at]) => (at === slot ? [type] : []))])];
 }
 
 /** The systems holding a wormhole of this type, tokens included. */
-export const wormholeSlots = (game: MapSource, pack: DataPack, type: string, tokens: GameState['wormholeTokens'] = {}): string[] =>
+export const wormholeSlots = (game: MapSource, pack: DataPack, type: string, tokens: Record<string, string> | undefined = {}): string[] =>
   boardSlots(game, pack).filter(slot => wormholesOf(game, pack, slot, tokens).includes(type));
 
 /** Wormhole tokens join their system to every system with a matching wormhole (6.1). */
-function tokenLinks(game: MapSource, pack: DataPack, tokens: GameState['wormholeTokens']): Link[] {
+function tokenLinks(game: MapSource, pack: DataPack, tokens: Record<string, string> | undefined): Link[] {
   return Object.entries(tokens ?? {}).flatMap(([type, at]) => wormholeSlots(game, pack, type, tokens).filter(slot => slot !== at).map((slot): Link => [at, slot]));
 }
 
 /** Who asks for the adjacency beyond the board. */
-export interface LinkWho { holder?: Holder; state?: GameState; shared?: GameState; named?: readonly string[]; during: 'tactical' | 'neighbors' }
+export interface LinkWho { holder?: Holder; state?: Moving; shared?: MoveShared; named?: readonly string[]; during: 'tactical' | 'neighbors' }
 
 /**
  * The adjacency the board does not draw: the wormhole tokens of the game and what the components of the player join
@@ -183,7 +184,7 @@ export interface LinkWho { holder?: Holder; state?: GameState; shared?: GameStat
 export function linksOf(game: Game, pack: DataPack, who: LinkWho): Link[] {
   const holder = who.holder ?? (who.state ? holderOf(game, who.state, who.shared) : undefined);
   return linksFrom(game, pack, {
-    ...(holder ? { holder } : {}), faction: game.faction, controls: planetId => who.state?.control[planetId] === 'me',
+    ...(holder ? { holder } : {}), faction: game.faction, controls: planetId => who.state?.control?.[planetId] === 'me',
     tokens: (who.shared ?? who.state)?.wormholeTokens, ...(who.named ? { named: who.named } : {}), during: who.during,
   });
 }

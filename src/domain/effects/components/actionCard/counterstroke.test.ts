@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, ExtensionCode, Opponent } from '../../../types';
+import type { Entry, ExtensionCode } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, NEAR, planned, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './counterstroke';
 
 /** The code pass 2 adds for a played card whose own condition is not met (see the report of batch 21). */
 const PLAY_CONDITION = 'playCondition' as ExtensionCode;
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 
 /** I activated the system next to home; the Hacan then activate it too, and I play Counterstroke naming a system. */
 const mine = () => tactical(NEAR);

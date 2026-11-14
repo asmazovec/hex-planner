@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, EntryBody, Opponent } from '../../../types';
+import type { Entry, EntryBody } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, effect, endOf, expectStanding, FAR, planned, quote, warningsOf } from '../kit';
 import { id } from './qdn';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 /** The node used at the end of the strategy phase, toward the rival. */
 const swap = () => planned({ type: 'component', componentId: id, note: '', choices: { player: 'o1' } } as EntryBody, 'strategy');
 const table = (entries: Entry[]) =>

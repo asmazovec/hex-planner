@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, ExtensionCode, GameState, Opponent } from '../../../types';
+import type { Entry, ExtensionCode } from '../../../types';
+import type { Player } from '../../../players';
+import type { GameState } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './wg';
 
@@ -11,7 +13,7 @@ const PLACE = 'wormholeTokenPlace' as ExtensionCode;
 /** Where the Creuss wormhole tokens stand, a new part of the shared state in pass 2: token to slot. */
 const tokens = (state: GameState): Record<string, string> | undefined => (state as GameState & { wormholeTokens?: Record<string, string> }).wormholeTokens;
 
-const RIVAL: Opponent = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 const generate = (systemId: string, token = 'alpha') => componentAction(id, { choices: { token, systemId } } as Partial<Entry>);
 const table = (entries: Entry[], units = {}) => bench({
   faction: 'ghost', units, start: { technologies: [id] }, entries, game: { opponents: [RIVAL], enemyUnits: { [FAR]: { o1: { cruiser: 1 } } } },

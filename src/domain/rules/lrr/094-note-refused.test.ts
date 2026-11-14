@@ -6,13 +6,14 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { alwaysInForce, throwaway } from '../../effects/points/throwaway';
 import noteRefused from '../codes/noteRefused';
 import { violation } from '../registry';
-import type { Entry, Opponent } from '../../types';
+import type { Entry } from '../../types';
+import type { Player } from '../../players';
 import { NEAR, forecast, rulesGame, rulesPack, tactical } from '../kit';
 
 vi.mock('../../effects/registry', async original => (await import('../../effects/points/throwaway')).mockRegistry(await original()));
 
 const pack = rulesPack();
-const RIVAL: Opponent = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
 const NOTE = 'promissory:war_funding@o1';
 
 const gift = (): Entry => tactical(NEAR, { acts: [{ kind: 'transaction', with: 'o1', give: {}, get: { components: [NOTE] } }] });

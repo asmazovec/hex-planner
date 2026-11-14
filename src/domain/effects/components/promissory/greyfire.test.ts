@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, endOf, expectNone, NEAR, quote, tactical, using, warningsOf } from '../kit';
 import { id } from './greyfire';
 
-const YIN: Opponent = { id: 'o1', faction: 'yin', vp: 0, seat: 2, color: 2 };
+const YIN: Player = { id: 'o1', faction: 'yin', vp: 0, seat: 2, color: 2 };
 /** The Yin player's note, held by me (Sol) under its address. */
 const NOTE = `${id}@o1`;
 const table = () => {

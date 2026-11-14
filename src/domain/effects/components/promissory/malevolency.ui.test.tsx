@@ -1,12 +1,13 @@
 import { expect, test } from 'vitest';
 import { expectNotShown, expectShownStanding, showFlight, take, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, endOf, HOME, NEAR, quote, statusTokens, tactical } from '../kit';
 import { id } from './malevolency';
 
 uiBench();
 
-const OBSIDIAN: Opponent = { id: 'o1', faction: 'obsidian', vp: 0, seat: 2, color: 2 };
+const OBSIDIAN: Player = { id: 'o1', faction: 'obsidian', vp: 0, seat: 2, color: 2 };
 const table = (notes: string[], rounds: Entry[][], cruisers = 0) => bench({
   faction: 'sol', expansions: ['pok', 'te'], units: { [HOME]: { cruiser: cruisers } }, start: { promissory: notes }, rounds,
   game: { opponents: [OBSIDIAN] },

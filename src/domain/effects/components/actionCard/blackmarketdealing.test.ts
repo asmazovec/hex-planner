@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import type { Act, DataPack, Entry, Game, Goods, Opponent, StartHoldings } from '../../../types';
+import type { Act, DataPack, Entry, Game, Goods, StartHoldings } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, endOf, expectStanding, expectWaived, NEAR, quote, tactical, using, warningsOf } from '../kit';
 import { tech } from '../../../rules/kit';
 import { id } from './blackmarketdealing';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const RELIC = 'relic:dynamiscore';
 
 const deal = (give: Goods, get: Goods = {}): Act => ({ kind: 'transaction', with: 'o1', give, get });

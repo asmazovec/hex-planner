@@ -1,13 +1,14 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, componentAction, FAR, HOME, NEAR, quote, tactical } from '../kit';
 import { id } from './convoys';
 
 uiBench();
 
 // Not a Hacan: Guild Ships (their ability) lifts a deal with them for anyone (Hacan, Guild Ships 2).
-const HACAN: Opponent = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
+const HACAN: Player = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@o1`;
 /** The warnings of a turn with a transaction with the Hacan, who sits two systems away; `before` comes first in the round. */
 const turn = (before: Entry[]) => {

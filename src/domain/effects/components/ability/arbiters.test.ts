@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Act, Opponent, StartHoldings } from '../../../types';
+import type { Act, StartHoldings } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, endOf, expectStanding, expectWaived, HOME, NEAR, quote, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './arbiters';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 const CARD_IN_HAND = 'actionCard:sabo1';
 /** My carrier flies next to home, beside the rival's at the target (neighbours), and I give them a component. */
 const table = (faction: string, component: string, me: StartHoldings) => {

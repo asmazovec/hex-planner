@@ -2,13 +2,13 @@
 import { describe, expect, test } from 'vitest';
 import { routeReach, routeSteps } from '../../../testing/old/domain/project';
 import { CARD } from '../../strategy';
-import type { Opponent } from '../../types';
+import type { Player } from '../../players';
 import { codesOf, FACTION, FAR, FARTHER, forecast, HOME, NEAR, rulesGame, rulesPack, secondary, tactical, TARGET, tech } from '../kit';
 
 const pack = rulesPack();
 const row = (tiles: Partial<Record<string, string>> = {}) =>
   ({ [HOME]: 'r-home', [NEAR]: 'r-empty', [TARGET]: 'r-target', [FAR]: 'r-empty', [FARTHER]: 'r-empty', ...tiles }) as Record<string, string>;
-const rival: Opponent = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
+const rival: Player = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
 
 /** A cruiser flies from `from` along `via` into the active system. */
 function flight(from: string, active: string, via: string[], map = row(), units = { cruiser: 1 }) {

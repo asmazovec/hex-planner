@@ -4,7 +4,7 @@ import type { Projection } from './types';
 import { type Blockers, routeReach as reachOf } from '../../../domain/movement';
 import { blockersOf } from './movement';
 
-export { isOnMap, sourceSlot, systemPlanets, systemsAdjacent, systemSlots, tileIdOf, fleetSpeed, routeDistances, routeMove, routeSteps, shipSpeed, readyToPlay, productionCost, START_TOKENS, dockFighterRoom, fightersFly, pickupAllowed, systemMeters, isWaived, standing, type ProductionPlace } from '../../../domain/replay/index';
+export { isOnMap, sourceSlot, systemPlanets, systemsAdjacent, systemSlots, tileIdOf, fleetSpeed, routeDistances, routeMove, routeSteps, shipSpeed, readyToPlay, productionCost, START_TOKENS, fightersFly, pickupAllowed, systemMeters, isWaived, standing, type ProductionPlace } from '../../../domain/replay/index';
 export { projectionOf, projectionAtRound, boardBefore, boardAfter, seenBefore, seenAfter, stateBeforeEntry, stateAfterEntry, boardBeforeEntry, timelineOf, forgetTimelines, tacticalNumbers, type Filter, type Frame, type Timeline } from '../../projection';
 /** Test hook: told of every game a plan of which is projected (the oracle recorder registers one). Nothing watches in an ordinary run. */
 export let projectWatcher: ((game: Game, pack: DataPack) => void) | undefined;

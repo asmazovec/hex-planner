@@ -1,13 +1,13 @@
 import { expect, test } from 'vitest';
 import { showUses, uiBench, use } from '../../../../ui/testing/effects';
 import { CARD } from '../../../strategy';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, endOf, NEAR, planned, quote, tactical, TARGET } from '../kit';
 import { id } from './salvage';
 
 uiBench();
 
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 
 // "After you win a space combat: Your opponent gives you all of their commodities."
 // LRR 21.6: a commodity given to another player becomes a trade good.

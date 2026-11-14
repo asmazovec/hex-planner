@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { emptyHoldings } from './holdings';
 import { EXPEDITION_SLICES } from './payment';
 import { autoPay, paymentValue } from '../testing/old/domain/payment';
-import type { DataPack, GameState } from './types';
+import type { DataPack } from './types';
+import type { GameState } from '../testing/old/domain/types';
 
 /** Planets `p1`, `p2`, ... get the given resource values; influence is 10 minus the resources. */
 function build(values: number[], tradeGoods: number, extra: Partial<GameState> = {}): { state: GameState; pack: DataPack } {

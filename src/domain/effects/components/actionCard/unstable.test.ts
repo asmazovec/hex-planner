@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import type { ExtensionCode, Opponent } from '../../../types';
+import type { ExtensionCode } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, quote, warningsOf } from '../kit';
 import { id } from './unstable';
 
 /** The code pass 2 adds for a played card whose own condition is not met (see the report of batch 21). */
 const PLAY_CONDITION = 'playCondition' as ExtensionCode;
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 
 /** Target One is made hazardous; the Hacan hold it with `infantry` infantry. Unstable Planet names a planet. */
 const unstable = (planetId: string) => componentAction(id, { choices: { planetId } });

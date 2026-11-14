@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, GameState, UnitCounts } from '../../../types';
+import type { AnyWarningCode, UnitCounts } from '../../../types';
+import type { GameState } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectNone, expectStanding, HOME, quote, statusTokens, tactical, warningsOf } from '../kit';
 import { id } from './mitosis';
 

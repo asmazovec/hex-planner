@@ -9,10 +9,12 @@ import { enemyChange, holderIn, othersOnPlanet, playerState } from '../testing/o
 import { type TacticalEntry } from './tactical';
 import { afterBattle, availableFor, flightOf, standingAfterBattle, withLanding, withProduction } from '../testing/old/domain/tactical';
 import { sliceOwners } from '../testing/old/domain/thundersEdge';
-import type { GameState, Opponent, Round } from './types';
+import type { Round } from './types';
+import type { Player } from './players';
+import type { GameState } from '../testing/old/domain/types';
 import { UNIT_ORDER } from './hexLayout';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'rules-tester', seat: 2, color: 2, vp: 0 };
+const RIVAL: Player = { id: 'o1', faction: 'rules-tester', seat: 2, color: 2, vp: 0 };
 
 test('an enemy ground force goes by planet, and one still listed with the system comes off there', () => {
   const game = rulesGame({ game: { opponents: [RIVAL], enemyUnits: { [TARGET]: { o1: { infantry: 2 } } } } });

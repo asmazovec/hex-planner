@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import { upgradeTech } from '../../../holdings';
-import type { Entry, Opponent, StartHoldings } from '../../../types';
+import type { Entry, StartHoldings } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectStanding, FAR, quote, warningsOf } from '../kit';
 import { id } from './fires';
 
-const MUAAT: Opponent = { id: 'o1', faction: 'muaat', vp: 0, seat: 2, color: 2 };
+const MUAAT: Player = { id: 'o1', faction: 'muaat', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@o1`;
 
 /** I play Sol, the Muaat sits at seat 2 with a carrier far away; `entries` is round 1. */

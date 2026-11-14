@@ -1,4 +1,5 @@
-import type { Holdings, GameState, UnitCounts, Warning } from '../../../domain/types';
+import type { UnitCounts, Warning } from '../../../domain/types';
+import type { Holdings, GameState } from '../domain/types';
 
 export const holdingsOf = (h: Holdings): Record<string, unknown> => ({
   technologies: sorted(h.technologies), hand: sorted(h.hand), relics: sorted(h.relics), promissory: sorted(h.promissory),

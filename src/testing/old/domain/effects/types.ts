@@ -1,4 +1,5 @@
-import type { Game, GameState, Entry, DataPack, Warning } from '../../../../domain/types';
+import type { Game, Entry, DataPack, Warning } from '../../../../domain/types';
+import type { GameState } from '../types';
 
 /** One component being played by an entry, with what the player chose for it. */
 export interface EffectTurn {

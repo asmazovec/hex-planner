@@ -3,10 +3,10 @@
  * gain run, and a play of a rival's entry changes that rival's planets, not the viewer's.
  */
 import { describe, expect, test } from 'vitest';
-import type { Opponent } from '../../domain/types';
+import type { Player } from '../../domain/players';
 import { adjust, bench, componentAction, endOf } from '../../domain/effects/components/kit';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 
 describe('a planet gained by a play', () => {
   // Assimilate (L1Z1X): "When you gain control of a planet: Replace each PDS and space dock that is on that planet with a

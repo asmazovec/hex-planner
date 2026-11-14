@@ -2,22 +2,8 @@
 import type { PaymentKind } from '../../payment';
 import type { CardEntry } from '../../strategy';
 import type { TokensOn } from '../../readers';
-import type { DataPack, ExpansionId, GameState } from '../../types';
+import type { DataPack, ExpansionId } from '../../types';
 import type { Shelf } from '../../shelf';
-
-/** What the round knows of the cards while it is replayed. Players are `me` and the opponents' ids. */
-export interface CardRound {
-  /** The cards a player holds this round; only mine are planned, so a rival holds none known. */
-  held: Record<string, number[]>;
-  /** The primaries of held cards resolved so far, by player. */
-  primaries: Record<string, number[]>;
-  /** The secondaries resolved so far, by player. */
-  secondaries: Record<string, number[]>;
-  /** The players whose secondary of a card spends no token, by card: Trade's primary chooses them (92.4). */
-  freeSecondary: Record<number, string[]>;
-  /** Every player's state, by player. */
-  states: Record<string, GameState>;
-}
 
 /** Whose play it is, for a card whose numbers a component of the player changes (Brilliant, research cost). */
 export interface CardWho { pack: DataPack; faction: string }

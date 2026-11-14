@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Holdings } from '../../../types';
+import type { Holdings } from '../../../../testing/old/domain/types';
 import { bench, effect, expectNone, expectStanding, FAR, FARTHER, HOME, NEAR, quote, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './crimsonbt';
 

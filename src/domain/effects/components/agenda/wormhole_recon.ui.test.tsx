@@ -1,13 +1,14 @@
 import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Act, DataPack, Entry, Opponent } from '../../../types';
+import type { Act, DataPack, Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET } from '../kit';
 import { id } from './wormhole_recon';
 
 uiBench();
 
 const resolved = (outcome: 'for' | 'against'): Entry => ({ ...adjust({}, 'agenda'), gains: [id], choices: { outcome } } as Entry);
-const RIVAL: Opponent = { id: 'o1', faction: 'rules-rival', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'rules-rival', vp: 0, seat: 2, color: 2 };
 const withRival = (pack: DataPack) => {
   pack.factions['rules-rival'] = { id: 'rules-rival', name: 'Rules Rival', homeTile: 'r-empty', startUnits: {}, startingTech: [], commodities: 3, abilities: [] };
 };

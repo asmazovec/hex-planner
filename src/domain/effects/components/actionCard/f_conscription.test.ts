@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Opponent, UnitCounts } from '../../../types';
+import type { UnitCounts } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectStanding, FAR, HOME, NEAR, quote, TARGET, warningsOf } from '../kit';
 import { id } from './f_conscription';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 
 /** My space dock on Home One; my ships by system; the Hacan cruiser in the target. */
 const table = (units: Record<string, UnitCounts>) => {

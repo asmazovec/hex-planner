@@ -1,5 +1,6 @@
 import { holderOf } from '../../../../domain/effects/registry';
-import type { DataPack, Entry, Game, GameState } from '../../../../domain/types';
+import type { DataPack, Entry, Game } from '../../../../domain/types';
+import type { GameState } from '../types';
 import { statusTokensFreeOf } from '../../../../domain/replay/status';
 /**
  * The command tokens a player gains in the status phase (81.5): two, changed by the components in force for them and by

@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, ExtensionCode, Opponent } from '../../../types';
+import type { Entry, ExtensionCode } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, FAR, FARTHER, HOME, NEAR, planned, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './s_retreat1';
 
 /** The code pass 2 adds for a played card whose own condition is not met (see the report of batch 21). */
 const PLAY_CONDITION = 'playCondition' as ExtensionCode;
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 
 /** My two cruisers attack the Hacan cruiser in the target; at the start of a combat round I play Skilled Retreat. */
 const attack = () => tactical(TARGET, { moves: [{ from: NEAR, units: { cruiser: 2 } }] });

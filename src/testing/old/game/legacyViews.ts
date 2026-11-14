@@ -1,5 +1,6 @@
 import { holdingsOfCards, legacyKey, playerOfKey, kindOf } from '../../../game/keys';
-import { type Game, SAVE_FORMAT, type Holdings, type GameState, type DataPack, type UnitCounts, type StructureCounts } from '../../../domain/types';
+import { type Game, SAVE_FORMAT, type DataPack, type UnitCounts, type StructureCounts } from '../../../domain/types';
+import { type Holdings, type GameState } from '../domain/types';
 import type { Table, Board, ComponentId, CardHold, PlayerId } from '../../../game/types';
 import { SOURCES } from '../../../game/source';
 import { emptyBoard } from '../../../game/board';

@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectStanding, quote, warningsOf } from '../kit';
 import { id } from './deepwroughthero';
 
 const GRAVITY_DRIVE = 'technology:gd';
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 
 const play = (extra: Partial<Entry> = {}): Entry => componentAction(id, { choices: { technology: GRAVITY_DRIVE }, ...extra } as Partial<Entry>);
 const deepwrought = (entries: Entry[]) => bench({

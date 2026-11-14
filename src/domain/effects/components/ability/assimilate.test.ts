@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, endOf, expectNone, expectStanding, NEAR, NO_PAYMENT, quote, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './assimilate';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 
 /** A carrier with two infantry flies from NEAR into the target and lands both on Target One. */
 const invade = (extra: Partial<Extract<Entry, { type: 'tactical' }>> = {}) =>

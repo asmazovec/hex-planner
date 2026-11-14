@@ -1,13 +1,13 @@
 import { expect, test } from 'vitest';
 import { choose, play, showTurn, uiBench } from '../../../../ui/testing/effects';
 import { componentById } from '../../../components';
-import type { Opponent } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, endOf, quote } from '../kit';
 import { id } from './mi';
 
 uiBench();
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const CARD = 'actionCard:abs';
 
 // "Choose 1 of those cards and add it to your hand."

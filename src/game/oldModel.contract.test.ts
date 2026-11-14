@@ -1,12 +1,12 @@
 /**
  * Ratchet for the deletion of the old per-player model: the identifiers below name it. Non-test source may mention
- * them only in the files listed in oldModel.allow.txt (the counting layer that still keeps an old-typed wrapper);
- * the list may shrink, never grow.
+ * them only in the files listed in oldModel.allow.txt (today the definitions of `Game` and `Entry` in
+ * src/domain/types.ts, which the counting layer still takes as the map and the entry); the list may shrink, never grow.
  */
 import { describe, expect, test } from 'vitest';
 import allowText from './oldModel.allow.txt?raw';
 
-const BANNED = ['GameState', 'EntryBody', 'enemyUnits', 'planetControl', 'fromCard', 'gameAs', 'legacy'];
+const BANNED = ['GameState', 'Holdings', 'Opponent', 'EntryBody', 'enemyUnits', 'planetControl', 'fromCard', 'gameAs', 'legacy'];
 
 const files = import.meta.glob<string>(
   ['../**/*.ts', '../**/*.tsx', '!../**/*.test.ts', '!../**/*.test.tsx', '!../**/*.bench.ts', '!../testing/**', '!../ui/testing/**', '!../**/kit.ts', '!../**/*.kit.ts', '!../**/kit-*.ts', '!../**/__oracle__/**'],

@@ -21,3 +21,9 @@ export interface SharedOf extends LawsOf { readonly holdings?: Shelf; readonly r
 export interface PayShared extends SharedOf { readonly attachments?: Readonly<Record<string, readonly string[]>> }
 /** A player paying: their cards, control and laws, the space docks on their planets, and the shared view. */
 export type Payer = Kept & PayShared & { readonly docks: readonly string[] };
+/** The wormhole tokens put on the map during the game: the token's type, then the slot. */
+export interface WormholeTokens { readonly wormholeTokens?: Readonly<Record<string, string>> }
+/** A player who moves: their cards, control and laws, the docks on their planets and the tokens of the game as they hold them. */
+export type Moving = Kept & WormholeTokens & { readonly docks: readonly string[] };
+/** The laws and tokens of the whole game, as the mover's shared view keeps them. */
+export type MoveShared = SharedOf & WormholeTokens;

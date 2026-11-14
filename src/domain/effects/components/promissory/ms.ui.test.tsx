@@ -1,13 +1,14 @@
 import { screen } from '@testing-library/react';
 import { expect, test } from 'vitest';
 import { expectShownStanding, showFlight, showWarnings, take, takeButton, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, ExtensionCode, Opponent } from '../../../types';
+import type { Entry, ExtensionCode } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, HOME, NEAR, quote, tactical } from '../kit';
 import { id } from './ms';
 
 uiBench();
 
-const SOL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const SOL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@o1`;
 const play = (planet: string) => componentAction(NOTE, { choices: { planet } } as Partial<Entry>);
 const flight = (before: Entry[]) => {

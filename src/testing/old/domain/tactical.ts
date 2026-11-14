@@ -1,4 +1,5 @@
-import type { DataPack, GameState, UnitId, StructureKind, StructureCounts, Game, UnitCounts, Holdings } from '../../../domain/types';
+import type { DataPack, UnitId, StructureKind, StructureCounts, Game, UnitCounts } from '../../../domain/types';
+import type { GameState, Holdings } from './types';
 import { type TacticalEntry, poolOf, hasUnits, withCount, hasStructures, withStructure, type Move, groupOf, hasCargo, isGround, unitsIn, addUnits, sourcesOf } from '../../../domain/tactical';
 import { sourceSlot, productionCost, systemPlanets, fightersFly, tileIdOf, routeSteps } from '../../../domain/replay/index';
 import { holderOf } from '../../../domain/effects/registry';

@@ -1,12 +1,13 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Act, Entry, Opponent } from '../../../types';
+import type { Act, Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, NEAR, quote, tactical } from '../kit';
 import { id } from './yssarilbt';
 
 uiBench();
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const deal: Act = { kind: 'transaction', with: 'me', give: {}, get: {} };
 const show = (uses: string[]) => {
   const entry = { ...tactical(NEAR, { acts: [deal, deal] }), owner: 'o1', uses } as Entry;

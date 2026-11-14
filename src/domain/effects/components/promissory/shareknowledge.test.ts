@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, componentAction, effect, endOf, expectStanding, quote, statusTokens, warningsOf } from '../kit';
 import { id } from './shareknowledge';
 
 const GRAVITY_DRIVE = 'technology:gd';
-const DEEPWROUGHT: Opponent = { id: 'o1', faction: 'deepwrought', vp: 0, seat: 2, color: 2 };
+const DEEPWROUGHT: Player = { id: 'o1', faction: 'deepwrought', vp: 0, seat: 2, color: 2 };
 const note = (owner: string) => `${id}@${owner}`;
 
 /** I play the Letnev, hold the Deepwrought's note and take their Gravity Drive with it. */
@@ -44,7 +45,7 @@ describe('promissory:shareknowledge Share Knowledge', () => {
   // Checks: the same when an opponent plays my note: the status phase takes the technology from them and the note comes back to me.
   // Why the check is NOT redundant here: the end of the status phase is every player's, not only mine.
   test('promissory:shareknowledge played by an opponent ends with the status phase too', () => {
-    const hacan: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+    const hacan: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
     const theirs = componentAction(note('me'), { owner: 'o1', choices: { technology: GRAVITY_DRIVE } } as Partial<Entry>);
     const table = bench({
       faction: 'deepwrought', expansions: ['pok', 'te'], rounds: [[theirs, statusTokens(0, 0, 0)], [adjust({})]],

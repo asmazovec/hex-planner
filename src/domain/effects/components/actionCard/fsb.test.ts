@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
+import type { Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, componentAction, effect, endOf, expectNone, NEAR, planned, quote, tactical, warningsOf } from '../kit';
 import { id } from './fsb';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 
 /** The Hacan activate the system of my cruiser; I play Forward Supply Base and choose them for the trade good. */
 const theirs = () => tactical(NEAR, {}, { owner: RIVAL.id });

@@ -1,13 +1,14 @@
 import { expect, test } from 'vitest';
 import { chooseFromSlot, play, showTurn, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, EntryBody, Opponent } from '../../../types';
+import type { Entry, EntryBody } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, endOf, planned, quote } from '../kit';
 import { id } from './deepwroughthero';
 
 uiBench();
 
 const GRAVITY_DRIVE = 'technology:gd';
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 
 const table = (turn: Entry) => bench({
   faction: 'deepwrought', expansions: ['pok', 'te'], entries: [turn],

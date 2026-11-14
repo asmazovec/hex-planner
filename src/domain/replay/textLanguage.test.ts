@@ -2,7 +2,8 @@ import { afterAll, describe, expect, test } from 'vitest';
 import { loadPack, setTextLanguage } from '../../data/loadPack';
 import { componentsOf } from '../components';
 import { emptyHoldings } from '../holdings';
-import type { GameState, Warning } from '../types';
+import type { Warning } from '../types';
+import type { GameState } from '../../testing/old/domain/types';
 import { playComponent } from '../../testing/old/domain/replay/holdings';
 
 afterAll(() => setTextLanguage('en'));

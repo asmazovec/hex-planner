@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { Act, Entry, Game, Opponent } from '../../../types';
+import type { Act, Entry, Game } from '../../../types';
+import type { Player } from '../../../players';
 import { bench, effect, expectStanding, expectWaived, NEAR, quote, tactical, warningsOf } from '../kit';
 import { id } from './yssarilbt';
 
-const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const STALL = 'ability:stall_tactics';
 const deal = (withId: string): Act => ({ kind: 'transaction', with: withId, give: {}, get: {} });
 /** A turn of the Sol player with its transactions with me, naming what it uses. */

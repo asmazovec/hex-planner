@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Act, Entry, Opponent } from '../../../types';
+import type { Act, Entry } from '../../../types';
+import type { Player } from '../../../players';
 import { adjust, bench, componentAction, effect, endOf, expectNone, expectStanding, expectWaived, FARTHER, HOME, quote, tactical, using, warningsOf } from '../kit';
 import { id } from './tcs';
 
@@ -11,7 +12,7 @@ const nomad = (entries: Entry[], technologies = [id]) =>
   bench({ faction: 'nomad', expansions: ['pok'], start: { leaders: { ...AGENTS }, technologies }, entries });
 
 /** A rival far down the row: not my neighbour. */
-const RIVAL: Opponent = { id: 'o1', faction: 'naaz', vp: 0, seat: 2, color: 2 };
+const RIVAL: Player = { id: 'o1', faction: 'naaz', vp: 0, seat: 2, color: 2 };
 const deal: Act = { kind: 'transaction', with: 'o1', give: { tradeGoods: 1 }, get: {} };
 const withRival = (turn: Entry, technologies = [id]) => bench({
   faction: 'nomad', expansions: ['pok'], start: { technologies }, entries: [adjust({ tradeGoods: 2 }), turn],
