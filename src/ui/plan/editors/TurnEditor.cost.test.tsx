@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { throwaway } from '../../../domain/effects/points/throwaway';
 import { bench, componentAction } from '../../../domain/effects/components/kit';
-import { stateBeforeEntry } from '../../../domain/project';
 import type { Entry } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
 import { uiBench } from '../../testing/effects';
@@ -21,11 +20,10 @@ beforeEach(() => { for (const key of Object.keys(throwaway)) delete throwaway[ke
 function show(entry: Entry, onPayment: (p: unknown) => void) {
   const table = bench({ faction: 'sol', expansions: ['pok'], start: { hand: [CARD] }, entries: [entry] });
   useGame.setState({ game: table.game });
-  const board = stateBeforeEntry(table.game, table.game.plans[0], entry.id, table.pack);
   const nothing = () => undefined;
   render(
-    <TurnEditor view={kernelViewOf(table.game, table.pack)}
-      entry={entry as Extract<Entry, { type: 'component' }>} game={table.game} pack={table.pack} board={board} warnings={[]} common={null}
+    <TurnEditor view={kernelViewOf(table.game, table.pack, entry.id)}
+      entry={entry as Extract<Entry, { type: 'component' }>} pack={table.pack} warnings={[]} common={null}
       onNote={nothing} onComponent={nothing} onPayment={onPayment} onDone={nothing} onRemove={nothing}
     />,
   );

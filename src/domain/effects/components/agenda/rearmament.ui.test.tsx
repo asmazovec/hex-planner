@@ -21,7 +21,7 @@ test('agenda:rearmament the agenda editor offers the outcomes For and Against', 
   quote(t.pack, id, 'on a planet they control in their home system');
   render(
     <AdjustmentEditor view={kernelViewOf(t.game, t.pack)}
-      game={t.game} pack={t.pack} entry={agenda as Extract<Entry, { type: 'adjustment' }>} warnings={[]} picking={false}
+      pack={t.pack} entry={agenda as Extract<Entry, { type: 'adjustment' }>} warnings={[]} picking={false}
       onPickSystem={nothing} onOpenHex={nothing} onUpdate={nothing} onDone={nothing} onRemove={nothing}
     />,
   );

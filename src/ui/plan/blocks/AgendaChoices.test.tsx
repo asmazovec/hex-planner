@@ -1,5 +1,6 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { kernelViewOf } from '../../testing/view';
 import { useState } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
@@ -31,7 +32,7 @@ function show(id: string, laws: string[] = []): () => Record<string, string | nu
   function Host() {
     const [choices, setChoices] = useState<Record<string, string | number> | undefined>();
     current = choices;
-    return <AgendaChoices game={game()} pack={pack} agenda={componentById(pack, id)!} choices={choices} laws={laws} onChange={setChoices} />;
+    return <AgendaChoices table={kernelViewOf(game(), pack).table} pack={pack} agenda={componentById(pack, id)!} choices={choices} laws={laws} onChange={setChoices} />;
   }
   render(<Host />);
   return () => current;

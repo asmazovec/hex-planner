@@ -2,17 +2,18 @@ import { useState } from 'react';
 import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import { effectOf } from '../../../domain/effects/registry';
 import { notesOfFirst, tradable, TRANSACTION_KINDS } from '../../../domain/holdings';
-import { opponentsBySeat } from '../../../domain/players';
-import type { Act, ComponentKind, DataPack, Game, GameState, Goods, Warning } from '../../../domain/types';
+import type { Act, ComponentKind, DataPack, Goods, Warning } from '../../../domain/types';
+import { legacyKey, playerOfKey } from '../../../game/keys';
+import { effectOfComponent as effectOf } from '../../../game/planQueries';
+import { shelfOf } from '../../../game/shelf';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { noteMark } from '../../components/noteMark';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { StepHints } from '../../feedback/StepHints';
-import { opponentName } from '../../players/names';
+import { nameOfPlayer } from '../../players/names';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { PlayerChoice, playerOptions } from '../../primitives/player';
 import { Section } from '../../primitives/Section';
@@ -24,13 +25,10 @@ type Side = 'give' | 'get';
 export interface TransactionStepProps {
   /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
   view: KernelView;
-  game: Game;
   pack: DataPack;
   act: Transaction;
   /** Whose turn it is: `me` or an opponent's id; the other side is chosen among the rest. */
   owner: string;
-  /** The whole board just before the turn's entry, every opponent in `rivals`: what each side holds to hand over. */
-  board: GameState;
   /** The turn's warnings: the step shows those of transactions. */
   warnings: Warning[];
   /** The components the turn uses beside its action: one that lifts the check of the kind (Black Market Dealings) opens relics and secret objectives to the deal. */
@@ -44,12 +42,16 @@ export interface TransactionStepProps {
  * A transaction with a neighbour (LRR 94): who with, then what is given and what is got. The components of a side are
  * chosen among what the giving side holds and a transaction hands over; nothing else is limited, the replay warns.
  */
-export function TransactionStep({ game, pack, view, act, owner, board, warnings, uses = [], onChange, onBack, onRemove }: TransactionStepProps) {
+export function TransactionStep({ pack, view, act, owner, warnings, uses = [], onChange, onBack, onRemove }: TransactionStepProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState<Side | null>(null);
   // The game is seen by the turn's owner: its opponents are every other player, me among them in an opponent's turn.
   // They are named as everywhere: the short name of the faction, a tag when the line is crowded.
-  const players = playerOptions(opponentsBySeat(game).filter(o => o.id !== owner), pack, id => opponentName(game, pack, id, t));
+  const players = playerOptions(
+    view.table.players.filter(p => p.seat <= 8 && legacyKey(view.table, p.id) !== owner).sort((a, b) => a.seat - b.seat)
+      .map(p => ({ id: legacyKey(view.table, p.id), faction: p.faction, vp: 0, seat: p.seat, color: p.color })),
+    pack, id => nameOfPlayer(view.table, pack, playerOfKey(view.table, id) ?? id, t),
+  );
   const giver = (key: Side): string => (key === 'give' ? owner : act.with);
   const set = (key: Side, patch: Partial<Goods>) => {
     const next: Goods = { ...act[key], ...patch };
@@ -65,8 +67,8 @@ export function TransactionStep({ game, pack, view, act, owner, board, warnings,
   const kinds: readonly ComponentKind[] = uses.some(id => effectOf(pack, id)?.permit?.some(w => w.code === 'transactionKind'))
     ? [...TRANSACTION_KINDS, 'relic', 'secretObjective'] : TRANSACTION_KINDS;
   const offer = (key: Side): string[] => {
-    const held = giver(key) === 'me' ? board.holdings : board.rivals?.[giver(key)]?.holdings;
-    return held ? notesOfFirst(tradable(held, act[key].components ?? [], kinds), giver(key === 'give' ? 'get' : 'give')) : [];
+    const who = playerOfKey(view.table, giver(key));
+    return who === undefined ? [] : notesOfFirst(tradable(shelfOf(view.table, view.board, who), act[key].components ?? [], kinds), giver(key === 'give' ? 'get' : 'give'));
   };
   const side = (key: Side, title: string) => {
     const goods = act[key];

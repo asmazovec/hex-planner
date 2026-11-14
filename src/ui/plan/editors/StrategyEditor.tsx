@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
-import type { KernelView } from '../kernelView';
+import { playerOfEntry, type KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../../data/loadPack';
 import { textOf } from '../../../domain/components';
 import { upgradesOf, upgradeTech } from '../../../domain/holdings';
-import { autoPay } from '../../../domain/payment';
+import { autoPayOn } from '../../../game/planQueries';
 import { opponentsBySeat } from '../../../domain/players';
 import { researchTokensGiven } from '../../../domain/replay/research';
 import { CARD, cardChange, cardCost, freeTokens, freshPlay, heldCards, playOf, startsAsPrimary, strategyTokensOwed, type CardEntry, type CardPatch } from '../../../domain/strategy';
@@ -71,6 +71,7 @@ export function StrategyEditor({
   const primary = entry.type === 'strategic';
   const effects = entry.effects ?? {};
   const mine = !entry.owner;
+  const player = playerOfEntry(view, entry.owner);
   const te = game.expansions.includes('te');
   const cost = cardCost(entry, game.faction, before.holdings, pack, { game, state: before });
   const change = (patch: CardPatch) => onUpdate(cardChange(entry, patch, before, game.faction, pack, manualPayment, game));
@@ -135,7 +136,7 @@ export function StrategyEditor({
   const payment = effects.payment ?? { planets: [], tradeGoods: 0 };
   const toggleManual = (open: boolean) => {
     onManualPayment(open);
-    if (!open) onUpdate({ effects: { ...effects, payment: autoPay(before, cost.amount, cost.kind, pack, { faction: game.faction }) } });
+    if (!open) onUpdate({ effects: { ...effects, payment: autoPayOn(view.table, view.board, pack, player, cost.amount, cost.kind) } });
   };
 
   // The card and the turn it is played in; a limit of the system stands with what the card builds.
@@ -164,7 +165,7 @@ export function StrategyEditor({
       {sections()}
       {(cost.amount > 0 || payment.planets.length > 0 || payment.tradeGoods > 0) && (
         <PaymentBlock
-          need={cost.amount} payment={payment} state={before} pack={pack} manual={manualPayment} kind={cost.kind} faction={game.faction}
+          need={cost.amount} payment={payment} view={view} player={player} pack={pack} manual={manualPayment} kind={cost.kind}
           onManual={toggleManual} onChange={next => onUpdate({ effects: { ...effects, payment: next } })}
         >
           {list(placer.at('payment'))}

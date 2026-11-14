@@ -1,14 +1,11 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import type { KernelView } from '../kernelView';
+import { playerOfEntry, type KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import { effectOf } from '../../../domain/effects/registry';
-import { autoPay } from '../../../domain/payment';
-import { productionCost } from '../../../domain/unitStats';
-import { playedCost } from '../../../domain/effects/playedCost';
-import { readyToPlay } from '../../../domain/project';
-import { playerState } from '../../../domain/stacks';
-import type { CardEffects, ComponentKind, DataPack, Entry, Game, GameState, Payment, Warning } from '../../../domain/types';
+import type { CardEffects, ComponentKind, DataPack, Entry, Payment, Warning } from '../../../domain/types';
+import { autoPayOn, effectOfComponent as effectOf, playedCostOf, productionDueOnBoard, readyToPlayOn } from '../../../game/planQueries';
+import { mapSource } from '../../../game/space';
+import { turnOfEntry } from '../../../state/projection';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { noteMark } from '../../components/noteMark';
 import { placeWarnings } from '../../feedback/warningPlaces';
@@ -46,10 +43,7 @@ export interface TurnEditorProps {
   /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
   view: KernelView;
   entry: Extract<Entry, { type: 'component' | 'pass' }>;
-  game: Game;
   pack: DataPack;
-  /** The whole board just before the entry: what its owner can play as a component action is reminded of. */
-  board?: GameState;
   /** The turn's warnings: those its blocks do not show stand first, such as what an expedition lacks to pay. */
   warnings: Warning[];
   /** «В этом ходу», the common part of the turn under its own heading: it stands last. */
@@ -73,19 +67,16 @@ export interface TurnEditorProps {
  * A component action or a pass as a turn: the component the action plays, first and as wide as the editor, and its note
  * in a part of their own, then what any turn holds; a pass has only that.
  */
-export function TurnEditor({ entry, game, pack, view, board, warnings, common, pickFirst, onNote, onComponent, onChoices, onPayment, production, onDone, onRemove }: TurnEditorProps) {
+export function TurnEditor({ entry, pack, view, warnings, common, pickFirst, onNote, onComponent, onChoices, onPayment, production, onDone, onRemove }: TurnEditorProps) {
   const { t } = useTranslation();
   const [manualPayment, setManualPayment] = useState(false);
   const [picking, setPicking] = useState(() => Boolean(pickFirst) && entry.type === 'component' && entry.componentId === undefined);
   // What the owner holds ready just before the entry stands first in the choice; the rest can be played too, and the plan warns.
-  const ready = useMemo(() => {
-    if (!board) return undefined;
-    const own = playerState(board, entry.owner);
-    return readyToPlay(pack, own.holdings, game.faction, own.control);
-  }, [board, pack, entry.owner, game.faction]);
+  const player = playerOfEntry(view, entry.owner);
+  const ready = useMemo(() => readyToPlayOn(view.table, view.board, pack, player), [view, pack, player]);
+  const map = mapSource(view.table, view.board);
   const played = entry.type === 'component' && entry.componentId ? componentById(pack, entry.componentId) : undefined;
-  const cost = playedCost(pack, entry, effectOf);
-  const own = board ? playerState(board, entry.owner) : undefined;
+  const cost = playedCostOf(view.table, pack, turnOfEntry(view.table, entry, pack));
   const payment: Payment = entry.type === 'component' && entry.payment ? entry.payment : { planets: [], tradeGoods: 0 };
   const makes = entry.type === 'component' && played ? effectOf(pack, played.id)?.produces === true : false;
   const made = entry.type === 'component' ? entry.effects?.production : undefined;
@@ -108,23 +99,23 @@ export function TurnEditor({ entry, game, pack, view, board, warnings, common, p
               onPick={() => setPicking(true)} onRemove={() => onComponent(undefined)}
             />
           </Section>
-          {played && board && onChoices && (
-            <ChoicesBlock id={played.id} entry={entry} game={game} pack={pack} onChange={onChoices} />
+          {played && onChoices && (
+            <ChoicesBlock id={played.id} entry={entry} view={view} pack={pack} onChange={onChoices} />
           )}
-          {cost && own && onPayment && (
+          {cost && onPayment && (
             <PaymentBlock
-              need={cost.amount} kind={cost.kind} payment={payment} state={own} pack={pack} faction={game.faction} manual={manualPayment}
-              onManual={open => { setManualPayment(open); if (!open) onPayment(autoPay(own, cost.amount, cost.kind, pack, { faction: game.faction })); }}
+              need={cost.amount} kind={cost.kind} payment={payment} view={view} player={player} pack={pack} manual={manualPayment}
+              onManual={open => { setManualPayment(open); if (!open) onPayment(autoPayOn(view.table, view.board, pack, player, cost.amount, cost.kind)); }}
               onChange={onPayment}
             />
           )}
-          {makes && production && own && (
+          {makes && production && (
             <Section label={t('components.produce')} title={t('components.produce')} warnings={<WarningList warnings={ofProduction} table={view.table} board={view.board} pack={pack} />}>
               {made
                 ? (
                   <div className="source-row in-card">
                     <button type="button" className="source-button" onClick={() => production.onOpenShop(made.systemId)}>
-                      {systemTitle(game, pack, made.systemId, t)}
+                      {systemTitle(map, pack, made.systemId, t)}
                       <small>{unitsText(made.units, t)}</small>
                     </button>
                     <HexRemove label={t('components.produceClear')} onClick={() => production.onChange(undefined)} />
@@ -133,7 +124,7 @@ export function TurnEditor({ entry, game, pack, view, board, warnings, common, p
                 : <MapPickButton className="option" active={production.picking} onToggle={production.onPick}>{t('components.pickProduce')}</MapPickButton>}
               {made && (
                 <PaymentBlock
-                  need={productionCost(made.units, game.faction, own, pack, entry)} payment={producedPayment} state={own} pack={pack} faction={game.faction}
+                  need={productionDueOnBoard(view.table, view.board, pack, player, made.units, turnOfEntry(view.table, entry, pack))} payment={producedPayment} view={view} player={player} pack={pack}
                   manual={production.manual} onManual={production.onManual}
                   onChange={next => production.onChange({ ...entry.effects, payment: next })}
                 />
@@ -151,7 +142,7 @@ export function TurnEditor({ entry, game, pack, view, board, warnings, common, p
           onPick={id => {
             onComponent(id);
             const picked = effectOf(pack, id)?.cost;
-            if (picked && own && onPayment) onPayment(autoPay(own, picked.amount, picked.kind, pack, { faction: game.faction }));
+            if (picked && onPayment) onPayment(autoPayOn(view.table, view.board, pack, player, picked.amount, picked.kind));
             setPicking(false);
           }}
         />

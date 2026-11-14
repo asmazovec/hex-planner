@@ -4,10 +4,13 @@ import { componentById } from '../../../domain/components';
 import { choicesFor, shownChoices } from '../../../domain/effects/choices';
 import type { ChoiceSlot, ChoiceSpec } from '../../../domain/effects/types';
 import { systemNameOf } from '../../../domain/systemName';
-import type { DataPack, Entry, Game } from '../../../domain/types';
-import { useGame } from '../../../state/gameStore';
-import { choicesBefore } from '../../../state/projection';
-import { opponentShortName, shortName } from '../../players/names';
+import type { DataPack, Entry } from '../../../domain/types';
+import { choicesOf } from '../../../game/abilities/choices';
+import { playerOfKey } from '../../../game/keys';
+import { mapSource } from '../../../game/space';
+import { turnOfEntry } from '../../../state/projection';
+import { nameOfPlayer, shortName } from '../../players/names';
+import type { KernelView } from '../kernelView';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { playerStyle } from '../../primitives/player';
 import { Section } from '../../primitives/Section';
@@ -21,7 +24,8 @@ export interface ChoicesBlockProps {
   /** The component whose choices these are: the entry's component action or one of its `uses`. */
   id: string;
   entry: Entry;
-  game: Game;
+  /** The table and the board just before the entry. */
+  view: KernelView;
   pack: DataPack;
   /** The choices as they stand after the press; empty when none is left. */
   onChange: (chosen: Record<string, string | number>) => void;
@@ -32,11 +36,11 @@ export interface ChoicesBlockProps {
  * and in it one row for each thing asked, its candidates as buttons (a stepper for a number). A press on the chosen one
  * takes it back. Nothing is forbidden: the effect warns of a value it cannot use. Draws nothing for a component that asks nothing.
  */
-export function ChoicesBlock({ id, entry, game, pack, onChange }: ChoicesBlockProps) {
+export function ChoicesBlock({ id, entry, view, pack, onChange }: ChoicesBlockProps) {
   const { t, i18n } = useTranslation();
-  // The board is asked of the real game: a rival's entry is shown through `gameAs`, which turns `me` around.
-  const real = useGame(s => s.game) ?? game;
-  const resolved = choicesBefore(real, entry, id, pack);
+  const { table, board } = view;
+  const map = mapSource(table, board);
+  const resolved = choicesOf(table, board, turnOfEntry(table, entry, pack), id, pack);
   const def = componentById(pack, id);
   if (resolved.length === 0 || !def) return null;
   const specs = resolved.map(each => each.spec);
@@ -51,19 +55,23 @@ export function ChoicesBlock({ id, entry, game, pack, onChange }: ChoicesBlockPr
     for (const name of Object.keys(next)) if (!shown.has(name) && specs.some(spec => spec.key === name)) delete next[name];
     onChange(next);
   };
-  const systemTitleOf = (slot: string): string => { const name = systemNameOf(game, pack, slot); return name.planets.length > 0 ? name.planets.join(' / ') : name.number; };
+  const systemTitleOf = (slot: string): string => { const name = systemNameOf(map, pack, slot); return name.planets.length > 0 ? name.planets.join(' / ') : name.number; };
   const nameOf = (spec: ChoiceSpec, value: string): string => {
     switch (spec.kind) {
       case 'planet': return pack.planets[value]?.name ?? value;
-      case 'system': { const name = systemNameOf(game, pack, value); return name.planets.length > 0 ? name.planets.join(' / ') : name.number; }
-      case 'player': return value === 'me' ? shortName(pack, game.faction, t('plan.mine')) : opponentShortName(game, pack, value, t);
+      case 'system': { const name = systemNameOf(map, pack, value); return name.planets.length > 0 ? name.planets.join(' / ') : name.number; }
+      case 'player': {
+        const who = playerOfKey(table, value);
+        const faction = table.players.find(p => p.id === who)?.faction ?? '';
+        return shortName(pack, faction, who === table.viewer || who === undefined ? t('plan.mine') : nameOfPlayer(table, pack, who, t));
+      }
       case 'unit': return t(`unit.${value}`);
       case 'component': return componentById(pack, value)?.name ?? value;
       default: return spec.names?.[value]?.[lang] ?? value;
     }
   };
   const colorOf = (spec: ChoiceSpec, value: string): number | undefined =>
-    (spec.kind === 'player' ? (value === 'me' ? game.color : game.opponents.find(o => o.id === value)?.color) : undefined);
+    (spec.kind === 'player' ? table.players.find(p => p.id === playerOfKey(table, value))?.color : undefined);
   return (
     <Section label={def.name} title={def.name} className="choices-block">
       {resolved.filter(each => each.shown).map(({ spec, options, slots }) => {

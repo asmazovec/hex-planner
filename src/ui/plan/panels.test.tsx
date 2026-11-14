@@ -223,16 +223,22 @@ test('the menu holds one item for a strategy card', async () => {
   expect(screen.queryByRole('button', { name: 'Pass' })).toBeNull();
 });
 
+/** The end of the plan with two trade goods in hand. */
+function richView() {
+  const { table, board } = kernelEndOf(game(), pack, 'forecast');
+  const me = table.viewer;
+  return { table, board: { ...board, players: { ...board.players, [me]: { ...board.players[me], tradeGoods: 2 } } } };
+}
 function PaymentHarness({ need }: { need: number }) {
-  const state = { ...project(game(), plan(), 'forecast', pack).state, tradeGoods: 2 };
-  return <PaymentBlockLive need={need} state={state} />;
+  return <PaymentBlockLive need={need} />;
 }
 const onPayment = vi.fn();
 const onManual = vi.fn();
-function PaymentBlockLive({ need, state, manual = false }: { need: number; state: ReturnType<typeof project>['state']; manual?: boolean }) {
+function PaymentBlockLive({ need, manual = false }: { need: number; manual?: boolean }) {
+  const view = richView();
   return (
     <PaymentBlock
-      need={need} payment={{ planets: ['nestphar'], tradeGoods: 0 }} state={state} pack={pack}
+      need={need} payment={{ planets: ['nestphar'], tradeGoods: 0 }} view={view} player={view.table.viewer} pack={pack}
       manual={manual} onManual={onManual} onChange={onPayment}
     />
   );
@@ -248,8 +254,7 @@ test('payment shows the selected payment and opens manual choice on request', as
 });
 
 test('manual payment toggles planets and trade goods', async () => {
-  const state = { ...project(game(), plan(), 'forecast', pack).state, tradeGoods: 2 };
-  render(<PaymentBlockLive need={3} state={state} manual />);
+  render(<PaymentBlockLive need={3} manual />);
   await userEvent.click(screen.getByRole('button', { name: /Nestphar/ }));
   expect(onPayment).toHaveBeenLastCalledWith({ planets: [], tradeGoods: 0 });
   await userEvent.click(screen.getByRole('button', { name: 'Add one trade good' }));

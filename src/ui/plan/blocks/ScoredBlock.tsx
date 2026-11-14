@@ -1,20 +1,22 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import { readyPlanetIds } from '../../../domain/payment';
-import type { DataPack, Entry, GameState, StatusSpend } from '../../../domain/types';
+import type { DataPack, Entry, StatusSpend } from '../../../domain/types';
+import { payingPlanets } from '../../../game/queries';
+import { shelfOf } from '../../../game/shelf';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { Section } from '../../primitives/Section';
 import { Stepper } from '../../primitives/Stepper';
+import { playerOfEntry, type KernelView } from '../kernelView';
 
 type StatusEntry = Extract<Entry, { type: 'statusTokens' }>;
 
 export interface ScoredBlockProps {
   entry: StatusEntry;
   pack: DataPack;
-  /** The state of the entry's owner just before it: the secret objectives in hand and the public ones revealed stand first. */
-  before?: GameState;
+  /** The table and the board just before the entry: the secret objectives in hand and the public ones revealed stand first. */
+  view?: KernelView;
   /** The fields that changed; `scored` and `spend` come without a value when they became empty. */
   onChange: (patch: { scored?: string[]; spend?: StatusSpend }) => void;
 }
@@ -31,18 +33,23 @@ const emptySpend = (spend: StatusSpend): boolean =>
  * stands over the cards, so a card added moves nothing. The requirement of an objective is not asked here: the replay
  * warns when it is not met, in the warnings of the entry.
  */
-export function ScoredBlock({ entry, pack, before, onChange }: ScoredBlockProps) {
+export function ScoredBlock({ entry, pack, view, onChange }: ScoredBlockProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
   const scored = entry.scored ?? [];
   const defs = scored.flatMap(id => componentById(pack, id) ?? []);
-  const owned = useMemo(() => new Set([...(before?.holdings.secrets ?? []), ...(before?.revealed ?? []).filter(id => !before?.holdings.scored.includes(id))]), [before]);
+  const player = view && playerOfEntry(view, entry.owner);
+  const owned = useMemo(() => {
+    if (!view || player === undefined) return new Set<string>();
+    const held = shelfOf(view.table, view.board, player);
+    return new Set([...held.secrets, ...view.board.common.revealed.filter(id => !held.scored.includes(id))]);
+  }, [view, player]);
   const spend = entry.spend ?? {};
   const setSpend = (patch: StatusSpend) => {
     const next = { ...spend, ...patch };
     onChange({ spend: emptySpend(next) ? undefined : next });
   };
-  const planets = before ? readyPlanetIds(before) : [];
+  const planets = view && player !== undefined ? payingPlanets(view.table, view.board, pack, player) : [];
   const group = (field: 'resources' | 'influence', label: string) => {
     const chosen = spend[field]?.planets ?? [];
     const toggle = (id: string) => setSpend({ [field]: { planets: chosen.includes(id) ? chosen.filter(p => p !== id) : [...chosen, id], tradeGoods: 0 } });

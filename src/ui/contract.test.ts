@@ -11,12 +11,18 @@ export const KERNEL_ONLY = [
   'map/geometry.ts', 'map/edgePan.ts', 'map/useArrowDrag.ts', 'map/usePanZoom.ts', 'map/viewLimits.ts',
   'feedback/StepHints.tsx', 'feedback/WarningText.tsx', 'feedback/warningPlaces.ts', 'components/noteMark.ts', 'map/systemName.ts',
   'plan/SummaryBar.tsx', 'plan/actLines.ts', 'screens/plan/mapMarks.ts', 'screens/plan/useFlightLoop.tsx',
+  'plan/blocks/LandingBlock.tsx', 'plan/blocks/PaymentBlock.tsx', 'plan/blocks/TokenTiles.tsx', 'plan/blocks/ScoredBlock.tsx', 'plan/blocks/GainsBlock.tsx', 'plan/blocks/UsesBlock.tsx', 'plan/blocks/ChoicesBlock.tsx',
+  'plan/editors/ExpeditionEditor.tsx', 'plan/editors/TurnEditor.tsx',
+  'plan/editors/AdjustmentEditor.tsx', 'plan/editors/TransactionStep.tsx', 'plan/blocks/AgendaChoices.tsx',
 ];
 
 /** The files of the list above that no longer take the old `Game` either: they read the table and the board. */
 export const WITHOUT_GAME = [
   'feedback/StepHints.tsx', 'feedback/WarningText.tsx', 'feedback/warningPlaces.ts', 'components/noteMark.ts', 'map/systemName.ts',
   'plan/SummaryBar.tsx', 'plan/actLines.ts',
+  'plan/blocks/LandingBlock.tsx', 'plan/blocks/PaymentBlock.tsx', 'plan/blocks/TokenTiles.tsx', 'plan/blocks/ScoredBlock.tsx', 'plan/blocks/GainsBlock.tsx', 'plan/blocks/UsesBlock.tsx', 'plan/blocks/ChoicesBlock.tsx',
+  'plan/editors/ExpeditionEditor.tsx', 'plan/editors/TurnEditor.tsx',
+  'plan/editors/AdjustmentEditor.tsx', 'plan/editors/TransactionStep.tsx', 'plan/blocks/AgendaChoices.tsx',
 ];
 
 const raw = import.meta.glob<string>(['./**/*.ts', './**/*.tsx', '!./**/*.test.*'], { query: '?raw', import: 'default', eager: true });

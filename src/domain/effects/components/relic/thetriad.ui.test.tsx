@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { PaymentBlock } from '../../../../ui/plan/blocks/PaymentBlock';
-import { stateBeforeEntry } from '../../../project';
+import { kernelViewOf } from '../../../../ui/testing/view';
 import type { Entry } from '../../../types';
 import { bench, HOME, NO_PAYMENT, quote, tactical } from '../kit';
 import { id } from './thetriad';
@@ -26,7 +26,7 @@ test('relic:thetriad is offered in the payment as a planet worth 3', async () =>
   const onChange = vi.fn();
   render(
     <PaymentBlock
-      need={3} payment={NO_PAYMENT} state={stateBeforeEntry(triad.game, triad.game.plans[0], carrier.id, triad.pack)} pack={triad.pack}
+      need={3} payment={NO_PAYMENT} view={kernelViewOf(triad.game, triad.pack, carrier.id)} player={kernelViewOf(triad.game, triad.pack, carrier.id).table.viewer} pack={triad.pack}
       manual onManual={() => undefined} onChange={onChange}
     />,
   );

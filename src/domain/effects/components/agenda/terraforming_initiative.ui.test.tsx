@@ -24,7 +24,7 @@ function showAgenda(table: Bench, entry: Entry): () => Agenda {
     const nothing = () => undefined;
     return (
       <AdjustmentEditor view={kernelViewOf(table.game, table.pack)}
-        game={table.game} pack={table.pack} entry={shown} warnings={[]} picking={false}
+        pack={table.pack} entry={shown} warnings={[]} picking={false}
         onPickSystem={nothing} onOpenHex={nothing} onDone={nothing} onRemove={nothing}
         onUpdate={patch => setShown(now => ({ ...now, ...patch }))}
       />

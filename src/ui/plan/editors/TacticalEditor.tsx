@@ -3,13 +3,13 @@ import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CUSTODIANS_COST } from '../../../domain/mecatol';
-import { autoPay, shownPlanetValues } from '../../../domain/payment';
+import { autoPayOn } from '../../../game/planQueries';
 import { productionDue, routeSteps, standing, systemPlanets } from '../../../domain/project';
 import { stepPlayers } from '../../../game/abilities/registry';
 import { fleetExcessOf, flightOf as flightAt } from '../../../game/flight';
 import { turnOfEntry } from '../../../state/projection';
 import { legacyKey, playerOfKey } from '../../../game/keys';
-import type { KernelView } from '../kernelView';
+import { playerOfEntry, type KernelView } from '../kernelView';
 import type { DataPack, Game, GameState, RuleStep, StructureKind, UnitCounts, UnitId, Warning } from '../../../domain/types';
 import { UNIT_ORDER } from '../../units/unitOrder';
 import { commitSources } from '../../../domain/commitSources';
@@ -37,8 +37,6 @@ export interface TacticalEditorProps {
   entry: TacticalEntry;
   /** The state just before the entry. */
   before: GameState;
-  /** The whole board just before the entry, every opponent in `rivals`. */
-  board?: GameState;
   warnings: Warning[];
   manualPayment: boolean;
   /** What the next tap on the map chooses. */
@@ -70,11 +68,12 @@ export interface TacticalEditorProps {
  * block shows its own warnings. The flight of a source is a step of its own (UnitPicker), shown in its place.
  */
 export function TacticalEditor({
-  game, pack, view, entry, before, board, warnings, manualPayment, choosing, onChoose,
+  game, pack, view, entry, before, warnings, manualPayment, choosing, onChoose,
   onUpdate, onOpenPicker, leaving = [], onLeft, onManualPayment, onOpenShop, onOpenBattle, onOpenFleet, onDone, onRemove, common,
 }: TacticalEditorProps) {
   const { t } = useTranslation();
   const target = entry.systemId;
+  const player = playerOfEntry(view, entry.owner);
   const planets = target === null ? [] : systemPlanets(game, target, pack);
   // The price asks the laws in play and the components this entry plays, as the replay does.
   const priceOf = (units: UnitCounts) => productionDue(game, before, units, pack, entry);
@@ -115,7 +114,7 @@ export function TacticalEditor({
 
   const toggleManual = (open: boolean) => {
     onManualPayment(open);
-    if (!open) onUpdate({ payment: autoPay(before, cost, 'resources', pack, { faction: game.faction }) });
+    if (!open) onUpdate({ payment: autoPayOn(view.table, view.board, pack, player, cost, 'resources') });
   };
 
   const placer = placeWarnings(warnings, entry);
@@ -200,8 +199,7 @@ export function TacticalEditor({
           {showLanding && (
             <Section title={t('plan.tactical.landing')} optional collapsible warnings={list(placer.at('landing'))}>
               <LandingBlock
-                game={game} planets={planets} before={before} board={board} units={landable} arrived={here} lost={entry.groundLosses}
-                valuesOf={planetId => shownPlanetValues(pack, before, planetId, game.faction)}
+                view={view} pack={pack} player={player} planets={planets} units={landable} arrived={here} lost={entry.groundLosses}
                 landedOn={landedOn} onLand={setLanding}
                 structures={hasStructures(afloat) || offers.structures.length > 0 || entry.landings.some(l => hasStructures(l.structures)) ? {
                   arrived: afloat, reinforced: offers.structures,
@@ -217,10 +215,10 @@ export function TacticalEditor({
               {custodiansAt !== undefined && (
                 <PaymentBlock
                   label={t('plan.tactical.custodians')} need={CUSTODIANS_COST} kind="influence" payment={entry.custodiansPayment ?? { planets: [], tradeGoods: 0 }}
-                  state={before} pack={pack} manual={custodiansManual} faction={game.faction}
+                  view={view} player={player} pack={pack} manual={custodiansManual}
                   onManual={open => {
                     setCustodiansManual(open);
-                    if (!open) onUpdate({ custodiansPayment: autoPay(before, CUSTODIANS_COST, 'influence', pack, { faction: game.faction }) });
+                    if (!open) onUpdate({ custodiansPayment: autoPayOn(view.table, view.board, pack, player, CUSTODIANS_COST, 'influence') });
                   }}
                   onChange={custodiansPayment => onUpdate({ custodiansPayment })}
                 />
@@ -250,7 +248,7 @@ export function TacticalEditor({
 
           {(cost > 0 || entry.payment.planets.length > 0 || entry.payment.tradeGoods > 0) && (
             <PaymentBlock
-              need={cost} payment={entry.payment} state={before} pack={pack} manual={manualPayment} faction={game.faction}
+              need={cost} payment={entry.payment} view={view} player={player} pack={pack} manual={manualPayment}
               onManual={toggleManual} onChange={payment => onUpdate({ payment })}
             >
               {list(placer.at('payment'))}

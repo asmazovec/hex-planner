@@ -153,7 +153,7 @@ describe('the strategy editor', () => {
 
 describe('the expedition editor', () => {
   const expedition = (warnings: Warning[], sliceId: string | null) => render(
-    <ExpeditionEditor view={kernelViewOf(game(), pack)} game={game()} pack={pack} sliceId={sliceId} payment={{ planets: [], tradeGoods: 0 }} owners={{}} before={before()} warnings={warnings}
+    <ExpeditionEditor view={kernelViewOf(game(), pack)} pack={pack} sliceId={sliceId} payment={{ planets: [], tradeGoods: 0 }} owners={{}} warnings={warnings}
       manualPayment={false} onManualPayment={() => undefined} onChange={() => undefined} onDone={() => undefined} onRemove={() => undefined}
     />,
   );
@@ -303,7 +303,7 @@ describe('the rest of an editor stands first', () => {
     const entry = { id: 'a', type: 'adjustment', status: 'planned', label: '', delta: {} } as Parameters<typeof AdjustmentEditor>[0]['entry'];
     const { container } = render(
       <AdjustmentEditor view={kernelViewOf(game(), pack)}
-        game={game()} pack={pack} entry={entry} picking={false} onPickSystem={() => undefined} onOpenHex={() => undefined} onUpdate={() => undefined} onDone={() => undefined} onRemove={() => undefined}
+        pack={pack} entry={entry} picking={false} onPickSystem={() => undefined} onOpenHex={() => undefined} onUpdate={() => undefined} onDone={() => undefined} onRemove={() => undefined}
         warnings={[{ code: 'unitsMissing', params: { where: HOME, unit: 'cruiser', missing: 1 }, step: 'round' }, SHORT]}
       />,
     );
@@ -315,7 +315,7 @@ describe('the rest of an editor stands first', () => {
 
   test('in the expedition what no block takes stands above the parts', () => {
     const { container } = render(
-      <ExpeditionEditor view={kernelViewOf(game(), pack)} game={game()} pack={pack} sliceId={null} payment={{ planets: [], tradeGoods: 0 }} owners={{}} before={before()} warnings={[LANDING]}
+      <ExpeditionEditor view={kernelViewOf(game(), pack)} pack={pack} sliceId={null} payment={{ planets: [], tradeGoods: 0 }} owners={{}} warnings={[LANDING]}
         manualPayment={false} onManualPayment={() => undefined} onChange={() => undefined} onDone={() => undefined} onRemove={() => undefined}
       />,
     );

@@ -98,16 +98,16 @@ export function showTactical(bench: Bench, entry: Entry): Live<TacticalEntry> {
       game={game} pack={pack} view={view} entry={shown as TacticalEntry} before={before} warnings={warnings} manualPayment={false} choosing={null}
       onChoose={nothing} onUpdate={patch => update(patch as Partial<EntryBody>)} onOpenPicker={nothing} onManualPayment={nothing}
       onOpenShop={nothing} onOpenBattle={nothing} onOpenFleet={nothing} onDone={nothing} onRemove={nothing}
-      common={<UsesBlock entry={shown} game={game} pack={pack} view={view} before={before} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />}
+      common={<UsesBlock entry={shown} pack={pack} view={view} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />}
     />
   ));
 }
 
 /** «Used» of any entry with every warning of the entry under it: what a component named there allows is seen at once. */
 export function showUses(bench: Bench, entry: Entry): Live {
-  return live(bench, entry, ({ game, pack, view, entry: shown, before, warnings, update }) => (
+  return live(bench, entry, ({ pack, view, entry: shown, warnings, update }) => (
     <>
-      <UsesBlock entry={shown} game={game} pack={pack} view={view} before={before} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />
+      <UsesBlock entry={shown} pack={pack} view={view} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />
       <WarningList warnings={warnings} table={view.table} board={view.board} pack={pack} />
     </>
   ));
@@ -123,10 +123,10 @@ export function showUses(bench: Bench, entry: Entry): Live {
  */
 export function showTurn(bench: Bench, entry: Entry): Live<ComponentEntry> {
   const nothing = () => undefined;
-  return live(bench, entry as ComponentEntry, ({ game, pack, view, entry: shown, before, warnings, update }) => (
+  return live(bench, entry as ComponentEntry, ({ pack, view, entry: shown, warnings, update }) => (
     <TurnEditor
-      entry={shown as ComponentEntry} game={game} pack={pack} view={view} board={before} warnings={warnings}
-      common={<UsesBlock entry={shown} game={game} pack={pack} view={view} before={before} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />}
+      entry={shown as ComponentEntry} pack={pack} view={view} warnings={warnings}
+      common={<UsesBlock entry={shown} pack={pack} view={view} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />}
       onNote={note => update({ note } as Partial<EntryBody>)} onComponent={componentId => update({ componentId, choices: undefined } as Partial<EntryBody>)}
       onChoices={choices => update({ choices: Object.keys(choices).length > 0 ? choices : undefined })}
       production={{ picking: false, onPick: nothing, onOpenShop: nothing, onChange: effects => update({ effects } as Partial<EntryBody>), manual: false, onManual: nothing }}
@@ -141,9 +141,9 @@ export const showComponent = showTurn;
 /** The editor of an agenda entry of the agenda phase, live: the outcome and the election are pressed and the replay answers with the warnings under them. */
 export function showAgenda(bench: Bench, entry: Entry): Live<Extract<Entry, { type: 'adjustment' }>> {
   const nothing = () => undefined;
-  return live(bench, entry as Extract<Entry, { type: 'adjustment' }>, ({ game, pack, view, entry: shown, before, warnings, update }) => (
+  return live(bench, entry as Extract<Entry, { type: 'adjustment' }>, ({ pack, view, entry: shown, warnings, update }) => (
     <AdjustmentEditor
-      game={game} pack={pack} view={view} entry={shown as Extract<Entry, { type: 'adjustment' }>} warnings={warnings} picking={false} laws={before.laws}
+      pack={pack} view={view} entry={shown as Extract<Entry, { type: 'adjustment' }>} warnings={warnings} picking={false}
       onPickSystem={nothing} onOpenHex={nothing} onUpdate={patch => update(patch as Partial<EntryBody>)} onDone={nothing} onRemove={nothing}
     />
   ));
@@ -151,9 +151,9 @@ export function showAgenda(bench: Bench, entry: Entry): Live<Extract<Entry, { ty
 
 /** The objectives a status entry scores and what it cost, live, with every warning of the entry under them. */
 export function showScored(bench: Bench, entry: Entry): Live<Extract<Entry, { type: 'statusTokens' }>> {
-  return live(bench, entry as Extract<Entry, { type: 'statusTokens' }>, ({ pack, view, entry: shown, before, warnings, update }) => (
+  return live(bench, entry as Extract<Entry, { type: 'statusTokens' }>, ({ pack, view, entry: shown, warnings, update }) => (
     <>
-      <ScoredBlock entry={shown as Extract<Entry, { type: 'statusTokens' }>} pack={pack} before={before} onChange={patch => update(patch as Partial<EntryBody>)} />
+      <ScoredBlock entry={shown as Extract<Entry, { type: 'statusTokens' }>} pack={pack} view={view} onChange={patch => update(patch as Partial<EntryBody>)} />
       <WarningList warnings={warnings} table={view.table} board={view.board} pack={pack} />
     </>
   ));

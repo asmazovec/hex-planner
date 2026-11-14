@@ -1,5 +1,6 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { kernelViewOf } from '../../testing/view';
+import { viewOf } from '../../testing/legacyMap';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
@@ -65,7 +66,7 @@ test('a breakthrough is taken like any component, in the round it is gained', as
 
 test('«+ Discarded» writes the spends, and a cross takes a component back out; an empty list leaves no key', async () => {
   const onChange = vi.fn();
-  render(<GainsBlock entry={turn({ gains: ['relic:shard'] })} pack={pack} before={holding({ hand: ['actionCard:sabo1'] })} onChange={onChange} />);
+  render(<GainsBlock entry={turn({ gains: ['relic:shard'] })} pack={pack} view={viewOf(game(), holding({ hand: ['actionCard:sabo1'] }), pack)} onChange={onChange} />);
   await userEvent.click(screen.getByRole('button', { name: '+ Discarded' }));
   await find('sabotage', 'Sabotage');
   expect(onChange).toHaveBeenLastCalledWith({ spends: ['actionCard:sabo1'] });
@@ -84,7 +85,7 @@ test('a component action chooses its component, shows it over the note and lets 
   const onComponent = vi.fn();
   const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
   const shown = (e: typeof entry) => (
-    <TurnEditor view={kernelViewOf(game(), pack)} entry={e} game={game()} pack={pack} warnings={[]} common={null} onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined} />
+    <TurnEditor view={kernelViewOf(game(), pack)} entry={e} pack={pack} warnings={[]} common={null} onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined} />
   );
   const { rerender } = render(shown(entry));
   await userEvent.click(screen.getByRole('button', { name: 'Choose the component' }));
@@ -101,7 +102,7 @@ test('a component action begins with the place of its component: as wide as the 
   const onComponent = vi.fn();
   const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
   const shown = (e: typeof entry) => (
-    <TurnEditor view={kernelViewOf(game(), pack)} entry={e} game={game()} pack={pack} warnings={[]} common={null} onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined} />
+    <TurnEditor view={kernelViewOf(game(), pack)} entry={e} pack={pack} warnings={[]} common={null} onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined} />
   );
   const { rerender } = render(shown(entry));
   const own = () => within(screen.getByRole('group', { name: 'Action setup' }));
@@ -121,7 +122,7 @@ test('a component action begins with the place of its component: as wide as the 
 
 test('a component action just added from the menu opens the choice of its component at once', async () => {
   const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
-  render(<TurnEditor view={kernelViewOf(game(), pack)} entry={entry} game={game()} pack={pack} warnings={[]} common={null} pickFirst onNote={() => undefined} onComponent={() => undefined} onDone={() => undefined} onRemove={() => undefined} />);
+  render(<TurnEditor view={kernelViewOf(game(), pack)} entry={entry} pack={pack} warnings={[]} common={null} pickFirst onNote={() => undefined} onComponent={() => undefined} onDone={() => undefined} onRemove={() => undefined} />);
   expect(picker()).toBeVisible();
   await userEvent.keyboard('{Escape}');
   expect(screen.getByRole('button', { name: 'Choose the component' })).toBeVisible();
@@ -181,7 +182,7 @@ test('the Technology card researches through the choice of technologies and list
 });
 
 test('«+ Discarded» offers only what the owner held before the entry, a repeated card once with its count', async () => {
-  render(<GainsBlock entry={turn()} pack={pack} before={holding({ hand: ['actionCard:sabo1', 'actionCard:sabo1'], relics: ['relic:shard'] })} onChange={() => undefined} />);
+  render(<GainsBlock entry={turn()} pack={pack} view={viewOf(game(), holding({ hand: ['actionCard:sabo1', 'actionCard:sabo1'], relics: ['relic:shard'] }), pack)} onChange={() => undefined} />);
   await userEvent.click(screen.getByRole('button', { name: '+ Discarded' }));
   expect(offered()).toEqual(['actionCard:sabo1', 'relic:shard']);
   expect(within(picker()).getByTestId('component-actionCard:sabo1')).toHaveTextContent('×2');
@@ -190,7 +191,7 @@ test('«+ Discarded» offers only what the owner held before the entry, a repeat
 });
 
 test('with nothing held «+ Discarded» is off and says why; the block says where giving to a player goes', () => {
-  render(<GainsBlock entry={turn()} pack={pack} before={holding({})} onChange={() => undefined} />);
+  render(<GainsBlock entry={turn()} pack={pack} view={viewOf(game(), holding({}), pack)} onChange={() => undefined} />);
   const discard = screen.getByRole('button', { name: /^\+ Discarded/ });
   expect(discard).toBeDisabled();
   expect(discard).toHaveAccessibleName('+ Discarded: nothing to discard');
@@ -200,17 +201,17 @@ test('with nothing held «+ Discarded» is off and says why; the block says wher
 
 test('what the entry itself takes can be discarded by it, and what it already discards is offered no more', async () => {
   const onChange = vi.fn();
-  const { rerender } = render(<GainsBlock entry={turn({ gains: ['relic:shard'] })} pack={pack} before={holding({})} onChange={onChange} />);
+  const { rerender } = render(<GainsBlock entry={turn({ gains: ['relic:shard'] })} pack={pack} view={viewOf(game(), holding({}), pack)} onChange={onChange} />);
   await userEvent.click(screen.getByRole('button', { name: '+ Discarded' }));
   expect(offered()).toEqual(['relic:shard']);
   await userEvent.click(within(picker()).getByRole('button', { name: 'Choose Shard of the Throne' }));
   expect(onChange).toHaveBeenLastCalledWith({ spends: ['relic:shard'] });
-  rerender(<GainsBlock entry={turn({ gains: ['relic:shard'], spends: ['relic:shard'] })} pack={pack} before={holding({})} onChange={onChange} />);
+  rerender(<GainsBlock entry={turn({ gains: ['relic:shard'], spends: ['relic:shard'] })} pack={pack} view={viewOf(game(), holding({}), pack)} onChange={onChange} />);
   expect(screen.getByRole('button', { name: /^\+ Discarded/ })).toBeDisabled();
 });
 
 test('«+ Took» offers the whole catalogue; what is held once already stands last and says so', async () => {
-  render(<GainsBlock entry={turn()} pack={pack} before={holding({ relics: ['relic:emphidia'] })} onChange={() => undefined} />);
+  render(<GainsBlock entry={turn()} pack={pack} view={viewOf(game(), holding({ relics: ['relic:emphidia'] }), pack)} onChange={() => undefined} />);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
   // The search alone would put it first.
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'crown');
@@ -236,8 +237,8 @@ test('a component action offers first what its owner holds ready; the rest says 
   const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
   const onComponent = vi.fn();
   render(
-    <TurnEditor view={kernelViewOf(game(), pack)}
-      entry={entry} game={game()} pack={pack} board={holding({ relics: ['relic:thalnos'] })} warnings={[]} common={null}
+    <TurnEditor view={viewOf(game(), holding({ relics: ['relic:thalnos'] }), pack)}
+      entry={entry} pack={pack} warnings={[]} common={null}
       onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined}
     />,
   );

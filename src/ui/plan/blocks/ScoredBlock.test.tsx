@@ -1,5 +1,6 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { viewOf } from '../../testing/legacyMap';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 vi.mock('../../../storage/db', () => ({
@@ -40,7 +41,7 @@ const find = async (query: string, name: string) => {
 
 test('«Score an objective» writes the objective into `scored`, and a cross takes it back out; an empty list leaves no key', async () => {
   const onChange = vi.fn();
-  render(<ScoredBlock entry={status({ scored: ['publicObjective:develop'] })} pack={pack} before={holding()} onChange={onChange} />);
+  render(<ScoredBlock entry={status({ scored: ['publicObjective:develop'] })} pack={pack} view={viewOf(useGame.getState().game!, holding(), pack)} onChange={onChange} />);
   expect(block().getByTestId('component-publicObjective:develop')).toHaveTextContent('scored');
   await userEvent.click(block().getByRole('button', { name: 'Score an objective' }));
   await find('Diversify', 'Diversify Research');
@@ -51,7 +52,7 @@ test('«Score an objective» writes the objective into `scored`, and a cross tak
 
 test('an objective that is scored by spending opens the cost: tokens, trade goods, the planets paying; an empty cost leaves no key', async () => {
   const onChange = vi.fn();
-  render(<ScoredBlock entry={status({ scored: ['publicObjective:centralize_trade'], spend: { tradeGoods: 9 } })} pack={pack} before={holding()} onChange={onChange} />);
+  render(<ScoredBlock entry={status({ scored: ['publicObjective:centralize_trade'], spend: { tradeGoods: 9 } })} pack={pack} view={viewOf(useGame.getState().game!, holding(), pack)} onChange={onChange} />);
   const cost = within(screen.getByRole('group', { name: 'What scoring cost' }));
   await userEvent.click(cost.getByRole('button', { name: 'Add one trade good' }));
   expect(onChange).toHaveBeenLastCalledWith({ spend: { tradeGoods: 10 } });
@@ -62,6 +63,6 @@ test('an objective that is scored by spending opens the cost: tokens, trade good
 });
 
 test('an objective that is not scored by spending shows no cost', () => {
-  render(<ScoredBlock entry={status({ scored: ['publicObjective:develop'] })} pack={pack} before={holding()} onChange={vi.fn()} />);
+  render(<ScoredBlock entry={status({ scored: ['publicObjective:develop'] })} pack={pack} view={viewOf(useGame.getState().game!, holding(), pack)} onChange={vi.fn()} />);
   expect(screen.queryByRole('group', { name: 'What scoring cost' })).toBeNull();
 });

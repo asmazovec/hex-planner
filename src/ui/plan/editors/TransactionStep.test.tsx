@@ -1,5 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
-import { kernelViewOf } from '../../testing/view';
+import { viewOf } from '../../../ui/testing/legacyMap';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { throwaway } from '../../../domain/effects/points/throwaway';
@@ -32,7 +32,7 @@ async function openGive(uses: string[]) {
   const board = stateBeforeEntry(table.game, table.game.plans[0], turn.id, table.pack);
   useGame.setState({ game: table.game });
   const nothing = () => undefined;
-  render(<TransactionStep view={kernelViewOf(table.game, table.pack)} game={table.game} pack={table.pack} act={act} owner="me" board={board} warnings={[]} uses={uses} onChange={nothing} onBack={nothing} onRemove={nothing} />);
+  render(<TransactionStep view={viewOf(table.game, board, table.pack)} pack={table.pack} act={act} owner="me" warnings={[]} uses={uses} onChange={nothing} onBack={nothing} onRemove={nothing} />);
   await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: '+ Component' }));
 }
 

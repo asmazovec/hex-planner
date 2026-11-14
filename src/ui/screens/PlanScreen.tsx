@@ -515,9 +515,9 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         {/* The reminders of the round: what its player holds ready that speaks of the round as a whole, stated in every turn. */}
         {turn && <StepHints pack={pack} table={boards.view(entry.id).table} board={boards.view(entry.id).board} step="round" players={[entry.owner ?? 'me']} />}
         {/* What the entry gained and gave stands with what else it holds. */}
-        <GainsBlock entry={entry} pack={pack} before={boards.before(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+        <GainsBlock entry={entry} pack={pack} view={boards.view(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
         {/* What the entry used beside its action: what it allows is marked among the entry's warnings. */}
-        <UsesBlock entry={entry} game={gameAs(game, entry.owner)} pack={pack} view={boards.view(entry.id)} before={boards.before(entry.id)} warnings={forecast.warningsByEntry[entry.id] ?? []} onChange={patch => updateEntry(entry.id, repaid(entry, patch, boards.before(entry.id), gameAs(game, entry.owner), pack, manualPayments.includes(entry.id)) as Partial<EntryBody>)} />
+        <UsesBlock entry={entry} pack={pack} view={boards.view(entry.id)} warnings={forecast.warningsByEntry[entry.id] ?? []} onChange={patch => updateEntry(entry.id, repaid(entry, patch, boards.before(entry.id), gameAs(game, entry.owner), pack, manualPayments.includes(entry.id)) as Partial<EntryBody>)} />
       </EditorPart>
     );
   };
@@ -551,7 +551,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const systemId = edited.systemId;
         return (
           <TacticalEditor
-            game={entryGame} pack={pack} view={boards.view(edited.id)} entry={edited} before={boards.before(edited.id)} board={boards.board(edited.id)}
+            game={entryGame} pack={pack} view={boards.view(edited.id)} entry={edited} before={boards.before(edited.id)}
             warnings={forecast.warningsByEntry[edited.id] ?? []}
             manualPayment={manualPayment} choosing={choosing}
             onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) { drawers.closeRight(); setView('map'); } }}
@@ -595,8 +595,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const adjusted = slot.entry;
         return (
           <AdjustmentEditor
-            key={adjusted.id} game={gameAs(game, adjusted.owner)} pack={pack} view={boards.view(adjusted.id)} entry={adjusted} warnings={forecast.warningsByEntry[adjusted.id] ?? []}
-            picking={adjustPick !== undefined} laws={boards.board(adjusted.id).laws} common={commonOf(adjusted)}
+            key={adjusted.id} pack={pack} view={boards.view(adjusted.id)} entry={adjusted} warnings={forecast.warningsByEntry[adjusted.id] ?? []}
+            picking={adjustPick !== undefined} common={commonOf(adjusted)}
             onPickSystem={() => { if (!adjustPick) drawers.closeRight(); update(state => ({ ...state, next: adjustPick ? IDLE : { kind: 'adjustmentSystem' } })); setView('map'); }}
             onOpenHex={at => update(state => ({ ...state, stage: { slot: at, mode: 'setup', only: 'units', for: { kind: 'adjustment', id: adjusted.id } } }))}
             onUpdate={patch => updateEntry(adjusted.id, patch)}
@@ -609,7 +609,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const turn = slot.entry;
         return (
           <TurnEditor
-            key={turn.id} entry={turn} game={gameAs(game, turn.owner)} pack={pack} view={boards.view(turn.id)} board={boards.board(turn.id)} warnings={forecast.warningsByEntry[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
+            key={turn.id} entry={turn} pack={pack} view={boards.view(turn.id)} warnings={forecast.warningsByEntry[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
             onNote={note => updateEntry(turn.id, { note })} onComponent={componentId => updateEntry(turn.id, { componentId, choices: undefined })} onChoices={choices => updateEntry(turn.id, { choices: Object.keys(choices).length > 0 ? choices : undefined })} onPayment={payment => updateEntry(turn.id, { payment })}
             production={{
               picking: next.kind === 'produce',
@@ -629,12 +629,11 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const backTo = () => update(state => ({ ...state, panel: back, next: IDLE }));
         const replace = (next: Act) => setActs(host, acts.map((a, i) => (i === index ? next : a)));
         const drop = () => { setActs(host, acts.filter((_, i) => i !== index)); backTo(); };
-        const hostGame = gameAs(game, host.owner);
         const all = forecast.warningsByEntry[host.id] ?? [];
         if (act.kind === 'transaction') {
           return (
             <TransactionStep
-              key={`${host.id}-${index}`} game={hostGame} pack={pack} view={boards.view(host.id)} act={act} owner={host.owner ?? 'me'} board={boards.board(host.id)}
+              key={`${host.id}-${index}`} pack={pack} view={boards.view(host.id)} act={act} owner={host.owner ?? 'me'}
               warnings={all.filter(w => w.step === 'transaction')} uses={host.uses} onChange={replace} onBack={backTo} onRemove={drop}
             />
           );
@@ -645,8 +644,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const paymentKey = `${host.id}#${index}`;
         return (
           <ExpeditionEditor
-            key={paymentKey} game={hostGame} pack={pack} view={boards.view(host.id)} sliceId={act.sliceId} payment={act.payment}
-            owners={act.sliceId && !game.expedition.slices[act.sliceId] ? othersOwners : owners} before={boards.before(host.id)}
+            key={paymentKey} owner={host.owner} pack={pack} view={boards.view(host.id)} sliceId={act.sliceId} payment={act.payment}
+            owners={act.sliceId && !game.expedition.slices[act.sliceId] ? othersOwners : owners}
             warnings={all.filter(w => w.step === 'expedition')}
             manualPayment={manualPayments.includes(paymentKey)} onManualPayment={open => toggleManualPayment(paymentKey, open)}
             onChange={patch => replace({ ...act, ...patch })}

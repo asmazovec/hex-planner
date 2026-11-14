@@ -2,7 +2,8 @@ import { useMemo, useState, type ReactNode } from 'react';
 import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import type { AdjustmentDelta, DataPack, Entry, Game, UnitCounts, Warning } from '../../../domain/types';
+import type { AdjustmentDelta, DataPack, Entry, UnitCounts, Warning } from '../../../domain/types';
+import { mapSource } from '../../../game/space';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { NoteField } from '../../primitives/NoteField';
 import { HexRemove } from '../../primitives/Icon';
@@ -27,14 +28,11 @@ export const agendaOf = (entry: Pick<Entry, 'gains'>, pack: DataPack) =>
 export interface AdjustmentEditorProps {
   /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
   view: KernelView;
-  game: Game;
   pack: DataPack;
   entry: Extract<Entry, { type: 'adjustment' }>;
   warnings: Warning[];
   /** The next tap on the map chooses the system. */
   picking: boolean;
-  /** The laws in play just before the entry: the choice of an agenda puts them last. */
-  laws?: string[];
   /** The common part of every editor, under its own heading: what the entry takes and discards. It stands last. */
   common?: ReactNode;
   onPickSystem: () => void;
@@ -51,7 +49,7 @@ export interface AdjustmentEditorProps {
  * big hex. In the agenda phase it is an agenda that was resolved: the card stands first, and a law among them stays in
  * play (7.3), while a directive leaves nothing (7.8); what the outcome changed is entered by the same numbers.
  */
-export function AdjustmentEditor({ game, pack, view, entry, warnings, picking, laws, common, onPickSystem, onOpenHex, onUpdate, onDone, onRemove }: AdjustmentEditorProps) {
+export function AdjustmentEditor({ pack, view, entry, warnings, picking, common, onPickSystem, onOpenHex, onUpdate, onDone, onRemove }: AdjustmentEditorProps) {
   const { t } = useTranslation();
   const [choosing, setChoosing] = useState(false);
   const { delta } = entry;
@@ -68,6 +66,7 @@ export function AdjustmentEditor({ game, pack, view, entry, warnings, picking, l
 
   const ofAgenda = entry.phase === 'agenda';
   const agenda = ofAgenda ? agendaOf(entry, pack) : undefined;
+  const laws = useMemo(() => view.board.common.laws.map(law => law.id), [view.board]);
   const inPlay = useMemo(() => new Set(laws), [laws]);
   /** The entry names one agenda: another takes its place, and the rest of what the entry gains stays. */
   const setAgenda = (id: string | undefined) => {
@@ -92,7 +91,7 @@ export function AdjustmentEditor({ game, pack, view, entry, warnings, picking, l
             <span className="muted">{t('plan.agenda.hint')}</span>
           </Section>
         )}
-        {agenda && <AgendaChoices game={game} pack={pack} agenda={agenda} choices={entry.choices} laws={laws} onChange={choices => onUpdate({ choices })} />}
+        {agenda && <AgendaChoices table={view.table} pack={pack} agenda={agenda} choices={entry.choices} laws={laws} onChange={choices => onUpdate({ choices })} />}
 
         <Section>
           <NoteField label={t('plan.entries.label')} value={entry.label} onCommit={label => onUpdate({ label })} />
@@ -109,7 +108,7 @@ export function AdjustmentEditor({ game, pack, view, entry, warnings, picking, l
             ? (
               <div className="source-row in-card">
                 <button type="button" className="source-button" onClick={() => onOpenHex(systemId)}>
-                  {systemTitle(game, pack, systemId, t)}
+                  {systemTitle(mapSource(view.table, view.board), pack, systemId, t)}
                   {changes.map(line => <small key={line}>{line}</small>)}
                   {changes.length === 0 && <small>{t('plan.entries.changeUnits')}</small>}
                 </button>

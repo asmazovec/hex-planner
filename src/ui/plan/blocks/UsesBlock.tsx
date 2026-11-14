@@ -2,8 +2,9 @@ import { Fragment, useMemo, useState } from 'react';
 import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import { readyToPlay } from '../../../domain/project';
-import type { ComponentKind, DataPack, Entry, Game, GameState, Warning } from '../../../domain/types';
+import type { ComponentKind, DataPack, Entry, Warning } from '../../../domain/types';
+import { readyToPlayOn } from '../../../game/planQueries';
+import { playerOfEntry } from '../kernelView';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { noteMark } from '../../components/noteMark';
@@ -21,11 +22,7 @@ export interface UsesBlockProps {
   view: KernelView;
   /** Any entry: its owner uses the components. */
   entry: Entry;
-  /** The game as the owner of the entry sees it. */
-  game: Game;
   pack: DataPack;
-  /** The state of the entry's owner just before it: what they hold ready then stands first in the choice. */
-  before?: GameState;
   /** The warnings of the entry: those of the components named here stand in this block. */
   warnings?: Warning[];
   /** The new list; without a value when it became empty. */
@@ -39,7 +36,7 @@ export interface UsesBlockProps {
  * is marked, and the plan warns of a component not held or exhausted. What a component used here allows is listed
  * among the warnings of the entry as allowed.
  */
-export function UsesBlock({ entry, game, pack, view, before, warnings = [], onChange }: UsesBlockProps) {
+export function UsesBlock({ entry, pack, view, warnings = [], onChange }: UsesBlockProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
   const list = entry.uses ?? [];
@@ -48,7 +45,7 @@ export function UsesBlock({ entry, game, pack, view, before, warnings = [], onCh
     const kept = Object.fromEntries(Object.entries(entry.useChoices ?? {}).filter(([id]) => ids.includes(id)));
     onChange({ uses: ids.length > 0 ? ids : undefined, ...(entry.useChoices ? { useChoices: Object.keys(kept).length > 0 ? kept : undefined } : {}) });
   };
-  const ready = useMemo(() => (before ? readyToPlay(pack, before.holdings, game.faction, before.control) : undefined), [before, pack, game.faction]);
+  const ready = useMemo(() => readyToPlayOn(view.table, view.board, pack, playerOfEntry(view, entry.owner)), [view, pack, entry.owner]);
   const title = t('components.uses.title');
   return (
     <Section label={title} title={title} warnings={<WarningList warnings={usesWarnings(entry, warnings)} table={view.table} board={view.board} pack={pack} />}>
@@ -65,7 +62,7 @@ export function UsesBlock({ entry, game, pack, view, before, warnings = [], onCh
               def={def} pack={pack} held note={t('components.uses.used')} owner={mark?.owner} text={mark?.text}
               onRemove={() => write(list.filter((_, i) => i !== index))}
             />
-            {before && <ChoicesBlock id={id} entry={entry} game={game} pack={pack} onChange={chosen => onChange(withChoices(entry, id, chosen))} />}
+            <ChoicesBlock id={id} entry={entry} view={view} pack={pack} onChange={chosen => onChange(withChoices(entry, id, chosen))} />
           </Fragment>
         );
       })}

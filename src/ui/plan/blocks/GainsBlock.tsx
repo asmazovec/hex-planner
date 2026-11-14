@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { emptyHoldings, heldOnce, HOLDING_FIELD, losable } from '../../../domain/holdings';
-import type { ComponentKind, DataPack, Entry, GameState } from '../../../domain/types';
+import type { ComponentKind, DataPack, Entry } from '../../../domain/types';
+import { losableOf } from '../../../game/planQueries';
+import { shelfOf } from '../../../game/shelf';
+import { playerOfEntry, type KernelView } from '../kernelView';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { Section } from '../../primitives/Section';
@@ -15,8 +18,8 @@ export interface GainsBlockProps {
   /** Any entry: its owner gains and gives. */
   entry: Entry;
   pack: DataPack;
-  /** The state of the entry's owner just before it: only what they hold then can be discarded. Without it nothing can. */
-  before?: GameState;
+  /** The table and the board just before the entry: only what its owner holds then can be discarded. Without it only what the entry itself takes can. */
+  view?: KernelView;
   /**
    * The kind this entry takes more often than any other, by a button of its own that offers that kind alone: the action
    * card drawn in the status phase (81.3). Which card it is only the player knows.
@@ -33,15 +36,15 @@ export interface GainsBlockProps {
  * card (an agenda the entry names) is not listed here and stays in the entry as it is. The buttons stand over the
  * cards, so a card added moves no button.
  */
-export function GainsBlock({ entry, pack, before, lead, onChange }: GainsBlockProps) {
+export function GainsBlock({ entry, pack, view, lead, onChange }: GainsBlockProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState<Side | 'lead' | null>(null);
   const listOf = (side: Side): string[] => entry[side] ?? [];
   const write = (side: Side, ids: string[]) => onChange(side === 'gains' ? { gains: ids.length > 0 ? ids : undefined } : { spends: ids.length > 0 ? ids : undefined });
   const title = t('components.gains.title');
-  const holdings = before?.holdings ?? emptyHoldings();
-  const canLose = losable(holdings, entry);
-  const once = useMemo(() => heldOnce(holdings), [holdings]);
+  const player = view && playerOfEntry(view, entry.owner);
+  const canLose = view && player !== undefined ? losableOf(view.board, player, entry) : losable(emptyHoldings(), entry);
+  const once = useMemo(() => heldOnce(view && player !== undefined ? shelfOf(view.table, view.board, player) : emptyHoldings()), [view, player]);
   const nothing = canLose.length === 0;
   return (
     <Section label={title} title={title}>

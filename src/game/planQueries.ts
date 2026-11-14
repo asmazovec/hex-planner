@@ -9,6 +9,7 @@ import { landingOffers } from '../domain/effects/points/landing';
 import { genericNotes, factionNotes, HOLDING_FIELD, notesOfFirst as notesFirst, TRANSACTION_KINDS } from '../domain/holdings';
 import { choosePayment, EXPEDITION_SLICES, slicePlanetCost, type PaymentKind } from '../domain/payment';
 import { cardTargetsOver, type CardMapPick } from '../domain/replay/cards/targets';
+import { readyToPlay } from '../domain/replay/holdings';
 import { productionDueOn } from '../domain/replay/production';
 import { specialtiesOf } from '../domain/specialties';
 import type { ComponentKind, Entry } from '../domain/types';
@@ -16,15 +17,20 @@ import type { Turn } from './actions';
 import { holderIn } from './abilities/registry';
 import { legacyEntry } from './entry';
 import { cardsOf, groundIn, ownerOf, payingPlanets, planetValue, tokensOnMapOf, tradeGoodWorth } from './queries';
+import { shelfOf } from './shelf';
 import { mapSource } from './space';
 import type { Payment } from './actions';
-import type { Board, ComponentId, DataPack, PlayerId, Slot, Table, UnitCounts } from './types';
+import type { Board, ComponentId, DataPack, PlanetId, PlayerId, Slot, Table, UnitCounts } from './types';
 
 /** The cheapest way to cover `need` from the ready planets and the trade goods of a player: least surplus burned, then fewer trade goods, then fewer planets. */
 export function autoPayOn(table: Table, board: Board, pack: DataPack, player: PlayerId, need: number, kind: PaymentKind): Payment {
   const items = payingPlanets(table, board, pack, player).map(id => ({ id, value: planetValue(table, board, pack, player, id, kind) }));
   return choosePayment(items, board.players[player]?.tradeGoods ?? 0, tradeGoodWorth(table, board, pack, player, kind), need);
 }
+
+/** The planets that can pay the technology part of the expedition: ready, the player's, with a technology specialty. */
+export const techSlicePlanetsOn = (table: Table, board: Board, pack: DataPack, player: PlayerId): PlanetId[] =>
+  payingPlanets(table, board, pack, player).filter(id => specialtiesOf(pack, id, board.planets[id]?.attached ?? []).length > 0);
 
 /** The payment a newly chosen expedition part starts with: its resources or influence from the ready planets, or the first ready planet with a technology specialty for the technology part. */
 export function sliceAutoPaymentOn(table: Table, board: Board, pack: DataPack, player: PlayerId, sliceId: string | null): Payment {
@@ -35,6 +41,9 @@ export function sliceAutoPaymentOn(table: Table, board: Board, pack: DataPack, p
   return EXPEDITION_SLICES.find(s => s.id === sliceId)?.techPlanet && techPlanets.length > 0 ? { planets: [techPlanets[0]], tradeGoods: 0 } : { planets: [], tradeGoods: 0 };
 }
 
+/** What a component declares for the plan: its cost, whether it produces, the choices it asks; the registry's entry, for the screens that read the kernel only. */
+export const effectOfComponent = effectOf;
+
 /** What a component turn costs to play: its component's cost and what the components it uses declare for following it, in one kind. */
 export const playedCostOf = (table: Table, pack: DataPack, turn: Turn): { kind: PaymentKind; amount: number } | undefined =>
   playedCost(pack, legacyEntry(table, turn), effectOf);
@@ -42,6 +51,12 @@ export const playedCostOf = (table: Table, pack: DataPack, turn: Turn): { kind: 
 /** What a turn owes for the units it produces, asked of the board before it (the editor's label, the shop counter): the same sum the replay's check makes. */
 export function productionDueOnBoard(table: Table, board: Board, pack: DataPack, player: PlayerId, units: UnitCounts, turn?: Turn): number {
   return productionDueOn(groundIn(table, board, pack, player), units, pack, turn ? legacyEntry(table, turn) : undefined);
+}
+
+/** The components a player can play as things stand: what they hold and is not exhausted, and the sheet and legendary planets that are theirs. */
+export function readyToPlayOn(table: Table, board: Board, pack: DataPack, player: PlayerId): Set<ComponentId> {
+  const control = Object.fromEntries(Object.keys(board.planets).filter(id => board.planets[id].owner === player).map(id => [id, 'me' as const]));
+  return readyToPlay(pack, shelfOf(table, board, player), table.players.find(p => p.id === player)?.faction ?? '', control);
 }
 
 /** A promissory note of a player and the player who holds it now; nobody when it was played and purged, or taken off by hand. */

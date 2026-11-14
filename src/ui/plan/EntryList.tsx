@@ -4,7 +4,8 @@ import { strategyCards } from '../../data/loadPack';
 import { componentById } from '../../domain/components';
 import { CARD } from '../../domain/strategy';
 import { gameAs, playersOf } from '../../domain/players';
-import { standing, statusTokensFree } from '../../domain/project';
+import { standing } from '../../domain/project';
+import { statusTokensFree } from '../../game/queries';
 import type { DataPack, Entry, EntryBody, Game, GameState, Phase, Round, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { turnsOf } from '../../state/projection';
@@ -16,7 +17,7 @@ import { actLines, insideCard } from './actLines';
 import { GainsBlock } from './blocks/GainsBlock';
 import { UsesBlock } from './blocks/UsesBlock';
 import { ScoredBlock } from './blocks/ScoredBlock';
-import type { KernelView } from './kernelView';
+import { playerOfEntry, type KernelView } from './kernelView';
 import { StepHints } from '../feedback/StepHints';
 import { agendaOf } from './editors/AdjustmentEditor';
 import { HexRemove, RowIcon } from '../primitives/Icon';
@@ -66,14 +67,14 @@ export interface EntryListProps {
  * The status entry: the tokens taken this round, the points each player gains with their running total, and what the
  * phase brings: the action card drawn (81.3), whichever it is, has a button of its own.
  */
-function StatusFields({ entry, game, pack, view, state, before, warnings }: {
-  entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; view: KernelView; state: GameState; before?: GameState; warnings: Warning[];
+function StatusFields({ entry, game, pack, view, state, warnings }: {
+  entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; view: KernelView; state: GameState; warnings: Warning[];
 }) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
   const gains = entry.opponentVp ?? {};
   // Two tokens, and what the player's components make of them (Versatile, Hyper Metabolism, a note named in «Used»).
-  const free = statusTokensFree(game, before ?? state, before ?? state, entry, pack);
+  const free = statusTokensFree(view.table, view.board, pack, playerOfEntry(view, entry.owner), entry);
   return (
     <>
       <TokenTiles
@@ -98,11 +99,11 @@ function StatusFields({ entry, game, pack, view, state, before, warnings }: {
       <p className="muted status-reminder">{t('plan.entries.planetsRefresh')}</p>
       {/* The objectives scored and their reminders come after the points: the warning under the tiles stays above the points. */}
       <StepHints pack={pack} table={view.table} board={view.board} step="status" players={['me']} />
-      <ScoredBlock entry={entry} pack={pack} before={before} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+      <ScoredBlock entry={entry} pack={pack} view={view} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
       {/* Last: a card taken stands under its buttons and moves nothing above. */}
-      <GainsBlock entry={entry} pack={pack} before={before} lead="actionCard" onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+      <GainsBlock entry={entry} pack={pack} view={view} lead="actionCard" onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
       {/* What the status phase uses: Letani Behemoth replaces the infantry of Mitosis, an agent is readied there. */}
-      <UsesBlock entry={entry} game={game} pack={pack} view={view} before={before} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+      <UsesBlock entry={entry} pack={pack} view={view} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
     </>
   );
 }
@@ -237,7 +238,7 @@ export function EntryList({
                     {shown && <EntrySteps entry={entry} game={gameAs(game, entry.owner)} pack={pack} view={viewOf(entry.id)} before={stateBefore ? stateBefore(entry.id) : state} warnings={list.filter(inSteps)} />}
                     {entry.id === openId && entry.type === 'statusTokens' && (
                       <div className="entry-details">
-                        <StatusFields entry={entry} game={game} pack={pack} view={viewOf(entry.id)} state={state} before={stateBefore?.(entry.id)} warnings={list} />
+                        <StatusFields entry={entry} game={game} pack={pack} view={viewOf(entry.id)} state={state} warnings={list} />
                       </div>
                     )}
                   </li>
