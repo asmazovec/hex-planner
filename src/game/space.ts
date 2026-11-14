@@ -11,7 +11,7 @@ import { planetsOf as planetsOfSystem, tileAt, type MapSource } from '../domain/
 import type { DataPack } from '../domain/types';
 import { effectOf, inForceOf } from '../domain/effects/registry';
 import { holderIn } from './abilities/registry';
-import { SOURCES } from './source';
+import { SOURCES, STARTS } from './source';
 import type { Board, PlayerId, Slot, Table } from './types';
 
 export type { MapSource };
@@ -25,13 +25,14 @@ export function mapSource(table: Table, board: Board): MapSource {
   let found = byFracture.get(board.common.fracture);
   if (!found) {
     const origin = SOURCES.get(table);
+    const start = STARTS.get(table);
     const viewer = table.players.find(p => p.id === table.viewer);
     found = {
       map: table.map,
-      fracture: { ...(origin?.fracture ?? { active: false, ingress: [], seat: null }), ...(board.common.fracture.open ? { tiles: board.common.fracture.tiles } : {}) },
+      fracture: { ...(origin?.fracture ?? start?.fracture ?? { active: false, ingress: [], seat: null }), ...(board.common.fracture.open ? { tiles: board.common.fracture.tiles } : {}) },
       faction: viewer?.faction ?? '',
       opponents: table.players.filter(p => p.id !== table.viewer).map(p => ({ id: p.id, faction: p.faction, vp: 0, seat: p.seat, color: p.color })),
-      expedition: { slices: {}, thundersEdgeSystem: origin?.expedition.thundersEdgeSystem ?? null },
+      expedition: { slices: {}, thundersEdgeSystem: origin?.expedition.thundersEdgeSystem ?? start?.expedition.thundersEdgeSystem ?? null },
     };
     byFracture.set(board.common.fracture, found);
   }
@@ -115,4 +116,4 @@ export const reach = (
 ): Set<Slot> => routeReach({ ...mapSource(table, board) } as Parameters<typeof routeReach>[0], path, speed, active, pack, blockers, view);
 
 /** The number of players the game began with: eliminations leave it, so the cards held at the table count by it (33.9). */
-export const playerCountOf = (table: Table): number => SOURCES.get(table)?.playerCount ?? table.players.length;
+export const playerCountOf = (table: Table): number => SOURCES.get(table)?.playerCount ?? table.players.filter(p => p.seat < 100).length;

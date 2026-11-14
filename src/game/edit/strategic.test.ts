@@ -8,7 +8,7 @@ import { placesOf } from '../../domain/replay/production';
 import type { Entry, Game } from '../../domain/types';
 import { legacyEntry } from '../entry';
 import { planOf, turnOf } from '../fromLegacy';
-import { timelineOf } from '../../state/projection';
+import { timelineOf } from '../../testing/projection';
 import * as read from './strategicRead';
 import * as now from './strategic';
 

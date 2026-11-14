@@ -9,7 +9,7 @@ import type { Entry, Game } from '../../domain/types';
 import { turnOf } from '../fromLegacy';
 import { playerOfKey } from '../keys';
 import { upgradesOf } from '../queries';
-import { timelineOf } from '../../state/projection';
+import { timelineOf } from '../../testing/projection';
 import * as read from './strategicRead';
 import * as now from './strategic';
 import { legacyEntry } from '../entry';

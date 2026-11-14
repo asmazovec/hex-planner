@@ -1,7 +1,7 @@
 import { bench, describe } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import type { Game } from '../domain/types';
-import { forgetTimelines, projectionOf, timelineOf } from './projection';
+import { forgetTimelines, projectionOf, timelineOf } from '../testing/projection';
 
 /** The real four-player game when the file is there (the plans are the player's own and not part of the repository). */
 const REAL = import.meta.glob<string>('/plans/slezy-radosti-2026-11-14.ti4.json', { query: '?raw', import: 'default', eager: true });

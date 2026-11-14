@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { boardBefore, timelineOf } from '../../../state/projection';
+import { boardBefore, timelineOf } from '../../../testing/projection';
 import { playerState } from '../../../domain/stacks';
 import type { DataPack, Game, GameState, Plan } from '../../../domain/types';
 import type { Board } from '../../../game/types';

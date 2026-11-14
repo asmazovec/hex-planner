@@ -2,7 +2,7 @@
  * What the plan screen marks on the map: the arrows of the round's tactical actions, and the light of each tile. The
  * rules of what fits come from the domain; here only their order and tone.
  */
-import { turnOfEntry } from '../../../state/projection';
+import { turnOfEntry } from '../../../testing/projection';
 import type { TacticalEntry } from '../../../domain/tactical';
 import { systemsAdjacent } from '../../../domain/project';
 import type { DataPack } from '../../../domain/types';

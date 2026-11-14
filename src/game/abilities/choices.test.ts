@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { adjust, bench, componentAction, HOME, NEAR } from '../../domain/effects/components/kit';
 import type { Entry, Opponent } from '../../domain/types';
-import { timelineOf } from '../../state/projection';
+import { timelineOf } from '../../testing/projection';
 import { turnOf } from '../fromLegacy';
 import { choicesOf } from './choices';
 

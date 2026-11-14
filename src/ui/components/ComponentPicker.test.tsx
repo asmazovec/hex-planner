@@ -9,7 +9,7 @@ vi.mock('../../storage/db', () => ({
 
 import { loadPack } from '../../data/loadPack';
 import { setLanguage } from '../../i18n';
-import { tableOfGame } from '../../state/projection';
+import { tableOfGame } from '../../testing/projection';
 import { useGame } from '../../state/gameStore';
 import { ComponentPicker } from './ComponentPicker';
 import { searchComponents } from './useComponentSearch';

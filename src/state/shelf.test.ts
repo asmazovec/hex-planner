@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { createGame } from '../domain/newGame';
 import { setPlayerFaction } from '../domain/players';
 import type { Entry } from '../domain/types';
-import { timelineOf } from './projection';
+import { timelineOf } from '../testing/projection';
 import { legacyKey } from '../game/keys';
 import { ownNotes } from '../domain/holdings';
 import { legacyNotes, shelfOf, shownOf } from '../game/shelf';

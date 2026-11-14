@@ -27,7 +27,7 @@ import {
   withTile,
 } from '../game/edit/table';
 import { playerOfLegacy } from '../game/entry';
-import { forgetTimelines, startOfGame } from './projection';
+import { forgetTimelines, startOfSaved } from './projection';
 
 export { flushSaves };
 
@@ -386,9 +386,8 @@ export const useGame = create<GameStore>((set, get) => {
       const plan = activePlan(s);
       const round = plan?.rounds.find(r => r.number === roundNo);
       if (!plan || !round) return s;
-      const game = gameOf(s);
       const pack = loadPack(s.table.expansions);
-      const { table, start } = startOfGame(game, pack);
+      const { table, start } = startOfSaved(s, pack);
       const made = changeOnBoard(table, start, pack, plan.rounds, roundNo, change, newId);
       return !made || made === round ? s : editRound(s, roundNo, () => made);
     }),

@@ -7,7 +7,7 @@ import { repaid } from '../../domain/strategy';
 import type { Entry, Game } from '../../domain/types';
 import { legacyEntry } from '../entry';
 import { turnOf } from '../fromLegacy';
-import { timelineOf } from '../../state/projection';
+import { timelineOf } from '../../testing/projection';
 import * as now from './turn';
 
 const pack = loadPack(['pok']);

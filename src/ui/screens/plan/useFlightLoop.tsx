@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { timelineOf, turnOfEntry } from '../../../state/projection';
+import { timelineOf, turnOfEntry } from '../../../testing/projection';
 import { gameAs } from '../../../domain/players';
 import type { TacticalEntry } from '../../../domain/tactical';
 import { atOf, tacticalSystems } from '../../../game/edit/tacticalRead';

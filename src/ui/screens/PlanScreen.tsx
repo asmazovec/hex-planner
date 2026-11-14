@@ -5,7 +5,7 @@ import { EXPEDITION_SLICES } from '../../domain/payment';
 import { isOnMap, systemSlots } from '../../domain/project';
 import { shownOf } from '../../game/shelf';
 import { warningsByTurn } from '../../game/rowWarnings';
-import { boardAtRound, tacticalEntries, tacticalNumbers, timelineOf, turnOfEntry } from '../../state/projection';
+import { boardAtRound, tacticalEntries, tacticalNumbers, timelineOf, turnOfEntry } from '../../testing/projection';
 import { cardTargetsOn } from '../../game/planQueries';
 import { tacticalOwner } from '../../game/edit/new';
 import { legacyKey, playerOfKey } from '../../game/keys';

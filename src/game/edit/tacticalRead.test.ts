@@ -15,7 +15,7 @@ import { legacyEntry } from '../entry';
 import { turnOf } from '../fromLegacy';
 import { routeHintOn } from '../flight';
 import { planetsIn } from '../space';
-import { timelineOf } from '../../state/projection';
+import { timelineOf } from '../../testing/projection';
 import { UNIT_ORDER } from '../../ui/units/unitOrder';
 import * as now from './tacticalRead';
 import { warningsByTurn } from '../rowWarnings';

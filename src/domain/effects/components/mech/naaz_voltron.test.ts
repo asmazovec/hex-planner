@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { UnitCounts } from '../../../types';
 import { bench, effect, expectStanding, expectWaived, HOME, NEAR, quote, tactical, warningsOf } from '../kit';
-import { timelineOf, systemWarningsAt } from '../../../../state/projection';
+import { timelineOf, systemWarningsAt } from '../../../../testing/projection';
 import { id } from './naaz_voltron';
 
 /** Everything of `units` flies from the home system to the next one; Absolute Synergy is held when `flipped`. */

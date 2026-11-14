@@ -5,7 +5,7 @@
  * old replay is gone: its last record is the frozen oracle of src/game/resolve (oracle.test.ts, recorded by record.test.ts).
  */
 import { blockersOf, routeReach as reachOf, type Blockers } from './movement';
-import { boardBefore, project as kernelProject, type Timeline } from '../state/projection';
+import { boardBefore, project as kernelProject, type Timeline } from '../testing/projection';
 import type { DataPack, Game, Plan, Projection } from './types';
 
 export {
@@ -18,7 +18,7 @@ export {
 export {
   projectionOf, projectionAtRound, boardBefore, boardAfter, seenBefore, seenAfter, stateBeforeEntry, stateAfterEntry, boardBeforeEntry,
   timelineOf, forgetTimelines, tacticalNumbers, type Filter, type Frame, type Timeline,
-} from '../state/projection';
+} from '../testing/projection';
 
 /** Test hook: told of every game a plan of which is projected (the oracle recorder registers one). Nothing watches in an ordinary run. */
 let projectWatcher: ((game: Game, pack: DataPack) => void) | undefined;

@@ -53,11 +53,10 @@ export function addTactical(table: Table, roundNumber: number, system: string, o
 
 /** A source with nothing chosen goes when the editor closes. Works on the store, for it runs on unmount too. */
 export function pruneEmptySources(entryId: string | undefined): void {
-  const { game, saved } = useGame.getState();
-  if (!game || !saved || !entryId) return;
-  const pack = loadPack(game.expansions);
-  const plan = game.plans.find(p => p.id === game.activePlanId) ?? game.plans[0];
-  const { kernel } = timelineOf(game, plan, 'forecast', pack);
+  const { saved } = useGame.getState();
+  if (!saved || !entryId) return;
+  const pack = loadPack(saved.table.expansions);
+  const kernel = timelineOf(saved, saved.activePlanId, 'forecast', pack);
   const write = writeSaved(saved, entryId);
   if (!write || write.turn.action.kind !== 'tactical') return;
   write.update(withoutEmptySources(atOf(kernel.table, kernel.byTurn.get(entryId)?.before ?? kernel.end, pack), write.turn));

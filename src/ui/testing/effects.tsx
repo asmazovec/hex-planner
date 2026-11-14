@@ -13,7 +13,7 @@ import userEvent from '@testing-library/user-event';
 import { useState, type ReactNode } from 'react';
 import { afterEach, beforeEach, expect } from 'vitest';
 import type { Bench } from '../../domain/effects/components/kit';
-import { project, stateBeforeEntry, timelineOf } from '../../state/projection';
+import { project, stateBeforeEntry, timelineOf } from '../../testing/projection';
 import type { KernelView } from '../plan/kernelView';
 import type { AnyWarningCode, DataPack, Entry, EntryBody, Game, GameState, Warning } from '../../domain/types';
 import { setLanguage } from '../../i18n';

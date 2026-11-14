@@ -4,7 +4,7 @@ import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
 import { gameAs, opponentsBySeat } from '../../../domain/players';
 import { standing, planetStructureWarnings, productionCost, productionDue, readyResources } from '../../../domain/project';
-import { boardAtRound, projectionAtRound, seenBefore, systemWarningsAt, timelineOf, turnOfEntry } from '../../../state/projection';
+import { boardAtRound, projectionAtRound, seenBefore, systemWarningsAt, timelineOf, turnOfEntry } from '../../../testing/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
 import { unitStats } from '../../../domain/unitStats';
 import type { Entry, PlanetDef, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';

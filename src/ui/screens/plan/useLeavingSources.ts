@@ -3,7 +3,7 @@ import { loadPack } from '../../../data/loadPack';
 import { emptySources, tacticalOf, withoutSource } from '../../../game/edit/tactical';
 import { atOf } from '../../../game/edit/tacticalRead';
 import { useGame } from '../../../state/gameStore';
-import { timelineOf } from '../../../state/projection';
+import { timelineOf } from '../../../testing/projection';
 import { writeTurn } from '../../../state/turnBridge';
 import { animates } from '../../common/motion';
 
