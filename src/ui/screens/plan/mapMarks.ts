@@ -2,9 +2,13 @@
  * What the plan screen marks on the map: the arrows of the round's tactical actions, and the light of each tile. The
  * rules of what fits come from the domain; here only their order and tone.
  */
-import { arrowsOf, entrySystems, sourcesOf, viaOf, type TacticalEntry } from '../../../domain/tactical';
+import { entrySystems, type TacticalEntry } from '../../../domain/tactical';
 import { systemsAdjacent } from '../../../domain/project';
 import type { DataPack, Entry, Game } from '../../../domain/types';
+import { arrowsOf, sourcesOf, tacticalOf, viaOf } from '../../../game/edit/tactical';
+import { turnOf } from '../../../game/fromLegacy';
+import { mapSource } from '../../../game/space';
+import type { Board, Table } from '../../../game/types';
 import { routeShapes } from '../../map/geometry';
 import type { Arrow } from '../../map/RouteArrows';
 import type { Highlight } from '../../map/TileView';
@@ -15,15 +19,16 @@ import type { Highlight } from '../../map/TileView';
  * whose sources are on their way out: they fade.
  */
 export function planArrows(
-  game: Game, pack: DataPack, tacticals: TacticalEntry[], numbers: Record<string, number>, focusId: string | undefined, showPlanned: boolean,
+  table: Table, board: Board, pack: DataPack, tacticals: TacticalEntry[], numbers: Record<string, number>, focusId: string | undefined, showPlanned: boolean,
   leaving: string[] = [],
 ): Arrow[] {
+  const at = { map: mapSource(table, board), pack };
   const drawn = tacticals.filter(item => item.status !== 'cancelled' && (item.id === focusId || item.status === 'done' || showPlanned))
-    .flatMap(item => arrowsOf(game, pack, item).map(a => ({
-      ...a, key: `${item.id}:${a.from}`, number: numbers[item.id], player: game.opponents.find(o => o.id === item.owner)?.color,
+    .flatMap(item => { const turn = turnOf(table, item, pack); return arrowsOf(at, tacticalOf(turn)).map(a => ({
+      ...a, key: `${item.id}:${a.from}`, number: numbers[item.id], player: turn.player === table.viewer ? undefined : table.players.find(p => p.id === turn.player)?.color,
       tone: item.id === focusId ? 'active' as const : item.status === 'done' ? 'done' as const : 'planned' as const,
-    })));
-  const shapes = routeShapes(drawn.map(a => [a.from, ...a.via, a.to]), systemsAdjacent(game));
+    })); });
+  const shapes = routeShapes(drawn.map(a => [a.from, ...a.via, a.to]), systemsAdjacent(at.map));
   return drawn.map((a, i) => ({ ...a, shape: shapes[i], ...(leaving.includes(a.key) ? { leaving: true } : {}) }));
 }
 
@@ -46,14 +51,15 @@ export interface HighlightInput {
  * being read speaks of, then the active system, the sources and the ways of the action in focus with the route under
  * way, and last where that route can still go and what else fits.
  */
-export function mapHighlights(game: Game, pack: DataPack, { choice, shownSystems, focused, path, reach, options }: HighlightInput): Record<string, Highlight> {
-  const sources = focused?.systemId ? sourcesOf(game, pack, focused) : [];
+export function mapHighlights(table: Table, board: Board, pack: DataPack, { choice, shownSystems, focused, path, reach, options }: HighlightInput): Record<string, Highlight> {
+  const action = focused ? tacticalOf(turnOf(table, focused, pack)) : undefined;
+  const sources = action?.system ? sourcesOf({ map: mapSource(table, board), pack }, action) : [];
   const layers: [Iterable<string>, Highlight][] = [
     [choice, 'valid'],
     [shownSystems, 'active'],
     [focused?.systemId ? [focused.systemId] : [], 'active'],
     [sources, 'source'],
-    [[...path, ...(focused ? sources.flatMap(source => viaOf(focused, source)) : [])], 'path'],
+    [[...path, ...(action ? sources.flatMap(source => viaOf(action, source)) : [])], 'path'],
     [reach, 'valid'],
     [options, 'valid'],
   ];

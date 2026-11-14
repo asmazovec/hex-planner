@@ -388,7 +388,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const offMap = placeOffMap(shownTable, shownBoard, pack);
   /** A system ships can be in: a tile of the map or an off-map home beside it. */
   const onBoard = (slot: string): boolean => slot in offMap || isOnMap(game, slot);
-  const arrows = planArrows(game, pack, tacticals, tacticalNumbers(game, round, pack), focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
+  const arrows = planArrows(shownTable, shownBoard, pack, tacticals, tacticalNumbers(game, round, pack), focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
 
   /** The action in hand, as its owner plays it. */
   const entryGame = gameAs(game, entry?.owner);
@@ -410,7 +410,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
 
   const cardBefore = cardEntry ? boards.before(cardEntry.id) : undefined;
   const cardGame = gameAs(game, cardEntry?.owner);
-  const highlights = mapHighlights(game, pack, {
+  const highlights = mapHighlights(shownTable, shownBoard, pack, {
     choice: cardPick && cardEntry && cardBefore ? cardTargets(game, pack, cardEntry, cardPick, cardBefore, forecast.state)
       : adjustPick ? tileSystems(game, pack)
         : next.kind === 'placeTe' ? systemSlots(game).filter(suitable) : [],

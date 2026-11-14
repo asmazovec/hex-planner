@@ -6,6 +6,7 @@ import { project } from '../../domain/project';
 import { routeShapes } from '../map/geometry';
 import type { Entry, Game, GameState } from '../../domain/types';
 import { emptySources } from '../../domain/tactical';
+import { tableOf, turnOf } from '../../game/fromLegacy';
 import { arrowsOf, entrySystems, flies, flightRoutes, sourcesOf, stateInFlight, viaOf, withRoute, withoutEmptySources, withoutSource, type Move, type TacticalEntry } from './tactical';
 
 const pack = loadPack(['pok']);
@@ -73,11 +74,12 @@ describe('a source and its route', () => {
 });
 
 describe('the flight', () => {
+  const routesOf = (e: TacticalEntry, shapeOf: Parameters<typeof flightRoutes>[2]) => flightRoutes({ map: game(), pack }, turnOf(tableOf(game()), e, pack), shapeOf);
   const shapes = (e: TacticalEntry) => routeShapes(sourcesOf(game(), pack, e).map(from => [from, ...viaOf(e, from), TARGET]));
 
   test('each route is one formation, laid out as a tile with no planets, with cells of the same size as there', () => {
     const e = entry(ROUTE);
-    const [route] = flightRoutes(game(), pack, e, () => shapes(e)[0]);
+    const [route] = routesOf(e, () => shapes(e)[0]);
     const { items } = hexLayout({ planets: 0, ground: [], space: [{ kind: 'carrier', owner: 'me', count: 1 }, { kind: 'fighter', owner: 'me', count: 3 }, { kind: 'infantry', owner: 'me', count: 1 }] });
     expect(route.stacks.map(s => [s.kind, s.x, s.y, s.size]).sort()).toEqual(items.map(i => [i.kind, i.x, i.y, i.size]).sort());
     expect(route.durationMs).toBe(600);
@@ -86,7 +88,7 @@ describe('the flight', () => {
 
   test('stacks of the source start at once, picked-up ones join where the leader passes their hex', () => {
     const e = entry(ROUTE);
-    const [route] = flightRoutes(game(), pack, e, () => shapes(e)[0]);
+    const [route] = routesOf(e, () => shapes(e)[0]);
     const joins = Object.fromEntries(route.stacks.map(s => [s.kind, s.joins]));
     expect(joins.carrier).toEqual([{ at: 0, count: 1, move: 0 }]);
     expect(joins.fighter[0]).toEqual({ at: 0, count: 1, move: 0 });
@@ -101,7 +103,7 @@ describe('the flight', () => {
       { from: HOME, units: { carrier: 5 } }, { from: '0,0', units: { dreadnought: 1 } }, { from: WAY, units: { cruiser: 1 } },
     ]);
     const all = shapes(e);
-    const routes = flightRoutes(game(), pack, e, from => all[sourcesOf(game(), pack, e).indexOf(from)]);
+    const routes = routesOf(e, from => all[sourcesOf(game(), pack, e).indexOf(from)]);
     expect(routes).toHaveLength(3);
     expect(routes[0].stacks[0].joins[0].count).toBe(5);
     expect(routes.map(r => r.delayMs)).toEqual([0, 60, 120]);

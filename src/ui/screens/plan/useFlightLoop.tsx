@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { timelineOf } from '../../../state/projection';
 import { gameAs } from '../../../domain/players';
-import { entrySystems, flies, type TacticalEntry } from '../../../domain/tactical';
+import { entrySystems, type TacticalEntry } from '../../../domain/tactical';
 import type { DataPack, Entry, Game, Plan } from '../../../domain/types';
 import { turnOf } from '../../../game/fromLegacy';
-import { activatedBoard, inFlight as boardInFlight } from '../../../game/flight';
+import { activatedBoard, flies, inFlight as boardInFlight } from '../../../game/flight';
+import { mapSource } from '../../../game/space';
 import type { Board } from '../../../game/types';
 import { useGame } from '../../../state/gameStore';
 import { playsFlights } from '../../common/motion';
@@ -59,7 +60,8 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
   const flying = flight?.game === game ? flight : null;
 
   // Nothing to show in a flight, nothing to repeat: an action with no units in its moves, for one.
-  const loops = shownEntry?.type === 'tactical' && playsFlights() && game !== null && plan !== undefined && flies(shownEntry);
+  const loops = shownEntry?.type === 'tactical' && playsFlights() && game !== null && plan !== undefined
+    && flies(turnOf(timelineOf(game, plan, 'forecast', pack).kernel.table, shownEntry, pack));
 
   const start = useCallback((entryId: string, filter: Filter = 'forecast', repeat = false) => {
     const current = useGame.getState().game;
@@ -110,7 +112,7 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
     const layer = flying && flyingEntry && beforeFlight && (
       <FlightLayer
         key={flying.run} colour={playerColour(flyingGame.color)} passed={flying.passed}
-        routes={flightRoutes(flyingGame, pack, flyingEntry, from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
+        routes={flightRoutes({ map: mapSource(table, shownBoard), pack }, turnOf(table, flyingEntry, pack), from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
         onPass={move => setFlight(f => f && { ...f, passed: [...f.passed, move] })}
         holdMs={flying.repeat ? DEPART_HOLD_MS : FIRST_HOLD_MS}
         onDepart={() => setFlight(f => f && { ...f, departed: true })}
