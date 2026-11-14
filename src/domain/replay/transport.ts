@@ -6,6 +6,7 @@ import { fullPath, shipSpeed, type Blockers } from '../movement';
 import { violation } from '../rules/registry';
 import { unitStats } from '../unitStats';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
+import type { TokensOn } from '../readers';
 import { planetsOf, sourceSlot, type MapSource } from './board';
 import { gameAs } from '../players';
 import { unitIds, type Move } from './state';
@@ -15,7 +16,7 @@ export const isPickup = (move: Move, target: string, pack: DataPack): boolean =>
   move.pickupOf !== undefined || move.from in pack.planets || move.from === target;
 
 /** Whether units may be picked up in a system: not where my command token lies, unless it is the active system (95.3). */
-export const pickupAllowed = (state: Pick<GameState, 'tokensOnMap'>, target: string, slot: string): boolean =>
+export const pickupAllowed = (state: TokensOn, target: string, slot: string): boolean =>
   slot === target || !state.tokensOnMap.includes(slot);
 
 /** The same over a reader of the mover's command tokens: one implementation for the old state and the board. */

@@ -3,11 +3,12 @@
  * are rearranged; in Thunder's Edge it starts a free tactical action. The secondary produces at home.
  */
 import type { CardEntry } from '../../strategy';
-import type { ExpansionId, GameState } from '../../types';
+import type { ExpansionId } from '../../types';
+import type { TokensOn } from '../../readers';
 import type { CardHandler } from './handler';
 
 /** Before Thunder's Edge, whether the primary lifts a token: the chosen system holds one of mine. Without the board, it may. */
-const lifts = (entry: CardEntry, expansions: ExpansionId[], before?: Pick<GameState, 'tokensOnMap'>): boolean => {
+const lifts = (entry: CardEntry, expansions: ExpansionId[], before?: TokensOn): boolean => {
   if (entry.type !== 'strategic' || expansions.includes('te')) return false;
   if (!before) return true;
   const systemId = entry.effects?.systemId;

@@ -6,7 +6,8 @@ import { type PaymentKind } from './payment';
 import { CARD, handlerOf } from './replay/cards/index';
 import { LEADERSHIP_FREE } from './replay/cards/leadership';
 import { productionCost } from './unitStats';
-import type { CardEffects, DataPack, Entry, ExpansionId, Game, GameState, Holdings, Round, StructureKind, UnitCounts, UnitId } from './types';
+import type { TokensOn } from './readers';
+import type { CardEffects, DataPack, Entry, ExpansionId, Game, Holdings, Round, StructureKind, UnitCounts, UnitId } from './types';
 
 export { diplomacySystemAllowed, readyChoices, readyLimit } from './replay/cards/diplomacy';
 export { researchCount, researchLimit } from './replay/cards/technology';
@@ -50,7 +51,7 @@ export function strategyTokensOwedOf(entry: CardEntry, play: { held?: number[]; 
  * What a card gives to distribute: Leadership's own and bought tokens, the token Warfare's primary gains before
  * Thunder's Edge. `before`, the state before the entry: Warfare gains a token only when the chosen system held one of mine (99 note 1).
  */
-export const freeTokens = (entry: CardEntry, expansions: ExpansionId[], before?: Pick<GameState, 'tokensOnMap'>): number =>
+export const freeTokens = (entry: CardEntry, expansions: ExpansionId[], before?: TokensOn): number =>
   handlerOf(entry.card).freeTokens?.(entry, expansions, before) ?? 0;
 
 /** Leadership's tokens as tapped: what goes beyond the free ones is bought. */

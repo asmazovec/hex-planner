@@ -6,6 +6,7 @@
 import { boardSlots } from './movement';
 import type { MapSource } from './replay/board';
 import { isOnMap, sourceSlot } from './replay';
+import type { Pools } from './readers';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
@@ -104,7 +105,7 @@ export function withAdjustedUnit(delta: AdjustmentDelta, slot: string, unit: Uni
 }
 
 /** The stack a move takes its units from: a planet's ground forces, or the space of a system. */
-export const poolOf = (state: Pick<GameState, 'systems' | 'ground'>, pack: DataPack, from: string): UnitCounts | undefined =>
+export const poolOf = (state: Pools, pack: DataPack, from: string): UnitCounts | undefined =>
   (from in pack.planets ? state.ground : state.systems)[from];
 
 /** The source systems of an action, in the order of their moves. */

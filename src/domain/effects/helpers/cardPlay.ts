@@ -8,17 +8,12 @@ import { unitIds } from '../../replay/state';
 import playCondition from '../../rules/codes/playCondition';
 import { violation } from '../../rules/registry';
 import { unitStats } from '../../unitStats';
-import type { GameState, UnitCounts, UnitId } from '../../types';
+import type { UnitCounts, UnitId } from '../../types';
 import type { AbilityContext } from '../../../game/abilities/types';
 import componentUnresolved from '../../rules/codes/componentUnresolved';
 import type { GameEvent } from '../../../game/events';
 import { planet as planetEvents, tokens } from '../../../game/abilities/emit';
 import { MECATOL_PLANET, MECATOL_PLANET_TE, MECATOL_TILE_TE } from '../../mecatol';
-
-/** Adds a planet to a state's exhausted ones. */
-export function exhaust(state: GameState, planetId: string): void {
-  if (!state.exhausted.includes(planetId)) state.exhausted.push(planetId);
-}
 
 // The same questions for a play written for the kernel: they read the board through the context.
 

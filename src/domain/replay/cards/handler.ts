@@ -1,6 +1,7 @@
 /** What one strategy card does: its cost, the tokens it gives, its own effects and checks. The replay calls these; so does the editor. */
 import type { PaymentKind } from '../../payment';
 import type { CardEntry } from '../../strategy';
+import type { TokensOn } from '../../readers';
 import type { DataPack, ExpansionId, Game, GameState, Holdings, Warning } from '../../types';
 
 /** What the round knows of the cards while it is replayed. Players are `me` and the opponents' ids. */
@@ -43,7 +44,7 @@ export interface CardHandler {
   /** What it places is placed, not produced: the units entered on it are paid for with nothing (Titans, Hecatoncheires). */
   placesFree?: (entry: CardEntry, who: CardWho) => boolean;
   /** The tokens it gives to distribute; `before`, the state before the entry, when the board is known. */
-  freeTokens?: (entry: CardEntry, expansions: ExpansionId[], before?: Pick<GameState, 'tokensOnMap'>) => number;
+  freeTokens?: (entry: CardEntry, expansions: ExpansionId[], before?: TokensOn) => number;
   /** Its own effects and checks, after the common steps (token, payment, distribution, readying). */
   apply?: (turn: CardTurn) => void;
 }
