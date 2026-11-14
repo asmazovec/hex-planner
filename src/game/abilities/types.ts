@@ -192,6 +192,13 @@ export interface AbilityContext {
   wormholes(slot: string): string[];
   /** The systems next to a system for a move (a shared side, a wormhole, a hyperlane). */
   adjacent(slot: string): string[];
+  /** What one trade good spent is worth to the holder for a payment of the kind, after what they hold changed it. */
+  tradeGoodWorth(kind: 'resources' | 'influence'): number;
+  /**
+   * What a status entry's `spend` pays for the objectives it scores (61.10): the command tokens, trade goods and planets it names are taken from the holder once
+   * for the entry, however many objectives it scores. `events` and the warnings of what was lacking come with the first call of the turn; `spent` says what it came to every time.
+   */
+  spendOnObjectives(): { spent: { tokens: number; tradeGoods: number; resources: number; influence: number }; events: GameEvent[] };
   /** Adds a warning of the turn. */
   warn(warning: Warning): void;
 }

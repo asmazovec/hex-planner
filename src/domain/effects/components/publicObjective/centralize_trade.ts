@@ -5,7 +5,9 @@
  * scored (LRR 61.4, 61.5.1, 81.1). Decided: play: scoring it spends the 10 trade goods (61.10); fewer held is warned
  * of as any short payment (shortTradeGoods, step status).
  */
-import { spendTradeGoods } from '../../../replay/payment';
+import { tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'publicObjective:centralize_trade';
@@ -13,5 +15,13 @@ export const id = 'publicObjective:centralize_trade';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => spendTradeGoods(turn.state, 10, turn.warnings, 'status'),
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const have = ctx.my.tradeGoods;
+    if (10 > have) ctx.warn(violation('shortTradeGoods', { needed: 10, have }, 'status'));
+    return have > 0 ? [tradeGoods(ctx.holder, -Math.min(10, have))] : [];
+  },
 };

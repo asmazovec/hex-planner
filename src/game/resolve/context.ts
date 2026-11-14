@@ -42,12 +42,14 @@ export interface Ctx {
   cur: StepResult;
   /** Every violation of the turn so far, in the order the checks gave them. */
   warnings: Warning[];
+  /** What the turn remembers between the components it plays. */
+  memo: Map<string, unknown>;
 }
 
 export function newCtx(table: Table, board: Board, turn: Turn, tactical: Tactical, pack: DataPack, blockers: Blockers, track: RoundTrack): Ctx {
   return {
     table, pack, turn, tactical, track, player: turn.player, entry: legacyEntry(table, turn), board, blockers, steps: [],
-    cur: { step: 'activation', events: [], violations: [], hints: [] }, warnings: [],
+    cur: { step: 'activation', events: [], violations: [], hints: [] }, warnings: [], memo: new Map(),
   };
 }
 

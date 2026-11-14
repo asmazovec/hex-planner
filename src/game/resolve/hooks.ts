@@ -21,7 +21,9 @@ import { noteBase } from '../../domain/components';
 import type { Entry, Warning } from '../../domain/types';
 import { readerOf, type Reader } from '../abilities/facade';
 import { appliedOn, inForce } from '../abilities/registry';
-import { areNeighbours, planetValue, reinforcementsOf } from '../queries';
+import { areNeighbours, planetValue, reinforcementsOf, tradeGoodWorth } from '../queries';
+import { spentOnObjectives, type Spent } from '../../domain/effects/points/status';
+import type { EffectTurn } from '../../domain/effects/types';
 import { planetsIn } from '../space';
 import { homeOf } from '../setup';
 import type { AbilityContext, HookKind, HookPayloads } from '../abilities/types';
@@ -48,6 +50,8 @@ export interface HookOptions {
   choices?: Readonly<Record<string, string | number>>;
   /** `play` only: whether the component was held and ready when it was played. */
   held?: boolean;
+  /** What the turn remembers between the components it plays (what a status entry's spend paid, once). */
+  memo?: Map<string, unknown>;
   /** `play` only: the warnings of the turn so far, and how a play takes one back or words it again. */
   warned?: readonly Warning[];
   revise?: (warning: Warning, to?: Warning) => void;
@@ -68,7 +72,7 @@ export function poolWarnings(table: Table, before: Board, board: Board, pack: Da
 
 /** The context a component is asked with: the board as it stands, the holder and the actor, the readers and the questions of the game. */
 export function contextOf(
-  table: Table, at: Board, pack: DataPack, player: PlayerId, id: string, options: Pick<HookOptions, 'actor' | 'step' | 'choices' | 'entry' | 'held' | 'warned' | 'revise'>, warn: (warning: Warning) => void,
+  table: Table, at: Board, pack: DataPack, player: PlayerId, id: string, options: Pick<HookOptions, 'actor' | 'step' | 'choices' | 'entry' | 'held' | 'warned' | 'revise' | 'memo'>, warn: (warning: Warning) => void,
 ): AbilityContext {
   return {
     board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), held: options.held ?? true, choices: options.choices ?? {}, own: player === options.actor,
@@ -98,6 +102,21 @@ export function contextOf(
       researchTechnologies(v.game, v.state, v.shared, [technology], pack, found);
       found.forEach(warn);
       return legacyEvents(table, pack, before, work, player);
+    },
+    tradeGoodWorth: kind => tradeGoodWorth(table, at, pack, player, kind),
+    spendOnObjectives: () => {
+      const entry = options.entry;
+      const known = options.memo?.get('spentOnObjectives') as Spent | undefined;
+      if (known) return { spent: known, events: [] };
+      if (!entry) return { spent: { tokens: 0, tradeGoods: 0, resources: 0, influence: 0 }, events: [] };
+      const before = legacyViews(table, at, pack);
+      const work = legacyViewsFresh(table, at, pack);
+      const v = viewFor(table, at, pack, player, work);
+      const found: Warning[] = [];
+      const spent = spentOnObjectives({ state: v.state, warnings: found, entry, pack } as unknown as EffectTurn);
+      found.forEach(warn);
+      options.memo?.set('spentOnObjectives', spent);
+      return { spent, events: legacyEvents(table, pack, before, work, player) };
     },
     buildStructures: structures => {
       const before = legacyViews(table, at, pack);

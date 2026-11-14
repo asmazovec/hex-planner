@@ -9,7 +9,8 @@
  * counted. Until pass 2 it is the hint every component is by default.
  */
 import { violation } from '../../../rules/registry';
-import { spentOnObjectives } from '../../points/status';
+import { tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 const GOODS = 6;
@@ -19,10 +20,17 @@ export const id = 'publicObjective:vast_reserves';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play(turn) {
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play(ctx) {
     // What the entry's own `spend` already paid in trade goods counts; the rest comes from the pool.
-    const owed = Math.max(0, GOODS - spentOnObjectives(turn).tradeGoods);
-    if (owed > turn.state.tradeGoods) turn.warnings.push(violation('shortTradeGoods', { needed: owed, have: turn.state.tradeGoods }, 'status'));
-    turn.state.tradeGoods -= Math.min(owed, turn.state.tradeGoods);
+    const { spent, events } = ctx.spendOnObjectives();
+    const owed = Math.max(0, GOODS - spent.tradeGoods);
+    const have = ctx.after(events).my.tradeGoods;
+    if (owed > have) ctx.warn(violation('shortTradeGoods', { needed: owed, have }, 'status'));
+    const taken = Math.min(owed, have);
+    return taken > 0 ? [...events, tradeGoods(ctx.holder, -taken)] : events;
   },
 };

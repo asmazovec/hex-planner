@@ -5,9 +5,8 @@
  * Decided: play: scoring it pays 16 influence from the status entry's `spend`: planets exhausted for influence, and the
  * trade goods spent, each worth what the payer's components make it; less is shortInfluence (step status).
  */
-import { tradeGoodWorth } from '../../../payment';
 import { violation } from '../../../rules/registry';
-import { spentOnObjectives } from '../../points/status';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'publicObjective:manipulate_law';
@@ -15,10 +14,15 @@ export const id = 'publicObjective:manipulate_law';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => {
-    const spent = spentOnObjectives(turn);
-    const worth = tradeGoodWorth(turn.pack, turn.state, 'influence', { faction: turn.game.faction, shared: turn.shared });
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const { spent, events } = ctx.spendOnObjectives();
+    const worth = ctx.tradeGoodWorth('influence');
     const paid = spent.influence + spent.tradeGoods * worth;
-    if (paid < 16) turn.warnings.push(violation('shortInfluence', { needed: 16, paid }, 'status'));
+    if (paid < 16) ctx.warn(violation('shortInfluence', { needed: 16, paid }, 'status'));
+    return events;
   },
 };

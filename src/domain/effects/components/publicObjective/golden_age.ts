@@ -5,9 +5,8 @@
  * Decided: play: scoring it pays 16 resources from the status entry's `spend`: planets exhausted for resources, and the
  * trade goods spent, each worth what the payer's components make it; less is shortResources (step status).
  */
-import { tradeGoodWorth } from '../../../payment';
 import { violation } from '../../../rules/registry';
-import { spentOnObjectives } from '../../points/status';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'publicObjective:golden_age';
@@ -15,10 +14,15 @@ export const id = 'publicObjective:golden_age';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => {
-    const spent = spentOnObjectives(turn);
-    const worth = tradeGoodWorth(turn.pack, turn.state, 'resources', { faction: turn.game.faction, shared: turn.shared });
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const { spent, events } = ctx.spendOnObjectives();
+    const worth = ctx.tradeGoodWorth('resources');
     const paid = spent.resources + spent.tradeGoods * worth;
-    if (paid < 16) turn.warnings.push(violation('shortResources', { needed: 16, paid }, 'status'));
+    if (paid < 16) ctx.warn(violation('shortResources', { needed: 16, paid }, 'status'));
+    return events;
   },
 };

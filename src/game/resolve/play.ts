@@ -51,7 +51,7 @@ function revise(ctx: Ctx, found: Warning, to?: Warning): void {
 export function playOne(ctx: Ctx, id: string): GameEvent[] {
   const lacking = ctx.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
   const before = ctx.board;
-  const result = runPlay(ctx.table, ctx.board, ctx.pack, id, ctx.player, { actor: ctx.player, step: ctx.cur.step, entry: ctx.entry, choices: choicesFor(ctx.entry, id), held: !lacking, warned: ctx.warnings, revise: (found, to) => revise(ctx, found, to) });
+  const result = runPlay(ctx.table, ctx.board, ctx.pack, id, ctx.player, { actor: ctx.player, step: ctx.cur.step, entry: ctx.entry, choices: choicesFor(ctx.entry, id), held: !lacking, memo: ctx.memo, warned: ctx.warnings, revise: (found, to) => revise(ctx, found, to) });
   ctx.board = result.board;
   ctx.cur.events.push(...result.events);
   if (result.violations.length > 0) warn(ctx, result.violations);

@@ -6,6 +6,8 @@
  * tests mark what it must do.
  */
 import { objectiveNotMet } from '../../points/status';
+import { tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'publicObjective:trade_routes';
@@ -14,8 +16,13 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   // Scoring pays 5 trade goods (61.10); they do not come back with the planets readied at the end of the status phase.
-  play: turn => {
-    if (turn.state.tradeGoods < 5) turn.warnings.push(objectiveNotMet(id, turn.state.tradeGoods, 5));
-    turn.state.tradeGoods -= Math.min(5, turn.state.tradeGoods);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const have = ctx.my.tradeGoods;
+    if (have < 5) ctx.warn(objectiveNotMet(id, have, 5));
+    return have > 0 ? [tradeGoods(ctx.holder, -Math.min(5, have))] : [];
   },
 };

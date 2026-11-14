@@ -5,7 +5,8 @@
  * Decided: play: the tokens the status entry spends are taken from the pools (poolNegative when a pool lacks them);
  * only tactic and strategy tokens count toward the 6, fewer is objectiveUnmet.
  */
-import { objectiveNotMet, spentOnObjectives } from '../../points/status';
+import { objectiveNotMet } from '../../points/status';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'publicObjective:galvanize';
@@ -13,10 +14,15 @@ export const id = 'publicObjective:galvanize';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => {
-    spentOnObjectives(turn);
-    const spend = turn.entry.type === 'statusTokens' ? turn.entry.spend ?? {} : {};
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const { events } = ctx.spendOnObjectives();
+    const spend = ctx.entry?.type === 'statusTokens' ? ctx.entry.spend ?? {} : {};
     const have = Math.max(0, spend.tactic ?? 0) + Math.max(0, spend.strategy ?? 0);
-    if (have < 6) turn.warnings.push(objectiveNotMet(id, have, 6));
+    if (have < 6) ctx.warn(objectiveNotMet(id, have, 6));
+    return events;
   },
 };

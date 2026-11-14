@@ -6,7 +6,8 @@
  * values only. A part short is shortInfluence or shortResources; fewer than 3 trade goods named is objectiveUnmet.
  */
 import { violation } from '../../../rules/registry';
-import { objectiveNotMet, spentOnObjectives } from '../../points/status';
+import { objectiveNotMet } from '../../points/status';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'publicObjective:amass_wealth';
@@ -14,10 +15,15 @@ export const id = 'publicObjective:amass_wealth';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => {
-    const spent = spentOnObjectives(turn);
-    if (spent.resources < 3) turn.warnings.push(violation('shortResources', { needed: 3, paid: spent.resources }, 'status'));
-    if (spent.influence < 3) turn.warnings.push(violation('shortInfluence', { needed: 3, paid: spent.influence }, 'status'));
-    if (spent.tradeGoods < 3) turn.warnings.push(objectiveNotMet(id, spent.tradeGoods, 3));
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const { spent, events } = ctx.spendOnObjectives();
+    if (spent.resources < 3) ctx.warn(violation('shortResources', { needed: 3, paid: spent.resources }, 'status'));
+    if (spent.influence < 3) ctx.warn(violation('shortInfluence', { needed: 3, paid: spent.influence }, 'status'));
+    if (spent.tradeGoods < 3) ctx.warn(objectiveNotMet(id, spent.tradeGoods, 3));
+    return events;
   },
 };
