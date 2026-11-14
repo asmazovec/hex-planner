@@ -6,7 +6,7 @@
  */
 import { MECATOL_PLANETS } from '../../mecatol';
 import type { Entry, Game, GameState, DataPack } from '../../types';
-import { isOnMap, systemPlanets, systemSlots } from '../board';
+import { isOnMap, systemPlanets, systemSlots, type MapSource } from '../board';
 import { CARD } from './ids';
 
 type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;
@@ -14,19 +14,30 @@ type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;
 /** What a tap on the map chooses for a card: the system of its effect, a place to build, or a dock to produce at. */
 export type CardMapPick = 'system' | 'build' | 'dock';
 
+/** What the targets are read from: the map, the systems holding a token of the player before the card, and whether a planet fits. */
+export interface TargetReads { map: MapSource; expansions: readonly string[]; tokens: readonly string[]; fits: (planetId: string, pick: CardMapPick) => boolean }
+
+/** The targets of a card over what the reads say; the old state and the board both ask this one. */
+export function cardTargetsOver(reads: TargetReads, pack: DataPack, entry: CardEntry, pick: CardMapPick): string[] {
+  const { map, tokens } = reads;
+  const primary = (card: number) => entry.type === 'strategic' && entry.card === card;
+  if (primary(CARD.warfare)) return tokens.filter(slot => isOnMap(map, slot));
+  const excluded = primary(CARD.diplomacy) ? MECATOL_PLANETS : [];
+  // Construction's secondary leaves its token there before Thunder's Edge: any system can be tapped, those without one are lit.
+  const placesToken = entry.type === 'secondary' && entry.card === CARD.construction && !reads.expansions.includes('te');
+  const tokened = placesToken ? tokens : [];
+  return systemSlots(map).filter(slot => {
+    const planets = systemPlanets(map, slot, pack);
+    return planets.some(p => reads.fits(p.id, pick)) && !planets.some(p => excluded.includes(p.id)) && !tokened.includes(slot);
+  });
+}
+
 /**
  * `before` is the state just before the card, `latest` the state the map shows (the planets mine and the docks there).
  */
 export function cardTargets(game: Game, pack: DataPack, entry: CardEntry, pick: CardMapPick, before: GameState, latest: GameState): string[] {
-  const primary = (card: number) => entry.type === 'strategic' && entry.card === card;
-  if (primary(CARD.warfare)) return before.tokensOnMap.filter(slot => isOnMap(game, slot));
-  const fits = (planetId: string) => (pick === 'dock' ? latest.docks.includes(planetId) : latest.control[planetId] === 'me');
-  const excluded = primary(CARD.diplomacy) ? MECATOL_PLANETS : [];
-  // Construction's secondary leaves its token there before Thunder's Edge: any system can be tapped, those without one are lit.
-  const placesToken = entry.type === 'secondary' && entry.card === CARD.construction && !game.expansions.includes('te');
-  const tokened = placesToken ? before.tokensOnMap : [];
-  return systemSlots(game).filter(slot => {
-    const planets = systemPlanets(game, slot, pack);
-    return planets.some(p => fits(p.id)) && !planets.some(p => excluded.includes(p.id)) && !tokened.includes(slot);
-  });
+  return cardTargetsOver({
+    map: game, expansions: game.expansions, tokens: before.tokensOnMap,
+    fits: (planetId, kind) => (kind === 'dock' ? latest.docks.includes(planetId) : latest.control[planetId] === 'me'),
+  }, pack, entry, pick);
 }

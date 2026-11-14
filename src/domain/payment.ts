@@ -93,15 +93,22 @@ interface Pick { count: number; ids: string[]; }
  * then fewer trade goods, then fewer planets. Falls short only by giving everything useful.
  */
 export function autoPay(state: GameState, need: number, kind: PaymentKind, pack: DataPack, view?: PayView): Payment {
-  const worth = tradeGoodWorth(pack, state, kind, view);
-  const items = readyPlanetIds(state)
-    .map(id => ({ id, value: planetValue(pack, state, id, kind, view) }))
+  const items = readyPlanetIds(state).map(id => ({ id, value: planetValue(pack, state, id, kind, view) }));
+  return choosePayment(items, state.tradeGoods, tradeGoodWorth(pack, state, kind, view), need);
+}
+
+/**
+ * The choice itself, over what is ready: `items` the planets that can pay with what each gives, the trade goods held and
+ * what one is worth. The old state and the board both ask this one.
+ */
+export function choosePayment(ready: { id: string; value: number }[], tradeGoods: number, worth: number, need: number): Payment {
+  const items = ready
     .filter(p => p.value > 0)
     .sort((a, b) => b.value - a.value || (a.id < b.id ? -1 : 1));
   const order = (ids: string[]): string[] => items.map(p => p.id).filter(id => ids.includes(id));
   if (need <= 0) return { planets: [], tradeGoods: 0 };
   const total = items.reduce((sum, p) => sum + p.value, 0);
-  if (total + state.tradeGoods * worth < need) return { planets: order(items.map(p => p.id)), tradeGoods: state.tradeGoods };
+  if (total + tradeGoods * worth < need) return { planets: order(items.map(p => p.id)), tradeGoods };
 
   // best[s]: fewest planets whose values sum to exactly s.
   const best: (Pick | undefined)[] = Array.from({ length: total + 1 }, () => undefined);
@@ -113,7 +120,7 @@ export function autoPay(state: GameState, need: number, kind: PaymentKind, pack:
     }
   }
   let winner: { surplus: number; goods: number; count: number; ids: string[] } | undefined;
-  for (let goods = 0; goods <= Math.min(state.tradeGoods, Math.ceil(need / worth)); goods++) {
+  for (let goods = 0; goods <= Math.min(tradeGoods, Math.ceil(need / worth)); goods++) {
     for (let s = Math.max(0, need - goods * worth); s <= total; s++) {
       const pick = best[s];
       if (!pick) continue;

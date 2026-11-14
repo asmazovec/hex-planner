@@ -71,7 +71,7 @@ describe('flightOf and the meters of a source', () => {
   test('inFlight and flies', () => {
     const entries = [setup('A', { carrier: 1, fighter: 2 }), setup('H', { cruiser: 1 }),
       { ...entry(tactical({ moves: [{ from: 'A', units: { carrier: 1 } }, { from: 'H', units: { cruiser: 1 }, pickupOf: 'A' }] })), id: 'm' }];
-    const { g, e, before, frame, turn, table } = both(gameOf('sol', entries), 'm');
+    const { e, before, frame, turn, table } = both(gameOf('sol', entries), 'm');
     expect(flies(turn)).toBe(oldFlies(e));
     expect(flies(turnOf(table, { ...e, moves: [] }, pack))).toBe(oldFlies({ ...e, moves: [] }));
     for (const passed of [[], [1]]) {
