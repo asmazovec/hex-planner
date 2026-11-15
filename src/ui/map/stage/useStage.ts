@@ -14,7 +14,7 @@ import type { Turn } from '../../../game/actions';
 import type { Board, PlayerId } from '../../../game/types';
 import { writeSaved } from '../../../state/turnBridge';
 import { warningsByTurn } from '../../../game/rowWarnings';
-import { fleetExcessOf, flightOf, productionSites } from '../../../game/flight';
+import { fleetExcessOf, flightOf, productionEntered, productionSites } from '../../../game/flight';
 import { productionDueOnBoard } from '../../../game/planQueries';
 import { allTurns, isTacticalTurn, mergedCountsOf, spendableOn, structureWarningsOn, type TacticalTurn } from '../../../game/screenQueries';
 import { shelfOf } from '../../../game/shelf';
@@ -140,10 +140,13 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const produced = tactical && beforeTactical ? productionSites(table, beforeTactical, pack, tactical) : [];
   const changeProduction = (entry: TacticalTurn, unit: UnitId, planetId: string | null, amount: 1 | -1) =>
     editTurn(entry.id, (turn, before) => withProductionOn(table, before, pack, turn, unit, planetId, amount, manualPayments.includes(entry.id)));
+  /** The same production by the row it was bought in: the tray of a row holds what was entered there. */
+  const enteredHere = tactical && beforeTactical ? productionEntered(table, beforeTactical, pack, tactical) : [];
   const purchases: PurchaseTarget = onPurchase ?? {
     bought: [...produced, ...mergedCountsOf(round, 'build', slot)],
+    entered: [...enteredHere, ...mergedCountsOf(round, 'build', slot)],
     change: (unit, planetId, amount) => {
-      const held = produced.some(p => p.unit === unit && p.planetId === planetId);
+      const held = enteredHere.some(p => p.unit === unit && p.planetId === planetId);
       if (tactical && beforeTactical && (amount > 0 || held)) changeProduction(tactical, unit, planetId, amount);
       else setup.changeAdjustment(roundNo, { kind: 'build', systemId: slot, unit, planetId, amount }, table.viewer);
     },
@@ -154,10 +157,21 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   };
   const bought: Record<string, number> = { ...news };
   for (const item of purchases.bought) bought[keyOfBought(item)] = (bought[keyOfBought(item)] ?? 0) + item.count;
+  /** What each row of the shop holds: the purchases by the place they were entered at. On the hex a unit is ringed where it stands. */
+  const entered: Record<string, number> = { ...news };
+  for (const item of purchases.entered ?? purchases.bought) entered[keyOfBought(item)] = (entered[keyOfBought(item)] ?? 0) + item.count;
+  /** The place a purchase of mine is taken back from: the one it was entered at, when it stands elsewhere on the hex. */
+  const enteredPlace = (unit: TokenKind, planetId: string | null): string | null => {
+    const places = (purchases.entered ?? []).filter(p => p.unit === unit);
+    return places.length === 0 || places.some(p => p.planetId === planetId) ? planetId : places[0].planetId;
+  };
 
   for (const { kind, planetId } of purchases.structures ?? []) {
     const index = planets.findIndex(p => p.id === planetId);
-    if (index >= 0) bought[stackKey(holderOf(planetId), kind, index)] = (bought[stackKey(holderOf(planetId), kind, index)] ?? 0) + 1;
+    if (index < 0) continue;
+    const key = stackKey(holderOf(planetId), kind, index);
+    bought[key] = (bought[key] ?? 0) + 1;
+    entered[key] = (entered[key] ?? 0) + 1;
   }
 
   /**
@@ -198,14 +212,14 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const inBaseline = (kind: StructureKind, planetId: string): boolean => setup.inBaseline(pack, kind, planetId);
 
   /** Build: a tap takes back one bought here. */
-  const unbuy = ({ kind, owner, key }: PlacedStack, planetId: string | null) => {
-    if ((bought[key] ?? 0) === 0) return;
+  const unbuy = ({ kind, owner, key }: PlacedStack, planetId: string | null, held: Record<string, number> = bought) => {
+    if ((held[key] ?? 0) === 0) return;
     if (isStructure(kind) && purchases.changeStructure) {
       purchases.changeStructure(kind, planetId ?? '', -1);
       return;
     }
     if (owner === mine && !isStructure(kind)) {
-      purchases.change(kind, planetId, -1);
+      purchases.change(kind, enteredPlace(kind, planetId), -1);
       return;
     }
     if (isStructure(kind)) changeStructure(kind, planetId ?? '', -1);
@@ -282,11 +296,11 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     }))),
   ];
   /** The keys of what was bought of a kind in one row of the shop: a structure of any holder, a unit of the chosen player. */
-  const boughtKeys = (kind: TokenKind, index: number | undefined): string[] => Object.keys(bought).filter(key => {
+  const boughtKeys = (kind: TokenKind, index: number | undefined): string[] => Object.keys(entered).filter(key => {
     const k = parseKey(key);
-    return bought[key] > 0 && k.kind === kind && k.planet === index && (isStructure(kind) || k.owner === side);
+    return entered[key] > 0 && k.kind === kind && k.planet === index && (isStructure(kind) || k.owner === side);
   });
-  const boughtAt = (kind: TokenKind, index: number | undefined): number => boughtKeys(kind, index).reduce((sum, key) => sum + bought[key], 0);
+  const boughtAt = (kind: TokenKind, index: number | undefined): number => boughtKeys(kind, index).reduce((sum, key) => sum + entered[key], 0);
   /**
    * The figures still in the reinforcements of the player the shop buys for (96.2, 24.4): the limit less what the forecast
    * already holds on the board, purchases included; below zero by what was bought beyond them. Fighters and infantry have tokens and never run out.
@@ -331,7 +345,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     const key = boughtKeys(kind, index)[0];
     if (!key) return;
     setTapNote(null);
-    unbuy({ kind, owner: parseKey(key).owner, key } as PlacedStack, planetIdOf(index));
+    unbuy({ kind, owner: parseKey(key).owner, key } as PlacedStack, planetIdOf(index), entered);
   };
 
   /** My ships in the space area of the system, for the removal beyond the fleet pool: what stands, and what was removed. */

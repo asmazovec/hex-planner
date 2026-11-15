@@ -7,6 +7,8 @@ export interface BoughtUnit { unit: UnitId; /** Null for the system's space area
 /** Where my purchases go: what it holds so far, and one tap to buy (1) or take back (-1). */
 export interface PurchaseTarget {
   bought: BoughtUnit[];
+  /** The same units by the row of the shop they were bought in, where that differs from where they stand: ground forces bought on a planet their player does not control stand elsewhere on the hex. */
+  entered?: BoughtUnit[];
   change: (unit: UnitId, planetId: string | null, amount: 1 | -1) => void;
   /** Structures this target holds: with `changeStructure` they stay in the entry and off the game. */
   structures?: { kind: StructureKind; planetId: string }[];

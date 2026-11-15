@@ -8,7 +8,7 @@ import { componentById } from '../../domain/components';
 import { costsStrategyToken, strategyTokensOwedOf, cardCostOf, type CardEntry } from '../../domain/strategy';
 import { handlerOf } from '../../domain/replay/cards/index';
 import { researchLimit } from '../../domain/replay/cards/technology';
-import { placesOn, type ProductionPlace } from '../../domain/replay/production';
+import { enteredOn, placesOn, type ProductionPlace } from '../../domain/replay/production';
 import type { PaymentKind } from '../../domain/payment';
 import { readyLimit } from '../../domain/replay/cards/diplomacy';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
@@ -87,6 +87,12 @@ export function purchasesOn(table: Table, board: Board, pack: DataPack, turn: Ca
 export function boughtOn(table: Table, board: Board, pack: DataPack, player: PlayerId, effects: NonNullable<Strategic['effects']>, slot: string): ProductionPlace[] {
   const production = effects.production?.systemId === slot ? effects.production : undefined;
   return placesOn(groundIn(table, board, pack, player), slot, production?.units ?? {}, pack, production?.ground);
+}
+
+/** Where the units of such effects were bought in the system, row by row of the shop: ground forces on the planet entered, the rest where the replay places it. */
+export function enteredIn(table: Table, board: Board, pack: DataPack, player: PlayerId, effects: NonNullable<Strategic['effects']>, slot: string): ProductionPlace[] {
+  const production = effects.production?.systemId === slot ? effects.production : undefined;
+  return enteredOn(boughtOn(table, board, pack, player, effects, slot), production?.units ?? {}, pack, production?.ground);
 }
 
 /** The planets the card may ready: my exhausted ones, or for the base primary mine in the chosen system; those already chosen stay listed. */

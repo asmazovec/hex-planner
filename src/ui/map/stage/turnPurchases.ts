@@ -1,7 +1,7 @@
 import { withCardChange, withCardProduction, withCardStructure } from '../../../game/edit/strategic';
 import { withProducedPayment } from '../../../game/edit/turn';
 import { withProduction, withStructure } from '../../../domain/strategy';
-import { boughtOn, effectsOf, isCardTurn, purchasesOn } from '../../../game/edit/strategicRead';
+import { boughtOn, effectsOf, enteredIn, isCardTurn, purchasesOn } from '../../../game/edit/strategicRead';
 import type { TurnWrite } from '../../../state/turnBridge';
 import type { CardEffects, DataPack } from '../../../domain/types';
 import type { KernelView } from '../../plan/kernelView';
@@ -21,6 +21,7 @@ export function turnPurchases(
   const apply = (next: typeof turn) => write.update(withCardChange(table, board, pack, turn, { effects: effectsOf(next) }, manual));
   return {
     bought: purchasesOn(table, board, pack, turn, slot),
+    entered: enteredIn(table, board, pack, turn.player, effectsOf(turn), slot),
     view, player: turn.player,
     entryId: turn.id,
     change: (unit, planetId, amount) => apply(withCardProduction(turn, slot, unit, planetId, amount) as typeof turn),
@@ -40,6 +41,7 @@ export function componentPurchases(
   const apply = (next: CardEffects) => write.update(withProducedPayment(table, board, pack, turn, next, manual));
   return {
     bought: boughtOn(table, board, pack, turn.player, effects, slot),
+    entered: enteredIn(table, board, pack, turn.player, effects, slot),
     view, player: turn.player,
     entryId: turn.id,
     change: (unit, planetId, amount) => apply(withProduction(effects, slot, unit, planetId, amount)),

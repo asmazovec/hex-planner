@@ -5,7 +5,7 @@
  */
 import type { Turn } from './actions';
 import { apply } from './apply';
-import { placesOn, type ProductionPlace } from '../domain/replay/production';
+import { enteredOn, placesOn, type ProductionPlace } from '../domain/replay/production';
 import { fleetLimit, groundIn, mapOf, routeReadsOn, shipsIn, stacksOn } from './queries';
 import { fleetSpeed, routeMove, routeReach, routeSteps, type Blockers } from '../domain/movement';
 import type { TacticalEntry } from '../domain/replay/state';
@@ -62,6 +62,13 @@ export function productionSites(table: Table, board: Board, pack: DataPack, turn
   if (action.kind !== 'tactical' || action.system === null) return [];
   const landed = flightOf(table, board, pack, turn).landed;
   return placesOn(groundIn(table, landed, pack, turn.player), action.system, action.production?.units ?? {}, pack, action.production?.ground);
+}
+
+/** Where a tactical turn's production was bought, row by row of the shop: ground forces on the planet entered, the rest where the replay places it. */
+export function productionEntered(table: Table, board: Board, pack: DataPack, turn: Turn): ProductionPlace[] {
+  const action = turn.action;
+  if (action.kind !== 'tactical' || action.system === null) return [];
+  return enteredOn(productionSites(table, board, pack, turn), action.production?.units ?? {}, pack, action.production?.ground);
 }
 
 /** How the active system stands against the fleet pool at the end of the action, in the numbers the meters give (the pool and the ships there). */

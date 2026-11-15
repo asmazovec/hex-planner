@@ -167,6 +167,29 @@ export function placesOn(g: Ground, target: string, units: UnitCounts, pack: Dat
   return places;
 }
 
+/**
+ * Where the units of a production were entered, for the one who edits it: ground forces on the planet they were bought
+ * on, whoever controls it, and the rest where the replay places them (`placed`, the answer of `placesOn` for the same
+ * production). The replay itself moves a unit off a planet its player does not control (67.4.1), and the board shows
+ * it there; the place of the purchase stays the row it is taken back from.
+ */
+export function enteredOn(placed: ProductionPlace[], units: UnitCounts, pack: DataPack, onPlanets: Record<string, UnitCounts> = {}): ProductionPlace[] {
+  const places: ProductionPlace[] = [];
+  for (const unit of unitIds(units)) {
+    let left = units[unit] ?? 0;
+    if (pack.units[unit]?.ground) {
+      for (const [planetId, counts] of Object.entries(onPlanets)) {
+        const count = Math.min(left, counts[unit] ?? 0);
+        if (count > 0) places.push({ unit, planetId, count });
+        left -= count;
+      }
+    }
+    // What was bought on no planet in particular is where the replay puts it: its place comes last among the unit's.
+    if (left > 0) places.push({ unit, planetId: placed.filter(p => p.unit === unit).at(-1)?.planetId ?? null, count: left });
+  }
+  return places;
+}
+
 const limitWarnings = (onBoardOf: (unit: UnitId) => number, units: UnitCounts, pack: DataPack, step?: RuleStep): Warning[] => {
   const warnings: Warning[] = [];
   for (const unit of unitIds(units)) {
