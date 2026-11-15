@@ -38,9 +38,9 @@ export function StatusFields({ turn, pack, view, end, warnings, onChange }: Stat
   if (!status) return null;
   // Two tokens, and what the player's components make of them (Versatile, Hyper Metabolism, a note named in «Used»).
   const free = statusTokensFreeOfTurn(view.table, view.board, pack, turn);
-  // The viewer first, then the others by seat, as the table lists them.
+  // The player of the turn first, then the others by seat, as the table lists them.
   const seated = view.table.players.filter(p => p.seat <= 8).sort((a, b) => a.seat - b.seat);
-  const players = [...seated.filter(p => p.id === view.table.viewer), ...seated.filter(p => p.id !== view.table.viewer)];
+  const players = [...seated.filter(p => p.id === turn.player), ...seated.filter(p => p.id !== turn.player)];
   return (
     <>
       <TokenTiles
@@ -49,11 +49,11 @@ export function StatusFields({ turn, pack, view, end, warnings, onChange }: Stat
       />
       <WarningList warnings={warnings} table={view.table} board={view.board} pack={pack} />
       <SectionTitle as="h5" className="status-points">{t('plan.entries.roundPoints')}</SectionTitle>
-      {players.map((player, index) => {
+      {players.map(player => {
         return (
           <div key={player.id} className="status-player" style={playerStyle('--player', player.color)}>
             <Stepper
-              name={shortName(pack, player.faction, t('players.player', { n: index + 1 }))}
+              name={shortName(pack, player.faction, t('players.player', { n: player.seat }))}
               note={t('plan.entries.pointsTotal', { n: end.board.players[player.id]?.vp ?? 0 })}
               value={roundPointsOf(turn, player.id)} min={0}
               onChange={value => onChange(withRoundPoints(turn, player.id, value))}

@@ -112,6 +112,15 @@ function remindersBuilt(board: Board, pack: DataPack, player: PlayerId, holder: 
  * `holder` declaration says it speaks in this action. A component held by several, or in several copies, is given once.
  */
 export function hintsAtSteps(table: Table, board: Board, pack: DataPack, actor: PlayerId, steps: readonly RuleStep[], concerned?: (step: RuleStep) => readonly PlayerId[]): Map<RuleStep, ComponentDef[]> {
+  const told = remindersAtSteps(table, board, pack, actor, steps, concerned);
+  return new Map(steps.map(step => [step, (told.get(step) ?? []).map(reminder => reminder.def)]));
+}
+
+/** A reminder of a step and the players it speaks for in this action, by seat: the actor among them when it is the actor's own. */
+export interface Reminder { def: ComponentDef; holders: PlayerId[] }
+
+/** The reminders of steps as `hintsAtSteps` gives them, each with the players who hold it and for whom it speaks here. */
+export function remindersAtSteps(table: Table, board: Board, pack: DataPack, actor: PlayerId, steps: readonly RuleStep[], concerned?: (step: RuleStep) => readonly PlayerId[]): Map<RuleStep, Reminder[]> {
   const held = new Map<string, Set<PlayerId>>();
   for (const player of table.players) {
     for (const id of remindersOf(table, board, pack, player.id)) (held.get(id) ?? held.set(id, new Set()).get(id)!).add(player.id);
@@ -119,12 +128,14 @@ export function hintsAtSteps(table: Table, board: Board, pack: DataPack, actor: 
   const sorted = [...held.keys()].sort((a, b) => orderOf(pack, a) - orderOf(pack, b));
   return new Map(steps.map(step => {
     const involved = concerned?.(step) ?? [actor];
-    const shown = sorted.filter(id => {
-      if (effectOf(pack, id)?.hintAt?.includes(step) !== true) return false;
+    const shown = sorted.flatMap((id): Reminder[] => {
+      if (effectOf(pack, id)?.hintAt?.includes(step) !== true) return [];
       const rule = holderRuleOf(pack, id);
-      return [...held.get(id)!].some(player => speaksIn(rule, player === actor, involved.includes(player)));
+      const holders = table.players.filter(p => held.get(id)!.has(p.id) && speaksIn(rule, p.id === actor, involved.includes(p.id))).sort((a, b) => a.seat - b.seat).map(p => p.id);
+      const def = componentById(pack, id);
+      return holders.length > 0 && def ? [{ def, holders }] : [];
     });
-    return [step, shown.flatMap(id => componentById(pack, id) ?? [])];
+    return [step, shown];
   }));
 }
 
