@@ -51,7 +51,7 @@ export const ability: Ability = {
 ```
 
 The context (`AbilityContext`) gives `holder` and `actor` (so a file never compares ids), `my` and `of(player)` (what a player
-holds, controls and has on the board), `choices`, `entry` (the turn as `TurnFacts`, `src/game/turnFacts.ts`: `type`, `systemId`, `moves`, `landings`, `uses`, `gains`, `spends`, `componentId`, `card`, `owner` as the old key `me` or a rival id), and the questions of the game (`planetsIn`, `adjacent`,
+holds, controls and has on the board), `choices`, `entry` (the turn as `TurnFacts`, `src/game/turnFacts.ts`: `type`, `systemId`, `moves`, `landings`, `uses`, `gains`, `spends`, `componentId`, `card`, `player`: whose turn it is, a player id of the table like every player a choice or the address of a note names; `ctx.playerOf(value)` tells whether a chosen value is a player at the table), and the questions of the game (`planetsIn`, `adjacent`,
 `planetValue`, `capacityOf`, ...). A play returns events (`src/game/abilities/emit.ts`) and reports breaches with `ctx.warn`;
 `apply.ts` is the only writer of a board.
 
@@ -60,8 +60,9 @@ those of its kind unless `options(ctx)` (or `slots(ctx)` for `counts`) says othe
 the board just before the entry, with `chosen`, for the one whose entry it is: `ctx.my.planets()` is the planets of whoever plays,
 the player kind offers the others as seen from them. `controlledPlanets`, `systemsWithUnits`, `technologiesOf`, `handOf` and
 `othersOf` (`effects/helpers/choices.ts`) cover the usual ones. One function answers them for the editor, the plays and the
-resolver: `choicesOf` (`src/game/abilities/choices.ts`). Values are kept in the entry's `choices` / `useChoices` as `me`, an
-opponent id, a planet id, a slot; they are the saved format.
+resolver: `choicesOf` (`src/game/abilities/choices.ts`). Values are kept in the entry's `choices` / `useChoices` as a
+player id of the table (`p1`..`p8`), a planet id, a slot; they are the saved format. In a test the entries of an old game keep
+writing `me` and an opponent's id: `src/testing/old/game/keys.ts` turns them into player ids on the way into the kernel and back.
 
 A component file must not import `game/abilities/registry`, `game/setup`, `game/queries` or `game/keys`: what it needs comes on its context.
 Still on the old state: `requirement` (objectives), `links` and `useCost`, which the old replay asks.

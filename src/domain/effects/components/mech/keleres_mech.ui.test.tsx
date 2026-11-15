@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { expectNotShown, expectShownStanding, land, showTactical, uiBench } from '../../../../ui/testing/effects';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, HOME, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './keleres_mech';
 

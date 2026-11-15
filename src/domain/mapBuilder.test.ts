@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { changeLayout, defaultLayout, duplicateTiles, emptySlots, readyToPlay, mapIsEmpty, resolveTile, seatSlots, slotsFor, templateFor, tileSuggestions, tilesLostByLayout } from './mapBuilder';
+import { defaultLayout, duplicateTiles, resolveTile, seatSlots, slotsFor, templateFor, tileSuggestions } from './mapBuilder';
+import { changeLayout, emptySlots, readyToPlay, mapIsEmpty, tilesLostByLayout } from '../testing/old/domain/mapBuilder';
 import { createGame } from '../testing/old/domain/newGame';
 
 const base = loadPack([]);

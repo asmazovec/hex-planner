@@ -6,8 +6,6 @@
  */
 import { componentById, componentsOf, noteAddress, noteBase } from '../components';
 import type { ComponentDef, DataPack, RuleStep } from '../types';
-import type { TableFacts } from '../facts';
-import type { ControlOf, Kept, LawsOf, SharedOf } from '../readers';
 import type { Shelf } from '../shelf';
 import { defaultHolder, type HolderRule } from './holder';
 import type { Ability, Modifiers } from './types';
@@ -71,7 +69,7 @@ function merged(generated: Ability, file: Ability): Ability {
   return { ...generated, ...file, tier: 'passive', modify: modify as Partial<Modifiers> };
 }
 
-interface Registry { effects: Map<string, Ability>; order: Map<string, number> }
+interface Registry { effects: Map<string, Ability>; order: Map<string, number>; /** The cards of the legendary planets that have an effect, each with its planet. */ legendary: [string, string][] }
 const REGISTRIES = new WeakMap<DataPack, Registry>();
 
 export function registryOf(pack: DataPack): Registry {
@@ -91,7 +89,8 @@ export function registryOf(pack: DataPack): Registry {
       written.set(id, generated ? merged(generated, effect) : effect.tier === 'hint' ? { ...defaults.get(id), ...effect } : effect);
     }
     const effects = new Map<string, Ability>([...written, ...hints.filter(([id]) => !written.has(id))]);
-    registry = { effects, order: new Map([...effects.keys()].map((id, index) => [id, index])) };
+    const legendary = [...effects.keys()].filter(id => id.startsWith('legendary:')).map((id): [string, string] => [id, id.slice('legendary:'.length)]);
+    registry = { effects, order: new Map([...effects.keys()].map((id, index) => [id, index])), legendary };
     REGISTRIES.set(pack, registry);
   }
   return registry;
@@ -121,12 +120,14 @@ export function readyComponents(pack: DataPack, holdings: Shelf): string[] {
 
 /**
  * Whose components are asked. The holdings alone give the cards a player holds; with the faction come the abilities
- * and the mech of its sheet and its breakthrough, with `control` the legendary planets the player controls (their own
- * state's `control`), with `laws` the laws in play for the whole game.
+ * and the mech of its sheet and its breakthrough, with `controls` the legendary planets the player controls, with
+ * `laws` the laws that bind the player.
  */
 export interface Holder {
-  holdings: Shelf; faction?: string; control?: ControlOf['control']; laws?: readonly string[];
-  /** The holdings of every player by `me` or opponent id: what another player's component lends this one (an Alliance note brings its owner's commander). */
+  holdings: Shelf; faction?: string; laws?: readonly string[];
+  /** Whether the player controls a planet. */
+  controls?: (planetId: string) => boolean;
+  /** The holdings of every player by player id: what another player's component lends this one (an Alliance note brings its owner's commander). */
   others?: Readonly<Record<string, Shelf>>;
 }
 
@@ -135,53 +136,6 @@ export type Who = Shelf | Holder;
 
 /** The holder of `who`: holdings alone take the faction of the game, a holder keeps its own. */
 export const holderFor = (who: Who, faction: string): Holder => ('holdings' in who ? (who.faction === undefined ? { ...who, faction } : who) : { holdings: who, faction });
-
-/**
- * The holder a player of a game is: `state` is their own, `shared` mine, which keeps the laws. A state of a view is
- * shared and never changes, so holders that come to the same holdings, control, laws and lent holdings are the one
- * holder, and what is kept per holder (what is in force, the passive effects) is worked out once.
- */
-const HOLDER_KEPT = new WeakMap<object, Holder[]>();
-
-const sameList = (a: readonly string[] | undefined, b: readonly string[] | undefined): boolean =>
-  a === b || (a !== undefined && b !== undefined && a.length === b.length && a.every((id, i) => id === b[i]));
-const sameOthers = (a: Holder['others'], b: Holder['others']): boolean => {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  const keys = Object.keys(a);
-  return keys.length === Object.keys(b).length && keys.every(key => a[key] === b[key]);
-};
-
-export function holderOf(
-  game: Pick<TableFacts, 'faction'>, state: Kept,
-  shared: SharedOf = state,
-): Holder {
-  const built = holderBuilt(game, state, shared);
-  let kept = HOLDER_KEPT.get(state.holdings);
-  const same = kept?.find(k => k.faction === built.faction && k.control === built.control && sameList(k.laws, built.laws) && sameOthers(k.others, built.others));
-  if (same) return same;
-  if (!kept) HOLDER_KEPT.set(state.holdings, kept = []);
-  if (kept.length >= 8) kept.shift();
-  kept.push(built);
-  return built;
-}
-
-const holderBuilt = (
-  game: Pick<TableFacts, 'faction'>, state: Kept,
-  shared: SharedOf,
-): Holder =>
-  ({
-    holdings: state.holdings, faction: game.faction, control: state.control, laws: lawsFor(shared, game.faction),
-    ...('rivals' in shared || 'holdings' in shared ? { others: othersOf(shared as Pick<SharedOf, 'holdings' | 'rivals'>) } : {}),
-  });
-
-/** Every player's holdings by `me` or opponent id, from my state, which holds the opponents' in `rivals`. */
-const othersOf = (shared: Pick<SharedOf, 'holdings' | 'rivals'>): Record<string, Shelf> =>
-  ({ me: shared.holdings as Shelf, ...Object.fromEntries(Object.entries(shared.rivals ?? {}).map(([id, rival]) => [id, rival.holdings])) });
-
-/** The laws that bind a faction: those of the whole game, and the `Elect Player` laws only for the player they elected. */
-const lawsFor = (shared: LawsOf, faction: string): readonly string[] | undefined =>
-  (shared.lawOwners && shared.laws ? shared.laws.filter(id => shared.lawOwners![id] === undefined || shared.lawOwners![id] === faction) : shared.laws);
 
 /** What a faction sheet brings by itself: the abilities and the mech; the breakthrough apart, as it must be held. */
 interface Sheet { always: string[]; breakthrough?: string }
@@ -235,7 +189,7 @@ export function inForceOf(pack: DataPack, holder: Holder, only?: (effect: Abilit
     const lent = holder.others?.[owner]?.leaders ?? {};
     for (const leader in lent) if (lent[leader] === 'unlocked' && componentById(pack, leader)?.detail?.type === 'commander') ask(leader);
   }
-  if (holder.control) for (const planetId in holder.control) if (holder.control[planetId] === 'me') ask(`legendary:${planetId}`);
+  if (holder.controls) for (const [id, planetId] of registryOf(pack).legendary) if (holder.controls(planetId)) ask(id);
   for (const id of holder.laws ?? []) ask(id);
   // A law in force may take other components out of force (Articles of War: the mechs).
   const suppressors = (holder.laws ?? []).flatMap(id => effects.get(noteBase(id))?.suppresses ?? []);

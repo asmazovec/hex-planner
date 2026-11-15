@@ -1,7 +1,7 @@
 /** LRR 49 Invasion. Source: tirules2 rules-reference/invasion.md. */
 import { describe, expect, test } from 'vitest';
 import { MECATOL_PLANET, MECATOL_TILE } from '../../mecatol';
-import type { Player } from '../../players';
+import type { Player } from '../../../testing/old/domain/types';
 import { adjust, codesOf, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

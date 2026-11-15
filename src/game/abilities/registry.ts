@@ -21,9 +21,9 @@ export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
   const quick = cards && HOLDERS.get(cards)?.find(k => k.table === table && k.player === player && k.planets === board.planets && k.laws === board.common.laws && k.lent.every((h, i) => h === holdingsOf(board, table.players[i].id)));
   if (quick) return quick.holder;
   const faction = table.players.find(p => p.id === player)?.faction;
-  const control: Record<string, 'me'> = {};
+  const mine = new Set<string>();
   let owned = '';
-  for (const [id, planet] of Object.entries(board.planets)) if (planet.owner === player) { control[id] = 'me'; owned += id + ','; }
+  for (const [id, planet] of Object.entries(board.planets)) if (planet.owner === player) { mine.add(id); owned += id + ','; }
   const laws = board.common.laws.filter(law => law.elected === undefined || law.elected === player).map(law => law.id);
   const lawKey = laws.join(',');
   // An Alliance note lends its owner's commander: every player's holdings, by the player id a note is addressed with.
@@ -32,7 +32,7 @@ export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
   if (kept) { kept.planets = board.planets; kept.laws = board.common.laws; return kept.holder; }
   const others: Record<string, Shelf> = {};
   table.players.forEach((p, i) => { others[p.id] = lent[i]; });
-  const holder: Holder = { holdings: holdingsOf(board, player), ...(faction === undefined ? {} : { faction }), control, laws, others };
+  const holder: Holder = { holdings: holdingsOf(board, player), ...(faction === undefined ? {} : { faction }), controls: id => mine.has(id), laws, others };
   if (cards) {
     const list = HOLDERS.get(cards) ?? [];
     if (list.length >= 8) list.shift();
@@ -83,7 +83,7 @@ function sheetOf(pack: DataPack, holder: Holder): string[] {
   const kept = SHEETS.get(holder);
   if (kept && kept.pack === pack) return kept.ids;
   const { holdings } = holder;
-  const ids = inForceOf(pack, { holdings, ...(holder.faction === undefined ? {} : { faction: holder.faction }), ...(holder.control ? { control: holder.control } : {}) }).filter(id => SHEET_KIND.test(id));
+  const ids = inForceOf(pack, { holdings, ...(holder.faction === undefined ? {} : { faction: holder.faction }), ...(holder.controls ? { controls: holder.controls } : {}) }).filter(id => SHEET_KIND.test(id));
   SHEETS.set(holder, { pack, ids });
   return ids;
 }

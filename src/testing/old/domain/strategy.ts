@@ -1,17 +1,20 @@
+import { MECATOL_PLANETS } from '../../../domain/mecatol';
 import type { CardPlay, DataPack, Payment, CardEffects } from '../../../domain/types';
 import { factsOfEntry } from './types';
 import type { Round, Entry, Game } from './types';
 import type { GameState, Holdings } from './types';
 import { heldCards, primaryForToken, strategyTokensOwedOf, cardCostOf, type HomeNote } from '../../../domain/strategy';
 import type { CardEntry } from './types';
-import { holderOf, type Holder, effectOf } from '../../../domain/effects/registry';
+import { type Holder, effectOf } from '../../../domain/effects/registry';
+import { holderOf } from './effects/holder';
 import { type PaymentKind } from '../../../domain/payment';
 import { autoPay } from './payment';
 import { playedCost } from '../../../domain/effects/playedCost';
 import { seatSlots } from '../../../domain/mapBuilder';
 import { productionDue } from './replay/production';
 
-export { controlsMecatol } from '../../../domain/replay/cards/imperial';
+/** Whether the player of an old state controls Mecatol Rex, in either version. */
+export const controlsMecatol = (state: Pick<GameState, 'control'>): boolean => MECATOL_PLANETS.some(id => state.control[id] === 'me');
 export type CardPatch = CardPlay & { type?: CardEntry['type'] };
 /**
  * The round with the `forToken` of my primaries following its cards, so that a saved entry agrees with the replay even
@@ -126,3 +129,69 @@ export function homeNotes(game: Game, pack: DataPack): HomeNote[] {
   }
   return notes;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// My home in the old game, and the structures written under it.
+
+export interface Home {
+  /** Where my start units stand and where home production happens, or null with nothing on the map. */
+  slot: string | null;
+  /** True when my seat holds no tile and the first slot with a tile stands in. */
+  fallback: boolean;
+}
+
+/**
+ * My home: the faction's home tile if it is on the map (for an off-map home with its gate on the map, the tile's own id:
+ * the projection keeps its units there and the route graph knows it, see `offMapHomes`); otherwise the slot of my seat, whatever tile stands there; with an
+ * empty seat, the first slot with a tile.
+ */
+export function homeOf(game: Game, pack: DataPack): Home {
+  const faction = pack.factions[game.faction];
+  if (!faction) return { slot: null, fallback: false };
+  const onMap = (tile: string | undefined) => Object.keys(game.map).find(slot => game.map[slot].split('@')[0] === tile);
+  const own = onMap(faction.homeTile) ?? (onMap(faction.gateTile) ? faction.homeTile : undefined);
+  if (own) return { slot: own, fallback: false };
+  const seat = seatSlots(game.playerCount, pack, game.layout)[game.seat - 1];
+  if (seat && game.map[seat]) return { slot: seat, fallback: false };
+  const first = Object.keys(game.map).find(slot => slot !== '0,0') ?? null;
+  return { slot: first, fallback: first !== null };
+}
+
+export const homeSlot = (game: Game, pack: DataPack): string | null => homeOf(game, pack).slot;
+
+/** The planets of my faction's own home tile, on the map or not. */
+const ownHomePlanets = (game: Game, pack: DataPack): string[] =>
+  pack.tiles[pack.factions[game.faction]?.homeTile ?? '']?.planetIds ?? [];
+
+/** The planets I start with: of my own home, or of the tile at my seat when mine is not on the map. A fallback tile only holds the units until the seat has one. */
+export function homePlanets(game: Game, pack: DataPack): string[] {
+  const { slot, fallback } = homeOf(game, pack);
+  if (slot === null || fallback) return ownHomePlanets(game, pack);
+  return pack.tiles[(game.map[slot] ?? slot).split('@')[0]]?.planetIds ?? ownHomePlanets(game, pack);
+}
+
+/** Planets that lost their place to the tile at my seat: nothing on the map stands for them. */
+export const absentHomePlanets = (game: Game, pack: DataPack): string[] => {
+  const home = homePlanets(game, pack);
+  return ownHomePlanets(game, pack).filter(id => !home.includes(id));
+};
+
+/** The docks of the game as they stand on the map: the one of my absent home stands on the first planet of the tile at my seat. */
+export function startingDocks(game: Game, pack: DataPack): string[] {
+  const absent = absentHomePlanets(game, pack);
+  const [first] = homePlanets(game, pack);
+  return [...new Set(game.docks.flatMap(id => (absent.includes(id) ? (first === undefined ? [] : [first]) : [id])))];
+}
+
+/** The PDS of the game as they stand on the map: those written under my absent home planets stand on the first planet of the tile at my seat, as the dock does. */
+export function startingPds(game: Game, pack: DataPack): Record<string, number> {
+  const absent = absentHomePlanets(game, pack);
+  const [first] = homePlanets(game, pack);
+  const out: Record<string, number> = {};
+  for (const [id, count] of Object.entries(game.pds)) {
+    const at = absent.includes(id) ? first : id;
+    if (at !== undefined) out[at] = (out[at] ?? 0) + count;
+  }
+  return out;
+}
+

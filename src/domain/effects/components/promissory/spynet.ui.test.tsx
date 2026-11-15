@@ -3,7 +3,7 @@ import { expect, test } from 'vitest';
 import { choose, showUses, uiBench } from '../../../../ui/testing/effects';
 import { componentById } from '../../../components';
 import type { Entry } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, endOf, NEAR, quote, tactical, using } from '../kit';
 import { id } from './spynet';
 

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../strategy';
 import type { StartHoldings } from '../../../types';
 import type { Entry } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, effect, expectNone, expectStanding, expectWaived, quote, secondary, warningsOf } from '../kit';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import { id } from './yincommander';

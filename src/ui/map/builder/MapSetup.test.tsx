@@ -10,7 +10,7 @@ vi.mock('../../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../../data/loadPack';
-import { emptySlots } from '../../../domain/mapBuilder';
+import { emptySlots } from '../../../testing/old/domain/mapBuilder';
 import { createGame } from '../../../testing/old/domain/newGame';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';

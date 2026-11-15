@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import type { Act } from '../../types';
 import type { Entry } from '../../../testing/old/domain/types';
-import type { Player } from '../../players';
+import type { Player } from '../../../testing/old/domain/types';
 import { FAR, FARTHER, HOME, NEAR, TARGET, adjust, codesOf, forecast, rulesGame, rulesPack, tactical } from '../kit';
 import { areNeighbors } from '../../../testing/old/domain/neighbors';
 

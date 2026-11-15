@@ -3,7 +3,7 @@ import { loadPack } from '../../data/loadPack';
 import { emptyHoldings, holdingsOf } from '../holdings';
 import { forecast, rulesGame, rulesPack, tech } from '../rules/kit';
 import type { Entry } from '../../testing/old/domain/types';
-import type { Player } from '../players';
+import type { Player } from '../../testing/old/domain/types';
 import { applied, stacked } from './apply';
 import { effectOf, stepsOfWindow } from './registry';
 import { hintsAt } from '../../testing/old/domain/effects/registry';

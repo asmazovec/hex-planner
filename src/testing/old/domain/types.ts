@@ -1,10 +1,19 @@
 /** The old per-player state of the replay: the input language of the rules and component tests, not part of the application. */
 import type { Shelf } from '../../../domain/shelf';
-import type { Player } from '../../../domain/players';
 import type { ExpansionId, MapLayout, SAVE_FORMAT, StartHoldings, StructureCounts, UnitCounts, Warning } from '../../../domain/types';
 import type { RoundFacts, TurnBody, TurnFacts } from '../../../game/turnFacts';
 
 export type Holdings = Shelf;
+
+/** A player of the old game: an opponent, or me under the id `me`. */
+export interface Player {
+  /** Stable: survives seat swaps, faction changes and the removal of other opponents. */
+  id: string;
+  faction: string;
+  vp: number;
+  seat: number;
+  color: number;
+}
 
 export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };
 

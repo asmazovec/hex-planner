@@ -1,8 +1,11 @@
 import { applied } from '../../../domain/effects/apply';
-import { holderOf } from '../../../domain/effects/registry';
+import { holderOf } from './effects/holder';
 import type { DataPack, Payment } from '../../../domain/types';
 import type { GameState } from './types';
-import { type PayView, type PaymentKind, PLANET_CARDS, type PlanetValues, planetValue, choosePayment, slicePlanetCost, EXPEDITION_SLICES } from '../../../domain/payment';
+import { type PaymentKind, PLANET_CARDS, type PlanetValues, choosePayment, isPlanetCard, slicePlanetCost, EXPEDITION_SLICES } from '../../../domain/payment';
+import { appliedToPlanet } from '../../../domain/effects/points/payment';
+import type { RuleStep } from '../../../domain/types';
+import type { Kept, SharedOf } from './effects/holder';
 import { specialtiesOf } from '../../../domain/specialties';
 /** Planets that can pay the technology part of the expedition: ready, mine, with a technology specialty. */
 export const techSlicePlanets = (state: GameState, pack: DataPack): string[] =>
@@ -54,3 +57,29 @@ export const readyPlanetIds = (state: GameState): string[] =>
 /** What one trade good spent is worth in `kind`: 1, or what the components of the payer make it. */
 export const tradeGoodWorth = (pack: DataPack, state: GameState, kind: PaymentKind, view?: PayView): number =>
   view ? applied(pack, holderOf(view, state, view.shared ?? state), 'tradeGoodValue', 1, { kind, faction: view.faction }).value : 1;
+
+// ---------------------------------------------------------------------------------------------------------------------
+// What a planet is worth to a player of the old state.
+
+/** The laws and cards of the whole game, and what is attached to planets: what a payer's components may read of it. */
+export interface PayShared extends SharedOf { readonly attachments?: Readonly<Record<string, readonly string[]>> }
+/** A player paying: their cards, control and laws, the space docks on their planets, and the shared view. */
+export type Payer = Kept & PayShared & { readonly docks: readonly string[] };
+
+/**
+ * Who pays, for the components that change what a payment is worth: the faction, my state (laws, attachments) when the
+ * payer is not me, and the step the warnings of the payment carry. Without it the printed values stand.
+ */
+export interface PayView { faction: string; shared?: PayShared; step?: RuleStep }
+
+/** What a planet (or planet card) gives in `kind`, after the components of its controller and what is attached to it. */
+export function planetValue(pack: DataPack, state: Payer, planetId: string, kind: PaymentKind, view?: PayView): number {
+  const printed = isPlanetCard(planetId) ? PLANET_CARDS[planetId] : pack.planets[planetId]?.[kind] ?? 0;
+  if (!view) return printed;
+  const shared = view.shared ?? state;
+  return appliedToPlanet(
+    pack, holderOf(view, state, shared), [...(shared.attachments?.[planetId] ?? [])],
+    kind === 'resources' ? 'planetResources' : 'planetInfluence', printed, planetId, state.docks.includes(planetId),
+  ).value;
+}
+

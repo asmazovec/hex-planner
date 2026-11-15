@@ -2,7 +2,7 @@ import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import type { ExtensionCode } from '../../../types';
 import type { Entry } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, componentAction, FAR, NEAR, quote } from '../kit';
 import { id } from './iff';
 

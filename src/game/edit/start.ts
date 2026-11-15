@@ -1,18 +1,17 @@
 /**
  * Edits of what the user places by hand before the plan (`StartEdits`): the units and planets of the other players,
  * docks and PDS, what the players hold, the state of their leaders, the expedition and the Fracture. Each takes the
- * saved game and hands back the same one when nothing changed. Pinned 1:1 against the old edits of `TableFacts`
+ * saved game and hands back the same one when nothing changed. Pinned 1:1 against the edits of the old game
  * (`start.test.ts`).
  */
 import { loadPack } from '../../data/loadPack';
 import { noteAddress } from '../../domain/components';
 import { HOLDING_FIELD, kindOf } from '../../domain/holdings';
 import { slotKeyOf } from '../../domain/layouts';
-import { startingDocks, startingPds } from '../../domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
-import type { ComponentKind, LeaderState, StartHoldings } from '../../domain/types';
-import type { TableFacts } from '../../domain/facts';
+import type { ComponentKind, DataPack, LeaderState, StartHoldings } from '../../domain/types';
 import type { SavedGame, StartEdits } from '../save';
+import { homeOf } from '../setup';
 import type { PlanetId, PlayerId, Slot, UnitCounts } from '../types';
 
 /** The seats from here on are players written for by hand who are not at the table (see `tableOf`). */
@@ -63,30 +62,49 @@ export function withControl(saved: SavedGame, planet: PlanetId, player: PlayerId
   return control === saved.start.control ? saved : withStart(saved, { control });
 }
 
-/** The fields of the old game that the dock and PDS queries read: my faction, seat and map, and what is written for the structures. */
-function placementView(saved: SavedGame): TableFacts {
-  const { table, start } = saved;
-  const me = table.players.find(p => p.id === table.viewer);
-  return {
-    expansions: table.expansions, layout: table.layout, map: table.map, faction: me?.faction ?? '', seat: me?.seat ?? 1,
-    playerCount: table.players.filter(p => p.seat < GHOST_SEAT).length, opponents: [], planetOwner: {}, docks: start.docks, pds: start.pds,
-    expedition: { slices: {}, thundersEdgeSystem: null }, fracture: { active: false, ingress: [], seat: null },
-  };
+/**
+ * Where what is written under a planet stands on the map: under a home planet the map has no place for (another tile
+ * stands at that player's seat), on the first planet of the tile at the seat, as the board of the start has it
+ * (`startBoard`); anything else where it is written.
+ */
+function standsOn(saved: SavedGame, pack: DataPack): (planet: PlanetId) => PlanetId | undefined {
+  const moved = new Map<PlanetId, PlanetId | undefined>();
+  for (const player of saved.table.players) {
+    const home = homeOf(saved.table, player, pack);
+    if (!home) continue;
+    for (const id of pack.tiles[pack.factions[player.faction]?.homeTile ?? '']?.planetIds ?? []) if (!home.planets.includes(id)) moved.set(id, home.planets[0]);
+  }
+  return planet => (moved.has(planet) ? moved.get(planet) : planet);
 }
 
-/** A space dock set or taken off a planet; what stands under my absent home planet is moved to where it stands now. */
+/** The docks of the start as they stand on the map. */
+function docksStanding(saved: SavedGame, pack: DataPack, docks: readonly PlanetId[] = saved.start.docks): PlanetId[] {
+  const at = standsOn(saved, pack);
+  return [...new Set(docks.flatMap(id => at(id) ?? []))];
+}
+
+/** The PDS of the start as they stand on the map, by planet. */
+function pdsStanding(saved: SavedGame, pack: DataPack): Record<PlanetId, number> {
+  const at = standsOn(saved, pack);
+  const out: Record<PlanetId, number> = {};
+  for (const [id, count] of Object.entries(saved.start.pds)) {
+    const planet = at(id);
+    if (planet !== undefined) out[planet] = (out[planet] ?? 0) + count;
+  }
+  return out;
+}
+
+/** A space dock set or taken off a planet; what stands under a home planet the map has no place for is moved to where it stands now. */
 export function withDock(saved: SavedGame, planet: PlanetId, present: boolean): SavedGame {
-  const game = placementView(saved);
-  const pack = loadPack(game.expansions);
-  if (startingDocks(game, pack).includes(planet) === present) return saved;
-  const standsThere = (id: string): boolean => startingDocks({ ...game, docks: [id] }, pack).includes(planet);
-  return withStart(saved, { docks: present ? [...game.docks, planet] : game.docks.filter(id => !standsThere(id)) });
+  const pack = loadPack(saved.table.expansions);
+  if (docksStanding(saved, pack).includes(planet) === present) return saved;
+  const standsThere = (id: string): boolean => docksStanding(saved, pack, [id]).includes(planet);
+  return withStart(saved, { docks: present ? [...saved.start.docks, planet] : saved.start.docks.filter(id => !standsThere(id)) });
 }
 
 /** The PDS on a planet set to `count`. */
 export function withPds(saved: SavedGame, planet: PlanetId, count: number): SavedGame {
-  const game = placementView(saved);
-  const standing = startingPds(game, loadPack(game.expansions));
+  const standing = pdsStanding(saved, loadPack(saved.table.expansions));
   return (standing[planet] ?? 0) === Math.max(0, count) ? saved : withStart(saved, { pds: setOrDelete(standing, planet, count > 0 ? count : null) });
 }
 
@@ -201,14 +219,10 @@ export function enemyChangeOf(
   return { slot, units: shifted(saved.start.units[slot]?.[player] ?? {}) };
 }
 
-/** The PDS of the start as they stand on the map (those under my absent home planets stand on the first planet of my home tile). */
-export const startingPdsOf = (saved: SavedGame): Record<string, number> => {
-  const game = placementView(saved);
-  return startingPds(game, loadPack(game.expansions));
-};
+/** The PDS of the start as they stand on the map (those under a home planet the map has no place for stand on the first planet of the tile at that seat). */
+export const startingPdsOf = (saved: SavedGame): Record<string, number> => pdsStanding(saved, loadPack(saved.table.expansions));
 
 /** Whether the start itself holds a structure, apart from what the plan builds: a PDS set on the map, or a dock of the start. */
 export function structureAtStart(saved: SavedGame, kind: 'pds' | 'spacedock', planet: PlanetId): boolean {
-  const game = placementView(saved);
-  return kind === 'pds' ? (startingPdsOf(saved)[planet] ?? 0) > 0 : startingDocks(game, loadPack(game.expansions)).includes(planet);
+  return kind === 'pds' ? (startingPdsOf(saved)[planet] ?? 0) > 0 : docksStanding(saved, loadPack(saved.table.expansions)).includes(planet);
 }

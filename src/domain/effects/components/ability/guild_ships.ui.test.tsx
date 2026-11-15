@@ -1,6 +1,6 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { adjust, bench, FAR, HOME, NEAR, quote, tactical } from '../kit';
 import { id } from './guild_ships';
 

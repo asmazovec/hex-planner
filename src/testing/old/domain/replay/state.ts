@@ -1,7 +1,8 @@
 import type { DataPack, UnitCounts, Warning } from '../../../../domain/types';
 import type { Game, Entry } from '../types';
 import type { GameState } from '../types';
-import { homePlanets, splitStartUnits, homeSlot, absentHomePlanets, startingDocks, startingPds } from '../../../../domain/strategy';
+import { splitStartUnits } from '../../../../domain/strategy';
+import { homePlanets, homeSlot, absentHomePlanets, startingDocks, startingPds } from '../strategy';
 import { add, unitIds, START_TOKENS, shiftUnits } from '../../../../domain/replay/state';
 import { startHoldings } from './holdings';
 

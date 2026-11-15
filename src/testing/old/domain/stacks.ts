@@ -1,12 +1,12 @@
 import type { PlanetDef, DataPack, UnitId, StructureKind, UnitCounts } from '../../../domain/types';
 import type { Game } from './types';
 import type { GameState } from './types';
-import { planetHolder } from '../../../domain/players';
+import { planetHolder } from './players';
 import { type SpaceStack, type GroundStack, UNIT_ORDER } from '../../../domain/hexLayout';
 import { unitsOf } from '../../../domain/stacks';
 import { opponentsBySeat } from './players';
 import { systemSlots, planetsOf, tileAt } from '../../../domain/replay/board';
-import { startingPds, startingDocks } from '../../../domain/strategy';
+import { startingPds, startingDocks } from './strategy';
 import { structuresOn } from './replay/structures';
 
 /** A player's own state in a whole board: mine, or an opponent's as the replay counts them. */

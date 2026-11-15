@@ -1,7 +1,7 @@
 import type { DataPack, MapLayout, CardEffects, ExpansionId } from '../../../domain/types';
-import type { Game, Entry, Plan } from './types';
-import { planetHolder, playersOf, homeTileOnMap, type Player, maxPlayers, COLORS, MIN_PLAYERS, homePlanets } from '../../../domain/players';
-import { seatSlots, slotsFor, ownHomeSlots, templateFor, defaultLayout, moveToTemplate, withPlacedTiles } from '../../../domain/mapBuilder';
+import type { Game, Entry, Plan, Player } from './types';
+import { seatSlots, slotsFor, templateFor, defaultLayout, moveToTemplate } from '../../../domain/mapBuilder';
+import { ownHomeSlots, withPlacedTiles } from './mapBuilder';
 import { splitStartUnits } from '../../../domain/strategy';
 import { startStructures } from '../../../domain/startStructures';
 import { slotKeyOf, type IdMaker, timeIdMaker, makeId } from '../../../domain/newGame';
@@ -268,3 +268,30 @@ export function gameAs(game: Game, owner: string | undefined): Game {
     enemyGround: without(game.enemyGround),
   };
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The players of an old game: me under the id `me`, then the opponents.
+
+export const MIN_PLAYERS = 3;
+export const COLORS = 8;
+
+/** Everyone in list order: my faction first. A player's number is the position in this list plus one. */
+export const playersOf = (game: Pick<Game, 'faction' | 'vp' | 'seat' | 'color' | 'opponents'>): Player[] => [
+  { id: 'me', faction: game.faction, vp: game.vp, seat: game.seat, color: game.color }, ...game.opponents,
+];
+
+/** The opponent an enemy planet belongs to: its owner, or the first opponent when it has none. */
+export const planetHolder = (game: Pick<Game, 'opponents' | 'planetOwner'>, planetId: string): string | undefined =>
+  game.opponents.find(o => o.id === game.planetOwner[planetId])?.id ?? game.opponents[0]?.id;
+
+/** The most players the map templates of the pack allow. */
+export const maxPlayers = (pack: DataPack): number => Math.max(MIN_PLAYERS, ...pack.templates.map(t => t.playerCount));
+
+/** The map tile of a faction's home: its gate when the planets lie on an off-map tile. */
+export const homeTileOnMap = (faction: string, pack: DataPack): string | undefined => {
+  const def = pack.factions[faction];
+  return def?.gateTile ?? def?.homeTile;
+};
+
+export const homePlanets = (faction: string, pack: DataPack): string[] =>
+  pack.tiles[pack.factions[faction]?.homeTile ?? '']?.planetIds ?? [];

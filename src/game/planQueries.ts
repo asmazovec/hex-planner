@@ -56,8 +56,7 @@ export function productionDueOnBoard(table: Table, board: Board, pack: DataPack,
 
 /** The components a player can play as things stand: what they hold and is not exhausted, and the sheet and legendary planets that are theirs. */
 export function readyToPlayOn(table: Table, board: Board, pack: DataPack, player: PlayerId): Set<ComponentId> {
-  const control = Object.fromEntries(Object.keys(board.planets).filter(id => board.planets[id].owner === player).map(id => [id, 'me' as const]));
-  return readyToPlay(pack, shelfOf(board, player), table.players.find(p => p.id === player)?.faction ?? '', control);
+  return readyToPlay(pack, shelfOf(board, player), table.players.find(p => p.id === player)?.faction ?? '', id => board.planets[id]?.owner === player);
 }
 
 /** A promissory note of a player and the player who holds it now; nobody when it was played and purged, or taken off by hand. */

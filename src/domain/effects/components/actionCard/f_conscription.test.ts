@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { UnitCounts } from '../../../types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectStanding, FAR, HOME, NEAR, quote, TARGET, warningsOf } from '../kit';
 import { id } from './f_conscription';
 

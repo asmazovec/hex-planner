@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectStanding, NEAR, quote, secondary, tactical, warningsOf } from '../kit';
 import { id } from './dark_pact';
 

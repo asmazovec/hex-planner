@@ -1,7 +1,8 @@
 import type { DataPack, RuleStep, ComponentDef } from '../../../../domain/types';
 import type { Game } from '../types';
 import type { GameState } from '../types';
-import { holderOf, inForceOf, registryOf, SHEET_KIND, readyComponents, effectOf, holderRuleOf } from '../../../../domain/effects/registry';
+import { inForceOf, registryOf, SHEET_KIND, readyComponents, effectOf, holderRuleOf } from '../../../../domain/effects/registry';
+import { holderOf } from './holder';
 import { noteAddress, noteBase, componentById } from '../../../../domain/components';
 import { speaksIn } from '../../../../domain/effects/holder';
 /**
@@ -26,7 +27,7 @@ export function hintsAtSteps(pack: DataPack, board: GameState, steps: RuleStep[]
     if (!state) continue;
     // A secret objective in hand, and a public one revealed and not yet scored by the player, are reminded of at the status step.
     const objectives = [...state.holdings.secrets, ...(board.revealed ?? []).filter(id => !state.holdings.scored.includes(id))];
-    const sheet = inForceOf(pack, { holdings: state.holdings, faction: state.faction, control: state.control }).filter(id => SHEET_KIND.test(id));
+    const sheet = inForceOf(pack, { holdings: state.holdings, faction: state.faction, controls: id => state.control[id] === 'me' }).filter(id => SHEET_KIND.test(id));
     for (const id of [...readyComponents(pack, state.holdings), ...objectives, ...sheet]) {
       // A note of one's own is not played from one's own hand (LRR 69.2).
       if (noteAddress(id) === player) continue;
@@ -41,6 +42,9 @@ export function hintsAtSteps(pack: DataPack, board: GameState, steps: RuleStep[]
   return new Map(steps.map(step => [step, sorted.filter(id => effectOf(pack, id)?.hintAt?.includes(step) === true && speaks(id)).flatMap(id => componentById(pack, id) ?? [])]));
 }
 
-/** The same for a player of a game: `state` is their own, `shared` mine, which keeps the laws. */
-export const inForce = (pack: DataPack, game: Pick<Game, 'faction'>, state: GameState, shared: GameState = state): string[] =>
-  inForceOf(pack, holderOf(game, state, shared));
+/** The same for a player of a game: `state` is their own, `shared` mine, which keeps the laws. */
+
+export const inForce = (pack: DataPack, game: Pick<Game, 'faction'>, state: GameState, shared: GameState = state): string[] =>
+
+  inForceOf(pack, holderOf(game, state, shared));
+

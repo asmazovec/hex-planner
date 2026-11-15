@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { upgradeTech } from '../../../holdings';
 import type { StartHoldings } from '../../../types';
 import type { Entry } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectStanding, FAR, quote, warningsOf } from '../kit';
 import { id } from './fires';
 

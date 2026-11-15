@@ -1,7 +1,6 @@
 import { strategyCardSet } from './cards';
 import { appliedFor } from './effects/entryApply';
 import type { Holder } from './effects/registry';
-import { seatSlots } from './mapBuilder';
 import { type PaymentKind } from './payment';
 import { CARD, handlerOf } from './replay/cards/index';
 import { LEADERSHIP_FREE } from './replay/cards/leadership';
@@ -9,7 +8,6 @@ import { productionCost } from './unitStats';
 import type { TokensOn } from './readers';
 import type { CardEffects, DataPack, ExpansionId, StructureKind, UnitCounts, UnitId } from './types';
 import type { TurnDeeds, TurnFacts, RoundFacts } from '../game/turnFacts';
-import type { TableFacts } from './facts';
 import type { Shelf } from './shelf';
 
 export { readyLimit } from './replay/cards/diplomacy';
@@ -141,79 +139,18 @@ export function withStructure(effects: CardEffects, kind: StructureKind, planetI
   return next;
 }
 
-export interface Home {
-  /** Where my start units stand and where home production happens, or null with nothing on the map. */
-  slot: string | null;
-  /** True when my seat holds no tile and the first slot with a tile stands in. */
-  fallback: boolean;
-}
-
 /**
- * My home: the faction's home tile if it is on the map (for an off-map home with its gate on the map, the tile's own id:
- * the projection keeps its units there and the route graph knows it, see `offMapHomes`); otherwise the slot of my seat, whatever tile stands there; with an
- * empty seat, the first slot with a tile.
+ * The off-map homes whose gate stands on the map (the Creuss home, LRR 6 note 2): each is a system of its own under its
+ * tile id, which the route graph joins to the board by its wormhole alone. The map says it by itself: a gate tile is
+ * there, and the home tile it leads to is not.
  */
-export function homeOf(game: TableFacts, pack: DataPack): Home {
-  const faction = pack.factions[game.faction];
-  if (!faction) return { slot: null, fallback: false };
-  const onMap = (tile: string | undefined) => Object.keys(game.map).find(slot => game.map[slot].split('@')[0] === tile);
-  const own = onMap(faction.homeTile) ?? (onMap(faction.gateTile) ? faction.homeTile : undefined);
-  if (own) return { slot: own, fallback: false };
-  const seat = seatSlots(game.playerCount, pack, game.layout)[game.seat - 1];
-  if (seat && game.map[seat]) return { slot: seat, fallback: false };
-  const first = Object.keys(game.map).find(slot => slot !== '0,0') ?? null;
-  return { slot: first, fallback: first !== null };
-}
-
-export const homeSlot = (game: TableFacts, pack: DataPack): string | null => homeOf(game, pack).slot;
-
-/**
- * The off-map homes of the players whose gate stands on the map (the Creuss home, LRR 6 note 2): each is a system of its
- * own under its tile id, which the route graph joins to the board by its wormhole alone.
- */
-export function offMapHomes(game: Pick<TableFacts, 'map' | 'faction' | 'opponents'>, pack: DataPack): string[] {
-  const onMap = (tile: string | undefined) => tile !== undefined && Object.values(game.map).some(id => id.split('@')[0] === tile);
-  const factions = [game.faction, ...(game.opponents ?? []).map(o => o.faction)];
-  return [...new Set(factions.flatMap(id => {
-    const def = pack.factions[id];
-    return def?.gateTile && onMap(def.gateTile) && !onMap(def.homeTile) ? [def.homeTile] : [];
-  }))];
-}
-
-/** The planets of my faction's own home tile, on the map or not. */
-const ownHomePlanets = (game: TableFacts, pack: DataPack): string[] =>
-  pack.tiles[pack.factions[game.faction]?.homeTile ?? '']?.planetIds ?? [];
-
-/** The planets I start with: of my own home, or of the tile at my seat when mine is not on the map. A fallback tile only holds the units until the seat has one. */
-export function homePlanets(game: TableFacts, pack: DataPack): string[] {
-  const { slot, fallback } = homeOf(game, pack);
-  if (slot === null || fallback) return ownHomePlanets(game, pack);
-  return pack.tiles[(game.map[slot] ?? slot).split('@')[0]]?.planetIds ?? ownHomePlanets(game, pack);
-}
-
-/** Planets that lost their place to the tile at my seat: nothing on the map stands for them. */
-export const absentHomePlanets = (game: TableFacts, pack: DataPack): string[] => {
-  const home = homePlanets(game, pack);
-  return ownHomePlanets(game, pack).filter(id => !home.includes(id));
-};
-
-/** The docks of the game as they stand on the map: the one of my absent home stands on the first planet of the tile at my seat. */
-export function startingDocks(game: TableFacts, pack: DataPack): string[] {
-  const absent = absentHomePlanets(game, pack);
-  const [first] = homePlanets(game, pack);
-  return [...new Set(game.docks.flatMap(id => (absent.includes(id) ? (first === undefined ? [] : [first]) : [id])))];
-}
-
-/** The PDS of the game as they stand on the map: those written under my absent home planets stand on the first planet of the tile at my seat, as the dock does. */
-export function startingPds(game: TableFacts, pack: DataPack): Record<string, number> {
-  const absent = absentHomePlanets(game, pack);
-  const [first] = homePlanets(game, pack);
-  const out: Record<string, number> = {};
-  for (const [id, count] of Object.entries(game.pds)) {
-    const at = absent.includes(id) ? first : id;
-    if (at !== undefined) out[at] = (out[at] ?? 0) + count;
-  }
-  return out;
+const OFF_MAP = new WeakMap<DataPack, [string, string][]>();
+export function offMapHomes(game: { map: Record<string, string> }, pack: DataPack): string[] {
+  let gates = OFF_MAP.get(pack);
+  if (!gates) OFF_MAP.set(pack, gates = [...new Map(Object.values(pack.factions).flatMap(def => (def.gateTile ? [[def.gateTile, def.homeTile] as [string, string]] : []))).entries()]);
+  if (gates.length === 0) return [];
+  const onMap = new Set(Object.values(game.map).map(id => id.split('@')[0]));
+  return gates.flatMap(([gate, home]) => (onMap.has(gate) && !onMap.has(home) ? [home] : []));
 }
 
 /** A faction's start units split by where they stand: ships in the space of the home system, ground forces on its planet (LRR 43.1; the one with the space dock). */

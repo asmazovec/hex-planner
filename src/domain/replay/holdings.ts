@@ -6,7 +6,6 @@
 import { componentById, componentsOf, noteAddress, ownedBy } from '../components';
 import { HOLDING_FIELD, staysInPlay } from '../holdings';
 import type { ComponentDef, DataPack } from '../types';
-import type { ControlOf } from '../readers';
 import type { Shelf } from '../shelf';
 
 export const removeOne = (list: string[], id: string): void => {
@@ -43,12 +42,12 @@ export function isExhausted(holdings: Shelf, def: ComponentDef): boolean {
 
 /**
  * The components a player of a faction holds ready to play: held and not exhausted. What comes with a faction sheet
- * counts for that faction only, and the card of a legendary planet for the player who controls the planet (`control`
- * is that player's own, by planet id).
+ * counts for that faction only, and the card of a legendary planet for the player who controls the planet (`controls`
+ * says whether the player does).
  */
-export function readyToPlay(pack: DataPack, holdings: Shelf, factionId: string, control: ControlOf['control'] = {}): Set<string> {
+export function readyToPlay(pack: DataPack, holdings: Shelf, factionId: string, controls: (planetId: string) => boolean = () => false): Set<string> {
   const mine = (def: ComponentDef) => (def.kind === 'legendary'
-    ? control[def.id.slice(def.id.indexOf(':') + 1)] === 'me'
+    ? controls(def.id.slice(def.id.indexOf(':') + 1))
     : HOLDING_FIELD[def.kind] !== undefined || def.faction === undefined || ownedBy(def, factionId));
   // The notes held are cards of their own, each under its address: the catalogue does not list them.
   const notes = holdings.promissory.flatMap(id => (noteAddress(id) === undefined ? [] : componentById(pack, id) ?? []));

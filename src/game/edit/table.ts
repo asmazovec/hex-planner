@@ -1,8 +1,8 @@
 /**
  * Edits of the table of a saved game before it starts, and of the players while it is open: the name, the tiles of the
  * map, the players and their factions, the seats, the layout, the map string and the expansions, and the making of a new
- * game. Each takes the saved game and hands back the same one when nothing changed. Pinned 1:1 against the old edits of
- * `TableFacts` (`table.test.ts`). A player's id is `p<seat>`; an edit that moves the seats renames the player where the start and
+ * game. Each takes the saved game and hands back the same one when nothing changed. Pinned 1:1 against the edits of the
+ * old game (`table.test.ts`). A player's id is `p<seat>`; an edit that moves the seats renames the player where the start and
  * the plans name them: as a player, and as the address of a promissory note.
  */
 import { loadPack } from '../../data/loadPack';
@@ -613,7 +613,7 @@ export function tilesLostByLayout(saved: SavedGame, layout: MapLayout, pack: Dat
 export const readyToPlay = (table: Table, pack: DataPack): boolean =>
   real(table).filter(p => p.id !== table.viewer).every(p => p.faction !== '') && emptySlots(table, pack).length === 0;
 
-/** What the TableFacts screen says about the homes: a seat holding another faction's home system, or my seat holding nothing. */
+/** What the game screen says about the homes: a seat holding another faction's home system, or my seat holding nothing. */
 export function homeNotes(table: Table, pack: DataPack): HomeNote[] {
   const slots = seatSlots(real(table).length, pack, table.layout);
   const onMap = (tile: string | undefined) => tile !== undefined && Object.values(table.map).some(id => id.split('@')[0] === tile);

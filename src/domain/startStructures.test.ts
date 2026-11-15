@@ -5,7 +5,7 @@ import { createGame } from '../testing/old/domain/newGame';
 import { placeStartUnits, removePlayer, setPlayerFaction } from '../testing/old/domain/players';
 import { project } from '../testing/old/domain/project';
 import { seatSlots } from './mapBuilder';
-import { homeSlot } from './strategy';
+import { homeSlot } from '../testing/old/domain/strategy';
 import type { UnitCounts } from './types';
 import type { Game } from '../testing/old/domain/types';
 import type { GameState } from '../testing/old/domain/types';

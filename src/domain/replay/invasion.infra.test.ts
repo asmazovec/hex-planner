@@ -11,7 +11,7 @@ import type { Ability } from '../effects/types';
 import { bench, endOf, expectStanding, NEAR, TARGET, adjust, tactical, using, warningsOf, type Bench } from '../effects/components/kit';
 import type { AnyWarningCode } from '../types';
 import type { Entry } from '../../testing/old/domain/types';
-import type { Player } from '../players';
+import type { Player } from '../../testing/old/domain/types';
 import { attachCard, exploreCondition, placeOnPlanet } from '../../testing/old/domain/replay/invasion';
 
 const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };

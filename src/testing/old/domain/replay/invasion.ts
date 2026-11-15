@@ -1,5 +1,6 @@
 import { applied } from '../../../../domain/effects/apply';
-import { effectOf, holderOf, inForceOf } from '../../../../domain/effects/registry';
+import { effectOf, inForceOf } from '../../../../domain/effects/registry';
+import { holderOf } from '../effects/holder';
 import { CUSTODIANS_COST, MECATOL_PLANETS } from '../../../../domain/mecatol';
 import { violation } from '../../../../domain/rules/registry';
 import type { DataPack, Warning, UnitCounts, RuleStep } from '../../../../domain/types';

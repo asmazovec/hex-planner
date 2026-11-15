@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectNone, NEAR, quote, tactical, using, warningsOf } from '../kit';
 import { id } from './greyfire';
 

@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { expectNotShown, expectShownStanding, showFlight, take, uiBench } from '../../../../ui/testing/effects';
 import type { Entry } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, endOf, HOME, NEAR, quote, statusTokens, tactical } from '../kit';
 import { id } from './malevolency';
 

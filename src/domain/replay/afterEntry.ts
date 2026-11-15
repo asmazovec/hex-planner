@@ -3,6 +3,7 @@
  * secret objectives (LRR 2.4, 61.21), which the components change through the `handLimit` and `secretLimit` points.
  * The hooks of the components it gained or lost and the checks the components in force add run on the kernel (`game/resolve/entryHooks.ts`).
  */
+import type { Shelf } from '../shelf';
 import { appliedFor } from '../effects/entryApply';
 import type { Holder } from '../effects/registry';
 import handOverLimit from '../rules/codes/handOverLimit';
@@ -10,14 +11,13 @@ import secretsOverLimit from '../rules/codes/secretsOverLimit';
 import { violation } from '../rules/registry';
 import type { DataPack, Warning } from '../types';
 import type { TurnFacts } from '../../game/turnFacts';
-import type { Kept } from '../readers';
 
 /** The hand limit of the rules (LRR 2.4) and the secret objective limit (61.21). */
 export const HAND_LIMIT = 7;
 export const SECRET_LIMIT = 3;
 
 /** The same for a holder: what they hold after the entry, the faction they play. */
-export function entryLimitsOf(holder: Holder, faction: string, entry: TurnFacts, pack: DataPack, before?: Pick<Kept, 'holdings'>): Warning[] {
+export function entryLimitsOf(holder: Holder, faction: string, entry: TurnFacts, pack: DataPack, before?: { readonly holdings: Shelf }): Warning[] {
   const { holdings } = holder;
   const warnings: Warning[] = [];
   // The hand grew: no more action cards than the limit (2.4, 2.4.1).

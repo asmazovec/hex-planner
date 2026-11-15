@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { effectOf } from '../domain/effects/registry';
 import { landingOffers } from '../domain/effects/points/landing';
-import { holderOf } from '../domain/effects/registry';
+import { holderOf } from '../testing/old/domain/effects/holder';
 import { losable, notesOfFirst as oldNotesOfFirst, tradable } from '../domain/holdings';
 import { ownNotes } from '../testing/old/domain/holdings';
 import { createGame } from '../testing/old/domain/newGame';

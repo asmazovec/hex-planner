@@ -54,12 +54,12 @@ describe.each([
   });
 
   test('the home slot of the table player stands where the old home does', () => {
-    expect(read.homeSlotOn(table, pack, table.viewer)).toBe(old.homeSlot(g, pack));
+    expect(read.homeSlotOn(table, pack, table.viewer)).toBe(oldOld.homeSlot(g, pack));
     for (const o of g.opponents) {
       const player = playerOfKey(table, o.id)!;
-      expect(read.homeSlotOn(table, pack, player)).toBe(old.homeSlot(gameAs(g, o.id), pack));
+      expect(read.homeSlotOn(table, pack, player)).toBe(oldOld.homeSlot(gameAs(g, o.id), pack));
     }
-    expect(read.homeSlotOn({ ...table, map: {} }, pack, table.viewer)).toBe(old.homeSlot({ ...g, map: {} }, pack));
+    expect(read.homeSlotOn({ ...table, map: {} }, pack, table.viewer)).toBe(oldOld.homeSlot({ ...g, map: {} }, pack));
   });
 });
 

@@ -6,7 +6,7 @@ import { Banner } from '../../feedback/Banner';
 
 export interface TileNumberInputProps {
   pack: DataPack;
-  /** Current `TableFacts.map` value of the slot, if any. */
+  /** Current value of the slot in the map of the table, if any. */
   value: string | undefined;
   /** A new map value, or null to clear the slot. */
   onChange: (value: string | null) => void;

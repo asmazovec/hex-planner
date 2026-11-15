@@ -1,4 +1,4 @@
-import { holderOf } from '../../../../domain/effects/registry';
+import { holderOf } from '../effects/holder';
 import { violation } from '../../../../domain/rules/registry';
 import type { DataPack, Warning } from '../../../../domain/types';
 import type { Game } from '../types';

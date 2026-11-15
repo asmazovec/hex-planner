@@ -2,7 +2,7 @@ import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import type { Act } from '../../../types';
 import type { Entry } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, NEAR, quote, tactical } from '../kit';
 import { id } from './yssarilbt';
 

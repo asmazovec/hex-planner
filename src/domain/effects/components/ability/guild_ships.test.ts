@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { Act } from '../../../types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { adjust, bench, effect, expectNone, expectStanding, expectWaived, FAR, HOME, NEAR, quote, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './guild_ships';
 

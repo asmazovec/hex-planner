@@ -11,7 +11,7 @@ import { gainCommodities } from '../../../testing/old/domain/replay/cards/trade'
 import { forecast, mutable, rulesGame, rulesPack, tactical } from '../../rules/kit';
 import type { Warning } from '../../types';
 import type { Entry } from '../../../testing/old/domain/types';
-import type { Player } from '../../players';
+import type { Player } from '../../../testing/old/domain/types';
 import type { GameState } from '../../../testing/old/domain/types';
 import { componentAction } from '../components/kit';
 import { alwaysInForce, throwaway } from './throwaway';

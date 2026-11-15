@@ -7,7 +7,7 @@ import { alwaysInForce, throwaway } from '../../effects/points/throwaway';
 import noteRefused from '../codes/noteRefused';
 import { violation } from '../registry';
 import type { Entry } from '../../../testing/old/domain/types';
-import type { Player } from '../../players';
+import type { Player } from '../../../testing/old/domain/types';
 import { NEAR, forecast, rulesGame, rulesPack, tactical } from '../kit';
 
 vi.mock('../../effects/registry', async original => (await import('../../effects/points/throwaway')).mockRegistry(await original()));

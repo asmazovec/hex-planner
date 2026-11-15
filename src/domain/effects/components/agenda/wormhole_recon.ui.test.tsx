@@ -2,7 +2,7 @@ import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import type { Act, DataPack } from '../../../types';
 import type { Entry } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { adjust, bench, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET } from '../kit';
 import { id } from './wormhole_recon';
 

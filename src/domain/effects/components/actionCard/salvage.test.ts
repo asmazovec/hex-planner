@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../strategy';
 import type { ExtensionCode } from '../../../types';
 import type { Entry } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectStanding, NEAR, planned, quote, tactical, TARGET, using, warningsOf } from '../kit';
 import { id } from './salvage';
 

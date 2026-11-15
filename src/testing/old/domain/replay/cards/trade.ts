@@ -1,6 +1,6 @@
 import { applied } from '../../../../../domain/effects/apply';
-import { holderOf } from '../../../../../domain/effects/registry';
-import { linksOf } from '../../../../../domain/movement';
+import { holderOf } from '../../effects/holder';
+import { linksOf } from '../../movement';
 import type { DataPack } from '../../../../../domain/types';
 import type { Game } from '../../types';
 import type { GameState } from '../../types';

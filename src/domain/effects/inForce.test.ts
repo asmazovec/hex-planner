@@ -29,8 +29,8 @@ describe('components in force', () => {
   test('a legendary planet is in force for the player who controls it, a law for everyone', () => {
     const planet = Object.values(pack.planets).find(p => p.legendary)!;
     const law = pack.components.find(c => c.kind === 'agenda' && c.detail?.type === 'law')!;
-    expect(inForceOf(pack, { holdings: emptyHoldings(), control: { [planet.id]: 'me' } })).toEqual([`legendary:${planet.id}`]);
-    expect(inForceOf(pack, { holdings: emptyHoldings(), control: { [planet.id]: 'enemy' } })).toEqual([]);
+    expect(inForceOf(pack, { holdings: emptyHoldings(), controls: id => id === planet.id })).toEqual([`legendary:${planet.id}`]);
+    expect(inForceOf(pack, { holdings: emptyHoldings(), controls: () => false })).toEqual([]);
     expect(inForceOf(pack, { holdings: emptyHoldings(), laws: [law.id] })).toEqual([law.id]);
   });
 

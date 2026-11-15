@@ -1,6 +1,6 @@
 import { describe, test } from 'vitest';
 import type { LeaderState } from '../../../types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, expectStanding, expectWaived, NEAR, quote, tactical, using, warningsOf } from '../kit';
 import { id } from './imperia';
 

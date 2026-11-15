@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { choose, play, showTurn, uiBench } from '../../../../ui/testing/effects';
 import { componentById } from '../../../components';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, componentAction, endOf, quote } from '../kit';
 import { id } from './mi';
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { Act, Goods, StartHoldings } from '../../../types';
 import type { Entry } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectStanding, expectWaived, NEAR, quote, tactical, warningsOf } from '../kit';
 import { id } from './thesilverflame';
 

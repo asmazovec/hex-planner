@@ -3,7 +3,7 @@
  * gain run, and a play of a rival's entry changes that rival's planets, not the viewer's.
  */
 import { describe, expect, test } from 'vitest';
-import type { Player } from '../../domain/players';
+import type { Player } from '../../testing/old/domain/types';
 import { adjust, bench, componentAction, endOf } from '../../domain/effects/components/kit';
 
 const RIVAL: Player = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };

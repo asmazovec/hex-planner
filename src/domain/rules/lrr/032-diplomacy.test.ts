@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { MECATOL_PLANET, MECATOL_TILE } from '../../mecatol';
 import { CARD } from '../../strategy';
-import type { Player } from '../../players';
+import type { Player } from '../../../testing/old/domain/types';
 import { codesOf, FACTION, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

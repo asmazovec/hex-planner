@@ -1,4 +1,4 @@
-import { holderOf } from '../../../../domain/effects/registry';
+import { holderOf } from '../effects/holder';
 import { factsOfEntry } from '../types';
 import type { DataPack } from '../../../../domain/types';
 import type { Entry, Game } from '../types';

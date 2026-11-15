@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { routeReach, routeSteps } from '../../../testing/old/domain/project';
 import { CARD } from '../../strategy';
-import type { Player } from '../../players';
+import type { Player } from '../../../testing/old/domain/types';
 import { codesOf, FACTION, FAR, FARTHER, forecast, HOME, NEAR, rulesGame, rulesPack, secondary, tactical, TARGET, tech } from '../kit';
 
 const pack = rulesPack();

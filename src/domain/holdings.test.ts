@@ -10,7 +10,7 @@ import { forgetTimelines, project, readyToPlay, timelineOf } from '../testing/ol
 import { CARD } from './strategy';
 import { codesOf, forecast, primary, rulesGame, rulesPack, statusTokens, tech } from './rules/kit';
 import type { Entry, Game } from '../testing/old/domain/types';
-import type { Player } from './players';
+import type { Player } from '../testing/old/domain/types';
 import { fleetSpeed } from './movement';
 import { capacity } from './replay/transport';
 import { productionCost } from './unitStats';
@@ -529,7 +529,7 @@ describe('what a choice of components offers', () => {
       ...holdingsOf({ hand: ['actionCard:sabo1'], relics: ['relic:shard'], technologies: ['technology:st'], leaders: { 'leader:solagent': 'unlocked', 'leader:solhero': 'purged' } }),
       exhausted: ['technology:st'],
     };
-    const ready = readyToPlay(pack, mine, 'sol', { primor: 'me', hopesend: 'enemy' });
+    const ready = readyToPlay(pack, mine, 'sol', id => id === 'primor');
     expect(ready.has('actionCard:sabo1')).toBe(true);
     expect(ready.has('relic:shard')).toBe(true);
     expect(ready.has('leader:solagent')).toBe(true);

@@ -1,6 +1,6 @@
 /** LRR 25 Control. Source: tirules2 rules-reference/control.md. */
 import { describe, expect, test } from 'vitest';
-import type { Player } from '../../players';
+import type { Player } from '../../../testing/old/domain/types';
 import { adjust, FACTION, forecast, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

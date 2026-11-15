@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { AnyWarningCode } from '../../../types';
 import type { Entry } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, componentAction, endOf, expectStanding, FAR, HOME, NEAR, quote, warningsOf } from '../kit';
 import { id } from './mahacthero';
 

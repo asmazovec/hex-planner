@@ -7,7 +7,7 @@ import { bench, NEAR, tactical } from '../../../domain/effects/components/kit';
 import { stateBeforeEntry } from '../../../testing/old/domain/project';
 import type { Act } from '../../../domain/types';
 import type { Game } from '../../../testing/old/domain/types';
-import type { Player } from '../../../domain/players';
+import type { Player } from '../../../testing/old/domain/types';
 import { uiBench } from '../../testing/effects';
 import { TransactionStep } from './TransactionStep';
 import { transactionProps } from '../../testing/turnProps';

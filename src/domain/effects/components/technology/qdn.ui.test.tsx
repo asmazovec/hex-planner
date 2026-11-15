@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { choose, play, showTurn, uiBench } from '../../../../ui/testing/effects';
 import type { EntryBody } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { adjust, bench, endOf, FAR, planned, quote } from '../kit';
 import { id } from './qdn';
 

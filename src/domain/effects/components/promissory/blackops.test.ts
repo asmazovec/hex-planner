@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { Entry } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import type { GameState } from '../../../../testing/old/domain/types';
 import { bench, endOf, NEAR, quote, tactical } from '../kit';
 import { id } from './blackops';

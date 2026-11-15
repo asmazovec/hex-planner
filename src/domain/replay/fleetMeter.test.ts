@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { bench, HOME, TARGET, tactical, warningsOf } from '../effects/components/kit';
 import { before } from '../rules/kit';
-import type { Player } from '../players';
+import type { Player } from '../../testing/old/domain/types';
 import { tacticalMeters } from '../../testing/meters';
 
 // Neuroglaive: "After another player activates a system that contains 1 or more of your ships, that player removes 1 token from their fleet pool".

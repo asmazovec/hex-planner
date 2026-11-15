@@ -1,5 +1,6 @@
 import { factsOfEntry } from '../types';
-import { isPlanetCard, planetValue, type PayView, type PaymentKind } from '../../../../domain/payment';
+import { isPlanetCard, type PaymentKind } from '../../../../domain/payment';
+import { planetValue, type PayView } from '../payment';
 import { violation } from '../../../../domain/rules/registry';
 import type { DataPack, Payment, Warning, RuleStep } from '../../../../domain/types';
 import type { Game, Entry } from '../types';

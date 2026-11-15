@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { linksOf, routeReach } from '../../../movement';
+import { routeReach } from '../../../movement';
+import { linksOf } from '../../../../testing/old/domain/movement';
 import { bench, endOf, expectNone, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './quantum_entanglement';
 

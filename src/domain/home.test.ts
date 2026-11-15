@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { parseMapString } from './mapString';
 import { createGame } from '../testing/old/domain/newGame';
 import { project } from '../testing/old/domain/project';
-import { homeOf, homeSlot, startingDocks } from './strategy';
+import { homeOf, homeSlot, startingDocks } from '../testing/old/domain/strategy';
 import { homeNotes } from '../testing/old/domain/strategy';
 import type { Game } from '../testing/old/domain/types';
 

@@ -8,14 +8,15 @@
  * with Stall Tactics or Scheming ("when you do" ties the transaction to their use). The warnings are still made and
  * listed, lifted by the card. The Yssaril's own turn is not covered: the card speaks of other players.
  */
+import { componentById } from '../../../components';
 import type { Ability } from '../../../../game/abilities/types';
 import type { Permit } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:yssarilbt';
 
-/** The entry is another player's and uses one of the two abilities the card lends. */
+/** The entry is of a player other than the one whose breakthrough it is, and uses one of the two abilities the card lends. */
 const lent: Permit['when'] = (_warning, ctx) =>
-  ctx.actor !== ctx.table.viewer && (ctx.entry?.uses ?? []).some(used => used === 'ability:stall_tactics' || used === 'ability:scheming');
+  ctx.of(ctx.actor).faction !== componentById(ctx.pack, id)?.faction && (ctx.entry?.uses ?? []).some(used => used === 'ability:stall_tactics' || used === 'ability:scheming');
 
 export const ability: Ability = {
   holder: 'self',

@@ -1,7 +1,8 @@
 import { type MomentHook } from '../../../../../domain/effects/points/moments';
 import type { GameState } from '../../types';
 import type { Ability } from '../../../../../domain/effects/types';
-import { inForceOf, holderOf, orderOf, effectOf } from '../../../../../domain/effects/registry';
+import { inForceOf, orderOf, effectOf } from '../../../../../domain/effects/registry';
+import { holderOf } from '../holder';
 import { type MomentTurn } from './momentsTurns';
 
 /** Where a moment happens: the same fields as the turn, less the component. */

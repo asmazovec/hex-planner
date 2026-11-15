@@ -1,6 +1,6 @@
 import { componentById, ownedBy } from '../../../../domain/components';
 import { applied } from '../../../../domain/effects/apply';
-import { holderOf } from '../../../../domain/effects/registry';
+import { holderOf } from '../effects/holder';
 import prerequisitesMissing from '../../../../domain/rules/codes/prerequisitesMissing';
 import researchForeign from '../../../../domain/rules/codes/researchForeign';
 import researchUnavailable from '../../../../domain/rules/codes/researchUnavailable';

@@ -1,11 +1,13 @@
+import { atOfState } from '../movement';
 import type { DataPack, UnitCounts, Warning, UnitId } from '../../../../domain/types';
 import type { Game } from '../types';
 import type { GameState } from '../types';
 import { sourceSlot } from '../../../../domain/replay/board';
 import { add, take, type Move } from '../../../../domain/replay/state';
 import type { TacticalEntry } from '../types';
-import { type MoveView, type Blockers, linksOf } from '../../../../domain/movement';
-import { holderOf } from '../../../../domain/effects/registry';
+import { type MoveView, type Blockers } from '../../../../domain/movement';
+import { linksOf } from '../movement';
+import { holderOf } from '../effects/holder';
 import { playedBy } from '../../../../domain/effects/waivers';
 import { isPickup } from '../../../../domain/replay/transport';
 import { blockersOf } from '../movement';
@@ -13,8 +15,8 @@ import { type RouteReads, checkRoutesOf } from '../../../../domain/replay/moveme
 /** What a route check knows of the entry beyond the board: my state (laws, tokens) and the components the entry names. */
 export interface RouteWho { shared?: GameState; named?: readonly string[]; links?: MoveView['links'] }
 /** What the components of the mover are told of one ship's move: where it starts, where it goes, who moves with it. */
-export const moveViewOf = (game: Game, state: GameState, move: Move, target: string, who: RouteWho, unit?: UnitId): MoveView => ({
-  holder: holderOf(game, state, who.shared), state, shared: who.shared, from: move.from, target, unit, group: move.units, named: who.named, links: who.links,
+export const moveViewOf = (game: Game, state: GameState, move: Move, target: string, who: RouteWho, pack: DataPack, unit?: UnitId): MoveView => ({
+  holder: holderOf(game, state, who.shared), at: atOfState(game, pack, state, who.shared), from: move.from, target, unit, group: move.units, named: who.named, links: who.links,
 });
 /**
  * The route warnings of a tactical entry as the replay makes them: over my state `shared` (laws, tokens), with the
@@ -36,7 +38,7 @@ export function checkRoutes(
   game: Game, state: GameState, target: string, moves: Move[], pack: DataPack, blockers: Blockers = blockersOf(game, null, undefined, pack), who: RouteWho = {},
 ): Warning[] {
   const reads: RouteReads = {
-    tokenAt: slot => state.tokensOnMap.includes(slot), holder: holderOf(game, state, who.shared), view: (move, unit) => moveViewOf(game, state, move, target, who, unit),
+    tokenAt: slot => state.tokensOnMap.includes(slot), holder: holderOf(game, state, who.shared), view: (move, unit) => moveViewOf(game, state, move, target, who, pack, unit),
   };
   return checkRoutesOf(game, reads, target, moves, pack, blockers);
 }

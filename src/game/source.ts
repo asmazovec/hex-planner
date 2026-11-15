@@ -1,9 +1,15 @@
-import type { TableFacts } from '../domain/facts';
 import type { StartEdits } from './save';
-import type { Table } from './types';
+import type { Slot, Table } from './types';
 
-/** The game a table came from, kept for the fields the table and board have no place for yet (ingress, the Thunder's Edge system). */
-export const SOURCES = new WeakMap<Table, TableFacts>();
+/**
+ * What the game of a table says beside the table itself, which the map and the count of players read: the Fracture as it
+ * is set up, the slot of Thunder's Edge, and how many players the game began with when that is not the number seated.
+ */
+export interface TableStart {
+  fracture: StartEdits['fracture'];
+  expedition: { thundersEdgeSystem: Slot | null };
+  playerCount?: number;
+}
 
-/** The hand-placed start of the saved game a table was made for: the Fracture and the Thunder's Edge slot that the map source reads, as `SOURCES` gives them for a table made from an old game. */
-export const STARTS = new WeakMap<Table, StartEdits>();
+/** The start of the game a table was made for: the saved game's hand-placed start (`startOfSaved`), or what a test gives. */
+export const STARTS = new WeakMap<Table, TableStart>();

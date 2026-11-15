@@ -5,7 +5,7 @@
 import { loadPack } from '../data/loadPack';
 import type { StartHoldings } from '../domain/types';
 import type { Game, Plan } from './old/domain/types';
-import type { Player } from '../domain/players';
+import type { Player } from './old/domain/types';
 import { SAVE_FORMAT } from '../domain/types';
 import { entryOf, nestedEntries } from './old/game/entry';
 import { legacyKey, legacyPlayer, playerOfLegacy, toOld, toTable } from './old/game/keys';

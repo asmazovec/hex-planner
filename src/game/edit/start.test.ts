@@ -5,7 +5,7 @@ import { setLeader, setStartHolding } from '../../testing/old/domain/holdings';
 import { createGame } from '../../testing/old/domain/newGame';
 import { placeStartUnits, setPlayerFaction } from '../../testing/old/domain/players';
 import { enemyChange, structureInGame } from '../../testing/old/domain/stacks';
-import { startingDocks, startingPds } from '../../domain/strategy';
+import { startingDocks, startingPds } from '../../testing/old/domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
 import type { Game } from '../../testing/old/domain/types';
 import { gameOf, savedOf } from '../../testing/legacySave';

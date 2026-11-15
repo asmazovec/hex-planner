@@ -2,7 +2,7 @@ import { expect, test } from 'vitest';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { play, showTurn, uiBench } from '../../../../ui/testing/effects';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, componentAction, endOf, NEAR, quote } from '../kit';
 import { id } from './saarhero';
 

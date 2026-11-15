@@ -1,7 +1,7 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { CARD } from '../../../strategy';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, quote, secondary } from '../kit';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import { id } from './yincommander';

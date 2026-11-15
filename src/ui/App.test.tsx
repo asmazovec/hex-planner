@@ -3,7 +3,7 @@ import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, test, expect } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { emptySlots } from '../domain/mapBuilder';
+import { emptySlots } from '../testing/old/domain/mapBuilder';
 import { factionCode } from '../domain/shareLink';
 import { useGame } from '../state/gameStore';
 import { App } from './App';

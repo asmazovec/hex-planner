@@ -88,7 +88,5 @@ export function sharedOf(board: Board, pack: DataPack): Shared {
 
 /** The components the player can play, as `readyToPlay` counts them (the old readiness, asked of the board's cards). */
 function readyIds(board: Board, pack: DataPack, player: PlayerId, cards: Board['players'][string]['cards'], faction: string): Set<string> {
-  const control: Record<string, 'me'> = {};
-  for (const [id, planet] of Object.entries(board.planets)) if (planet.owner === player) control[id] = 'me';
-  return readyToPlay(pack, holdingsOfCards(cards), faction, control);
+  return readyToPlay(pack, holdingsOfCards(cards), faction, id => board.planets[id]?.owner === player);
 }

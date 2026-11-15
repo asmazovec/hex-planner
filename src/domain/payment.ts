@@ -1,7 +1,4 @@
-import { appliedToPlanet } from './effects/points/payment';
-import { holderOf } from './effects/registry';
-import type { DataPack, Payment, RuleStep } from './types';
-import type { PayShared, Payer } from './readers';
+import type { Payment } from './types';
 
 export type PaymentKind = 'resources' | 'influence';
 
@@ -23,26 +20,9 @@ export const EXPEDITION_SLICES: ExpeditionSlice[] = [
   { id: 'tech', techPlanet: true },
 ];
 
-/**
- * Who pays, for the components that change what a payment is worth: the faction, my state (laws, attachments) when the
- * payer is not me, and the step the warnings of the payment carry. Without it the printed values stand.
- */
-export interface PayView { faction: string; shared?: PayShared; step?: RuleStep }
-
 /** Cards that are spent as if they were planets (The Triad), with their printed resources and influence. */
 export const PLANET_CARDS: Readonly<Record<string, number>> = { 'relic:thetriad': 3 };
 export const isPlanetCard = (id: string): boolean => id in PLANET_CARDS;
-
-/** What a planet (or planet card) gives in `kind`, after the components of its controller and what is attached to it. */
-export function planetValue(pack: DataPack, state: Payer, planetId: string, kind: PaymentKind, view?: PayView): number {
-  const printed = isPlanetCard(planetId) ? PLANET_CARDS[planetId] : pack.planets[planetId]?.[kind] ?? 0;
-  if (!view) return printed;
-  const shared = view.shared ?? state;
-  return appliedToPlanet(
-    pack, holderOf(view, state, shared), shared.attachments?.[planetId] ?? [],
-    kind === 'resources' ? 'planetResources' : 'planetInfluence', printed, planetId, state.docks.includes(planetId),
-  ).value;
-}
 
 /** A planet's resources and influence as the screens show them, and whether a component changed either. */
 export interface PlanetValues { resources: number; influence: number; changed: boolean }

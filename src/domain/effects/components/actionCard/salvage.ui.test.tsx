@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { showUses, uiBench, use } from '../../../../ui/testing/effects';
 import { CARD } from '../../../strategy';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, endOf, NEAR, planned, quote, tactical, TARGET } from '../kit';
 import { id } from './salvage';
 

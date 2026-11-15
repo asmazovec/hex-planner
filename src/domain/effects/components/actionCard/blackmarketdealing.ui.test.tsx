@@ -7,7 +7,7 @@ import { TransactionStep } from '../../../../ui/plan/editors/TransactionStep';
 import { project, stateBeforeEntry } from '../../../../testing/old/domain/project';
 import type { Act } from '../../../types';
 import type { Entry, Game } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, NEAR, quote, tactical, using } from '../kit';
 import { id } from './blackmarketdealing';
 import { transactionProps } from '../../../../ui/testing/turnProps';

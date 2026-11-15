@@ -4,7 +4,8 @@
  */
 import { describe, expect, test } from 'vitest';
 import { fleetCount } from '../../replay/transport';
-import { adjacentTo, fleetSpeed, joined, linksOf, routeDistances, routeReach, shipSpeed, wormholesOf, type MoveView } from '../../movement';
+import { adjacentTo, fleetSpeed, joined, routeDistances, routeReach, shipSpeed, wormholesOf, type MoveView } from '../../movement';
+import { linksOf } from '../../../testing/old/domain/movement';
 import type { GameState } from '../../../testing/old/domain/types';
 import { bench, endOf, FAR, FARTHER, HOME, NEAR, TARGET, tactical, using, warningsOf, type Bench } from '../components/kit';
 import { tech } from '../../rules/kit';

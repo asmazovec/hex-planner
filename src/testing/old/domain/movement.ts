@@ -1,8 +1,13 @@
 import type { DataPack, UnitCounts } from '../../../domain/types';
 import type { Game } from './types';
 import type { GameState } from './types';
-import { holderOf, inForceOf, effectOf } from '../../../domain/effects/registry';
-import { holdsShips } from '../../../domain/movement';
+import { inForceOf, effectOf } from '../../../domain/effects/registry';
+import { holderOf } from './effects/holder';
+import { holdsShips, linksFrom, type Link, type MoveAt } from '../../../domain/movement';
+import { planetsOf } from '../../../domain/replay/board';
+import type { Holder } from '../../../domain/effects/registry';
+import type { Kept, SharedOf } from './effects/holder';
+import { homeSlot } from './strategy';
 
 /**
  * The systems that end a route of `mover` (undefined or `me` for me): the ships of every other player. Over the replayed
@@ -50,3 +55,36 @@ export function shipBlockersOf(game: Game, state: Pick<GameState, 'systems' | 'r
   }
   return blockers;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// What the counting of a move reads of the old per-player state.
+
+/** The wormhole tokens put on the map during the game: the token's type, then the slot. */
+export interface WormholeTokens { readonly wormholeTokens?: Readonly<Record<string, string>> }
+/** A player who moves: their cards, control and laws, the docks on their planets and the tokens of the game as they hold them. */
+export type Moving = Kept & WormholeTokens & { readonly docks: readonly string[] };
+/** The laws and tokens of the whole game, as the mover's shared view keeps them. */
+export type MoveShared = SharedOf & WormholeTokens;
+
+/** What a component of the mover reads of the board, over the old per-player state. */
+export const atOfState = (game: Game, pack: DataPack, state: Moving, shared?: MoveShared): MoveAt => ({
+  map: game, tokens: (shared ?? state).wormholeTokens as Record<string, string> | undefined,
+  get home() { return homeSlot(game, pack); },
+  dockIn: slot => planetsOf(game, slot, pack).some(planetId => state.docks.includes(planetId)),
+});
+
+/** Who asks for the adjacency beyond the board. */
+export interface LinkWho { holder?: Holder; state?: Moving; shared?: MoveShared; named?: readonly string[]; during: 'tactical' | 'neighbors' }
+
+/**
+ * The adjacency the board does not draw: the wormhole tokens of the game and what the components of the player join
+ * (in force, or named by the entry). Empty for a board that has none, so the cached graph is used as it is.
+ */
+export function linksOf(game: Game, pack: DataPack, who: LinkWho): Link[] {
+  const holder = who.holder ?? (who.state ? holderOf(game, who.state, who.shared) : undefined);
+  return linksFrom(game, pack, {
+    ...(holder ? { holder } : {}), faction: game.faction, controls: planetId => who.state?.control?.[planetId] === 'me',
+    tokens: (who.shared ?? who.state)?.wormholeTokens as Record<string, string> | undefined, ...(who.named ? { named: who.named } : {}), during: who.during,
+  });
+}
+

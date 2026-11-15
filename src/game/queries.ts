@@ -50,7 +50,7 @@ import { capacity, dockRoom, fleetCount, type Stacks } from '../domain/replay/tr
 import { appliedToPlanet } from '../domain/effects/points/payment';
 import { isPlanetCard, PLANET_CARDS, type PaymentKind } from '../domain/payment';
 import type { DataPack, UpgradeId } from '../domain/types';
-import { linksFrom, type MoveAt } from '../domain/movement';
+import { linksFrom, type MoveAt, type Mover } from '../domain/movement';
 import { playedBy } from '../domain/effects/waivers';
 import type { RouteReads } from '../domain/replay/movement';
 import type { Move, TacticalEntry } from '../domain/replay/state';
@@ -167,7 +167,7 @@ const tokenSlots = (board: Board): Record<string, string> =>
   Object.fromEntries(Object.entries(board.common.wormholeTokens).flatMap(([slot, types]) => types.map((type): [string, string] => [type, slot])));
 
 /** The map as the player moves on it: the table's map and the open Fracture, with the faction of the mover (their ships' printed speeds). */
-export const mapOf = (table: Table, board: Board, player: PlayerId): ReturnType<typeof mapSource> => ({ ...mapSource(table, board), faction: factionOf(table, player) });
+export const mapOf = (table: Table, board: Board, player: PlayerId): Mover => ({ ...mapSource(table, board), faction: factionOf(table, player) });
 
 /**
  * What the route checks read of the mover on the board: their command tokens, the components that answer for them and

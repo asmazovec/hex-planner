@@ -4,8 +4,8 @@ import type { DataPack, UnitCounts } from '../../../domain/types';
 import type { Game, Entry, Plan } from '../domain/types';
 import type { GameState } from '../domain/types';
 import type { Table, Board, PlayerId } from '../../../game/types';
-import { playersOf } from '../../../domain/players';
-import { SOURCES } from '../../../game/source';
+import { playersOf } from '../domain/players';
+import { STARTS } from '../../../game/source';
 import { ORIGINS } from './origin';
 import { emptyBoard } from '../../../game/board';
 import { applyAll } from '../../../game/apply';
@@ -42,7 +42,7 @@ export function tableOf(game: Game): Table {
   };
   // The one place the old ids are tied to the players of the table: every converter asks `keys.ts` from here on.
   nameOld(table, players.map(p => [p.id, p.old] as const));
-  SOURCES.set(table, game);
+  STARTS.set(table, { fracture: game.fracture, expedition: { thundersEdgeSystem: game.expedition.thundersEdgeSystem }, playerCount: game.playerCount });
   ORIGINS.set(table, game);
   return table;
 }

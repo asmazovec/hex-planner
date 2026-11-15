@@ -1,10 +1,16 @@
 /** The board as the steps read it: which slots hold systems, their tiles, anomalies and planets. */
 import { areAdjacent, type Adjacency } from '../route';
 import type { Anomaly, DataPack, PlanetDef } from '../types';
-import type { TableFacts } from '../facts';
 
-/** What the board of systems is read from: the map, the Fracture, who sits at the table. An old game is one; so is what the game kernel makes of a table and a board. */
-export type MapSource = Pick<TableFacts, 'map' | 'fracture' | 'faction' | 'opponents' | 'expedition'>;
+/**
+ * The map as the counting reads it: the tiles by slot (`<tileId>` or `<tileId>@<rotation 0-5>`), the Fracture (whether
+ * it is open, its ingress and seat, and while open its tiles by slot) and the slot Thunder's Edge stands in.
+ */
+export interface MapSource {
+  map: Record<string, string>;
+  fracture: { active: boolean; ingress: string[]; /** Chosen seat; null puts the group at the default edge. */ seat: number | null; tiles?: Record<string, string> };
+  expedition: { thundersEdgeSystem: string | null };
+}
 
 export const THUNDERS_EDGE_PLANET = 'thundersedge';
 

@@ -13,7 +13,6 @@ import { componentById, noteAddress } from '../components';
 import { holds, isExhausted } from '../replay/holdings';
 import type { DataPack } from '../types';
 import type { TurnFacts } from '../../game/turnFacts';
-import type { Kept } from '../readers';
 import type { Shelf } from '../shelf';
 import { applied, type Applied } from './apply';
 import { effectOf, type Holder } from './registry';
@@ -22,13 +21,13 @@ import { playedBy } from './waivers';
 import './points/production';
 
 /** Whether the owner holds the component ready on the board before the entry. */
-const ready = (pack: DataPack, state: Pick<Kept, 'holdings'> | undefined, id: string): boolean => {
+const ready = (pack: DataPack, state: { readonly holdings: Shelf } | undefined, id: string): boolean => {
   const def = componentById(pack, id);
   return !state || !def || (holds(state.holdings, def) && !isExhausted(state.holdings, def));
 };
 
 export function appliedFor<K extends keyof Modifiers>(
-  pack: DataPack, who: Shelf | Holder, entry: TurnFacts | undefined, point: K, base: number, ctx: ModifierContext[K], state?: Pick<Kept, 'holdings'>,
+  pack: DataPack, who: Shelf | Holder, entry: TurnFacts | undefined, point: K, base: number, ctx: ModifierContext[K], state?: { readonly holdings: Shelf },
 ): Applied {
   const result = applied(pack, who, point, base, ctx);
   if (!entry) return result;

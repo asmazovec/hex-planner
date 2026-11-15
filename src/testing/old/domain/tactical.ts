@@ -1,3 +1,4 @@
+import { atOfState } from './movement';
 import { factsOfEntry } from './types';
 import type { DataPack, UnitId, StructureKind, StructureCounts, UnitCounts } from '../../../domain/types';
 import type { Game } from './types';
@@ -5,9 +6,10 @@ import type { GameState, Holdings } from './types';
 import { poolOf, hasUnits, withCount, hasStructures, withStructure, type Move, groupOf, hasCargo, isGround, unitsIn, addUnits, sourcesOf } from '../../../domain/tactical';
 import type { TacticalEntry } from './types';
 import { sourceSlot, productionCost, systemPlanets, fightersFly, tileIdOf, routeSteps } from '../../../domain/replay/index';
-import { holderOf } from '../../../domain/effects/registry';
+import { holderOf } from './effects/holder';
 import { autoPay } from './payment';
-import { boardSlots, type Blockers, type MoveView, linksOf, fleetSpeed, routeMove, routeReach } from '../../../domain/movement';
+import { boardSlots, type Blockers, type MoveView, fleetSpeed, routeMove, routeReach } from '../../../domain/movement';
+import { linksOf } from './movement';
 import { MECATOL_PLANETS, CUSTODIANS_COST } from '../../../domain/mecatol';
 import { productionDue } from './replay/production';
 /** Nothing of the action is filled in yet, so its system can still change. */
@@ -205,7 +207,7 @@ export function routeHint(
   // The components of the player answer for the start, the active system and the group, as in the replay of the move.
   const group = before.systems[path[0]] ?? {};
   const view: MoveView = {
-    holder: holderOf(game, before), state: before, from: path[0], target: active ?? undefined, group,
+    holder: holderOf(game, before), at: atOfState(game, pack, before), from: path[0], target: active ?? undefined, group,
     links: linksOf(game, pack, { state: before, during: 'tactical' }),
   };
   const fastest = fleetSpeed(game, group, holderOf(game, before), pack, view);

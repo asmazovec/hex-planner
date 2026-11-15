@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { MECATOL_PLANET, MECATOL_PLANET_TE, MECATOL_TILE, MECATOL_TILE_TE } from '../../../mecatol';
-import { linksOf, routeReach } from '../../../movement';
+import { routeReach } from '../../../movement';
+import { atOfState, linksOf } from '../../../../testing/old/domain/movement';
+import { holderOf } from '../../../../testing/old/domain/effects/holder';
 import type { Entry, Game } from '../../../../testing/old/domain/types';
 import { bench, type Bench, componentAction, effect, endOf, expectStanding, FAR, FARTHER, HOME, NEAR, quote, TARGET, warningsOf } from '../kit';
 import { id } from './lgf';
@@ -13,7 +15,7 @@ const table = (faction: string, entries: Entry[] = [], game: Partial<Game> = {})
 const reach = (winnu: Bench) => {
   const { game, pack } = winnu;
   const state = endOf(winnu);
-  return routeReach(game, [NEAR], 1, FARTHER, pack, new Set(), { state, shared: state, links: linksOf(game, pack, { state, shared: state, during: 'tactical' }) });
+  return routeReach(game, [NEAR], 1, FARTHER, pack, new Set(), { holder: holderOf(game, state, state), at: atOfState(game, pack, state, state), links: linksOf(game, pack, { state, shared: state, during: 'tactical' }) });
 };
 
 describe('technology:lgf Lazax Gate Folding', () => {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { UnitCounts } from '../../../types';
 import type { Game } from '../../../../testing/old/domain/types';
-import type { Player } from '../../../players';
+import type { Player } from '../../../../testing/old/domain/types';
 import { bench, effect, expectNone, expectStanding, expectWaived, HOME, NEAR, quote, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './mentakbt';
 

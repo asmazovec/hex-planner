@@ -2,7 +2,7 @@ import { toOld } from '../../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { adjust, bench, componentAction, HOME, NEAR } from '../../domain/effects/components/kit';
 import type { Entry } from '../../testing/old/domain/types';
-import type { Player } from '../../domain/players';
+import type { Player } from '../../testing/old/domain/types';
 import { timelineOf } from '../../testing/projection';
 import { turnOf } from '../../testing/old/game/fromLegacy';
 import { choicesOf } from './choices';
