@@ -11,7 +11,7 @@ import type { Turn } from './actions';
 import type { GameEvent } from './events';
 import { factsOf } from './turnFacts';
 import { resolveTurn, type StepResult } from './resolve';
-import { newTrack } from './resolve/track';
+import { newTrack, type RoundTrack } from './resolve/track';
 import { roundClear, roundStarted, statusEnd, statusStart, turnStart, type Round } from './round';
 import { initialBoard } from './setup';
 import type { Board, Table } from './types';
@@ -32,6 +32,9 @@ export interface Frame {
   steps: StepResult[];
   violations: Warning[];
   hints: ComponentDef[];
+  /** What the round remembered when the turn began, and what the moments right before it warned of: the turn is resolved again from these (`src/game/options.ts`). */
+  track: RoundTrack;
+  lead: readonly Warning[];
 }
 
 interface Mark { round: Round; start: Board; to: number; statusDone: boolean }
@@ -98,7 +101,7 @@ export function timeline(table: Table, pack: DataPack, rounds: Round[], filter: 
       const phase = turn.phase ?? 'action';
       const skipped = turn.status === 'cancelled' || (filter === 'now' && turn.status !== 'done');
       if (skipped) {
-        frames.push({ turnId: turn.id, before: board, after: board, applied: false, moments: [], steps: [], violations: [], hints: [] });
+        frames.push({ turnId: turn.id, before: board, after: board, applied: false, moments: [], steps: [], violations: [], hints: [], track, lead: [] });
         continue;
       }
       moments = [];
@@ -112,14 +115,16 @@ export function timeline(table: Table, pack: DataPack, rounds: Round[], filter: 
       const before = board;
       // The status phase ends with its first status entry (81.4, 81.6), and what its end brings is part of that turn; each player may have a status entry of their own, and the later ones find the phase ended.
       const closing = turn.action.kind === 'status' ? (b: Board) => { board = b; finishStatus(); return { board, violations: lead.splice(0) }; } : undefined;
-      const resolution = resolveTurn(table, board, turn, pack, { track, moments: lead.splice(0), ...(closing ? { closing } : {}) });
+      const led = lead.splice(0);
+      const began = track;
+      const resolution = resolveTurn(table, board, turn, pack, { track, moments: led, ...(closing ? { closing } : {}) });
       board = resolution.board;
       track = resolution.track;
       const violations = resolution.steps.flatMap(s => s.violations);
       const after = board;
       frames.push({
         turnId: turn.id, before, after, applied: true, moments, steps: resolution.steps, violations,
-        hints: resolution.steps.flatMap(s => s.hints),
+        hints: resolution.steps.flatMap(s => s.hints), track: began, lead: led,
       });
     }
     mark.to = frames.length;

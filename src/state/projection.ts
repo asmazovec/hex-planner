@@ -18,6 +18,13 @@ import { waiveBoard } from '../game/resolve/waive';
 import type { Board, PlayerId, Table } from '../game/types';
 import type { DataPack, Warning } from '../domain/types';
 import { checkSystemOf } from '../domain/replay/transport';
+import { newTurn } from '../game/edit/new';
+import { withTurnAdded } from '../game/edit/plan';
+import { emptyRound } from '../game/round';
+import { asker, causes, optionsAt, type Candidate, type ChoicePoint, type Option, type Point } from '../game/options';
+
+export type { Candidate, ChoicePoint, Option, Point };
+export { asker, causes, optionsAt };
 
 export type { Filter, Timeline };
 export { warningsByTurn, violationsOf };
@@ -101,3 +108,73 @@ export function systemWarningsAt(line: Timeline, roundNo: number, slot: string, 
   const ordered = [...bySeat.filter(p => p.id === first), ...bySeat.filter(p => p.id !== first)];
   return ordered.flatMap(({ id }) => waiveBoard(table, board, pack, id, checkSystemOf(stacksOn(table, board, pack, id), slot)));
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The options of a turn: what an edit of it would cause (src/game/options.ts).
+
+const points = new WeakMap<Timeline, WeakMap<Turn, { plain?: Point; manual?: Point }>>();
+
+/**
+ * A turn of the plan at its place: the board just before it, the round and what the round remembered, so that a candidate
+ * edit is resolved as the replay resolves the turn. Warfare's free action is resolved inside its card. The same object
+ * for the same turn of the same timeline, so what was asked of it is kept; `manual` says the payment is the player's own.
+ * None for a turn the timeline does not hold.
+ */
+export function pointOf(line: Timeline, turn: Turn, manual = false): Point | undefined {
+  let byTurn = points.get(line);
+  if (!byTurn) points.set(line, byTurn = new WeakMap());
+  let kept = byTurn.get(turn);
+  if (!kept) byTurn.set(turn, kept = {});
+  const slot = manual ? 'manual' : 'plain';
+  if (kept[slot]) return kept[slot];
+  const { table, pack } = line;
+  const frame = line.byTurn.get(turn.id);
+  let point: Point | undefined;
+  if (frame) {
+    const round = line.rounds.find(r => r.turns.some(t => t.id === turn.id));
+    point = { table, pack, board: frame.before, turn, ...(round ? { round } : {}), track: frame.track, lead: frame.lead, manual };
+  } else {
+    for (const round of line.rounds) {
+      const host = round.turns.find(t => t.action.kind === 'strategic' && (t.action.nested ?? []).some(n => n.id === turn.id));
+      const hostFrame = host && line.byTurn.get(host.id);
+      // The editors of a nested action read the board the plan ends on (`boardBefore`); its card is resolved where it stands.
+      if (host && hostFrame) point = { table, pack, board: line.end, turn, host, hostBoard: hostFrame.before, round, track: hostFrame.track, lead: hostFrame.lead, manual };
+    }
+  }
+  if (point) kept[slot] = point;
+  return point;
+}
+
+const fresh = new WeakMap<Timeline, Map<string, Point>>();
+
+/**
+ * The point of a tactical action not in the plan yet, as it would stand once added to a round for a player (inside the
+ * card `byCard` for Warfare's free action): it has no system, and nothing of it is resolved until a candidate gives one.
+ * The round is replayed once with it; the rounds before keep their frames.
+ */
+export function pointOfNewTactical(line: Timeline, roundNo: number, player: PlayerId, byCard?: string): Point | undefined {
+  let kept = fresh.get(line);
+  if (!kept) fresh.set(line, kept = new Map());
+  const key = `${roundNo}:${player}:${byCard ?? ''}`;
+  const known = kept.get(key);
+  if (known) return known;
+  const round = line.rounds.find(r => r.number === roundNo) ?? emptyRound(roundNo);
+  const made = newTurn('tactical', { id: 'option:new', player, round }, byCard ? { byCard } : {});
+  const turn: Turn = made.action.kind === 'tactical' ? { ...made, action: { ...made.action, system: null } } : made;
+  const added = withTurnAdded(round, turn, byCard);
+  const rounds = line.rounds.some(r => r.number === roundNo) ? line.rounds.map(r => (r.number === roundNo ? added : r)) : [...line.rounds, added];
+  const next = kernelTimeline(line.table, line.pack, rounds, line.filter, { start: line.start, previous: line });
+  const placed = findNested(added, turn.id);
+  const point = placed && pointOf(next, placed);
+  if (point) kept.set(key, point);
+  return point;
+}
+
+const findNested = (round: Round, id: string): Turn | undefined => {
+  for (const turn of round.turns) {
+    if (turn.id === id) return turn;
+    const inner = turn.action.kind === 'strategic' ? (turn.action.nested ?? []).find(n => n.id === id) : undefined;
+    if (inner) return inner;
+  }
+  return undefined;
+};
