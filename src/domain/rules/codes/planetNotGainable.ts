@@ -9,7 +9,7 @@ export default defineCode('planetNotGainable', {
   rules: ['ability:peace_accords'],
   step: 'component',
   text: {
-    ru: 'Планету {{planet}} нельзя получить этой способностью: это не Mecatol Rex, на ней не должно быть юнитов, а её система должна быть рядом с системой вашей планеты.',
-    en: 'The planet {{planet}} cannot be gained by this ability: it must not be Mecatol Rex, must hold no units, and must be in a system adjacent to a planet you control.',
+    ru: 'Планету {{planet}} нельзя получить этой способностью: это не Mecatol Rex, на ней не должно быть юнитов, а её система должна быть рядом с системой планеты игрока.',
+    en: 'The planet {{planet}} cannot be gained by this ability: it must not be Mecatol Rex, must hold no units, and must be in a system adjacent to a planet the player controls.',
   },
 });

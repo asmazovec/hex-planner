@@ -256,7 +256,7 @@ test('a component action offers first what its owner can play without a warning;
   expect(within(picker()).getByTestId('component-relic:thalnos')).not.toHaveTextContent('not held');
   const other = within(picker()).getByTestId(`component-${offered().at(-1)}`);
   // What the kernel says playing it would cause, in the look of every option that leads to a warning.
-  expect(other).toHaveTextContent('you do not hold this component');
+  expect(other).toHaveTextContent('the player does not hold this component');
   expect(other).toHaveClass('would-warn');
   expect(within(picker()).getByTestId('component-relic:thalnos')).not.toHaveClass('would-warn');
   const id = offered().at(-1);

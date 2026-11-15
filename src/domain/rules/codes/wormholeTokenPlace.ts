@@ -9,7 +9,7 @@ export default defineCode('wormholeTokenPlace', {
   rules: ['promissory:iff', 'technology:wg'],
   step: 'component',
   text: {
-    ru: 'Жетон червоточины Creuss можно поместить только в систему с вашей планетой или в не домашнюю систему без кораблей других игроков, а в {{system}} это не так.',
-    en: 'A Creuss wormhole token goes only into a system with a planet you control, or into a non-home system with no other players\' ships, and {{system}} is neither.',
+    ru: 'Жетон червоточины Creuss можно поместить только в систему с планетой игрока или в не домашнюю систему без кораблей других игроков, а в {{system}} это не так.',
+    en: 'A Creuss wormhole token goes only into a system with a planet the player controls, or into a non-home system with no other players\' ships, and {{system}} is neither.',
   },
 });

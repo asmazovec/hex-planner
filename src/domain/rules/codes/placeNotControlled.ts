@@ -8,7 +8,7 @@ export default defineCode('placeNotControlled', {
   rules: ['67.4.1'],
   step: 'component',
   text: {
-    ru: 'Юниты помещаются только на планету, которую вы контролируете, а {{planet}} не ваша.',
-    en: 'Units are placed only on a planet you control, and {{planet}} is not yours.',
+    ru: 'Юниты помещаются только на планету, которую игрок контролирует, а {{planet}} не его.',
+    en: 'Units are placed only on a planet their player controls, and {{planet}} is not that player\'s.',
   },
 });

@@ -8,7 +8,7 @@ export default defineCode('warSunAbsent', {
   rules: ['ability:star_forge'],
   step: 'component',
   text: {
-    ru: 'В выбранной системе нет вашего Военного Солнца.',
-    en: 'No war sun of yours stands in the chosen system.',
+    ru: 'В выбранной системе нет Военного Солнца этого игрока.',
+    en: 'No war sun of this player stands in the chosen system.',
   },
 });

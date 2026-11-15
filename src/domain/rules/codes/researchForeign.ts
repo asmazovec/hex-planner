@@ -9,6 +9,6 @@ export default defineCode('researchForeign', {
   step: 'card',
   text: {
     ru: 'Технологию {{name}} другой фракции исследовать нельзя: технологию берут из своей колоды технологий.',
-    en: '{{name}} is a technology of another faction; research takes a card from your own technology deck.',
+    en: '{{name}} is a technology of another faction; research takes a card from the player\'s own technology deck.',
   },
 });
