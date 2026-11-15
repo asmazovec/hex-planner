@@ -11,10 +11,12 @@ export interface StepperProps {
   min?: number;
   /** How the value reads, e.g. with its sign for a change; the number itself by default. */
   format?: (value: number) => string;
+  /** What one more would cause, as the kernel says: the plus is then drawn dashed and says it; it still adds. */
+  plusWarns?: string;
   onChange: (value: number) => void;
 }
 
-export function Stepper({ name, value, of, note, min, format = String, onChange }: StepperProps) {
+export function Stepper({ name, value, of, note, min, format = String, plusWarns, onChange }: StepperProps) {
   const { t } = useTranslation();
   return (
     <div className="stepper" role="group" aria-label={name}>
@@ -27,7 +29,12 @@ export function Stepper({ name, value, of, note, min, format = String, onChange 
       </button>
       {/* The value keeps its width as it changes, so the minus beside it stays under the finger. */}
       <output className={of === undefined ? undefined : 'stepper-of'}>{of === undefined ? format(value) : `${format(value)}/${of}`}</output>
-      <button type="button" aria-label={t('plan.stepper.plus', { name })} onClick={() => onChange(value + 1)}>+</button>
+      <button
+        type="button" className={plusWarns ? 'would-warn' : undefined} aria-label={t('plan.stepper.plus', { name })}
+        title={plusWarns ? `${t('plan.stepper.plus', { name })}: ${plusWarns}` : undefined} onClick={() => onChange(value + 1)}
+      >
+        +
+      </button>
     </div>
   );
 }

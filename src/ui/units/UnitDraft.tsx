@@ -18,6 +18,8 @@ export interface UnitDraftItem {
   returnLabel: string;
   /** Why this one cannot be taken at all: a reason of its own, never an empty stock. */
   blockedReason?: string;
+  /** What taking one more would cause, as the kernel says (`src/game/options.ts`): the text of the warning. The button then looks as one beyond the stock does, and still takes. */
+  warns?: string;
 }
 
 /** `horizontal`: the buttons, then the tray beside them, on one line. `vertical`, for a narrow panel or many kinds: the buttons on a line, the tray under them in the same columns. */
@@ -64,7 +66,8 @@ const PICTURE = 40;
  * Units taken from a known stock, a row per place. A row is its place, a button to take per kind, a quiet arrow and the
  * tray of what was taken. A button is the stock: a plus and what is left. An empty stock forbids nothing, since an
  * ability may change the rule and the domain warns: with nothing left the button stays where it is and still takes,
- * dashed, with the number taken beyond the stock in its corner. Only a reason of its own disables it. The tray keeps one place per kind in the order of the buttons: an outline while empty, a filled
+ * dashed, with the number taken beyond the stock in its corner. The same look says that one more would lead to a warning
+ * of any kind (`warns`, the kernel's answer): the button says which in its title. Only a reason of its own disables it. The tray keeps one place per kind in the order of the buttons: an outline while empty, a filled
  * chip with its count once taken, and a tap on the chip returns one. Nothing appears, leaves or changes its width from
  * a tap, so the finger stays on what it pressed. The one way to take units from a stock anywhere in the app.
  *
@@ -89,10 +92,12 @@ export function UnitDraft({ rows, layout = 'horizontal', stock, colour, onTake, 
                 const blocked = row.blockedReason ?? item.blockedReason;
                 const out = !blocked && counted && left <= 0;
                 const over = out ? -left : 0;
-                const note = blocked ?? (out ? [t('draft.over'), ...(over > 0 ? [t('draft.overBy', { n: over })] : [])].join(' · ') : undefined);
+                const warns = blocked ? undefined : item.warns;
+                const marked = out || warns !== undefined;
+                const note = blocked ?? (marked ? [...(out ? [t('draft.over'), ...(over > 0 ? [t('draft.overBy', { n: over })] : [])] : []), ...(warns ? [warns] : [])].join(' · ') : undefined);
                 return (
                   <button
-                    key={item.id ?? item.kind} type="button" className={blocked ? 'draft-take draft-take-out' : out ? 'draft-take draft-take-over' : 'draft-take'} aria-label={item.takeLabel}
+                    key={item.id ?? item.kind} type="button" className={blocked ? 'draft-take draft-take-out' : marked ? 'draft-take draft-take-over' : 'draft-take'} aria-label={item.takeLabel}
                     title={note ? `${item.takeLabel}: ${note}` : item.takeLabel} disabled={Boolean(blocked)} onClick={() => (item.id === undefined ? onTake(row.id, item.kind) : onTake(row.id, item.kind, item.id))}
                   >
                     <span className="draft-plus" aria-hidden="true">+</span>

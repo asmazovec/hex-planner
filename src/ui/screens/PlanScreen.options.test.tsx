@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import * as edits from '../../testing/entries';
@@ -91,4 +91,77 @@ test('a route under way: an asteroid field beside it is dashed, where the ships 
   await userEvent.click(tile(ROCKS));
   await userEvent.click(tile(TARGET));
   expect(warningsShown()).toContain('routeBlocked');
+});
+
+const button = (name: string | RegExp, within_?: HTMLElement) => (within_ ? within(within_) : screen).getByRole('button', { name });
+const tap = (name: string | RegExp, within_?: HTMLElement) => userEvent.click(button(name, within_));
+const DASHED = 'draft-take-over';
+
+test('the units of a flight: cargo with no ship to carry it is dashed and says why, plain once a carrier flies; one over the capacity is dashed again, still taken and warned of', async () => {
+  await newTactical();
+  await userEvent.click(tile(TARGET));
+  await userEvent.click(screen.getByRole('button', { name: 'Add source' }));
+  await userEvent.click(tile(HOME));
+  await userEvent.click(tile(TARGET));
+  // The stock holds two fighters, so it is not the stock that marks the button.
+  expect(button('Take one Fighter')).toHaveClass(DASHED);
+  expect(button('Take one Fighter').title).toMatch(/capacity/i);
+  expect(button('Take one Carrier')).not.toHaveClass(DASHED);
+  await tap('Take one Carrier');
+  expect(button('Take one Fighter')).not.toHaveClass(DASHED);
+  expect(button('Take one Infantry')).not.toHaveClass(DASHED);
+  await tap('Take one Fighter');
+  await tap('Take one Fighter');
+  await tap('Take one Infantry');
+  await tap('Take one Infantry');
+  // Four places on board are taken: the fifth is over, though two infantry still stand on the planet.
+  expect(button('Take one Infantry')).toHaveClass(DASHED);
+  expect(button('Take one Infantry')).toBeEnabled();
+  expect(warningsShown()).not.toContain('capacityGroup');
+  await tap('Take one Infantry');
+  expect(warningsShown()).toContain('capacityGroup');
+  // Taken beyond the capacity it stays marked: it is what holds the warning.
+  expect(button('Take one Infantry')).toHaveClass(DASHED);
+});
+
+test('the landing: a ground force beyond what arrived is dashed with the reason, one that arrived is plain', async () => {
+  const id = edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { carrier: 1 } }, { from: 'nestphar', units: { infantry: 1 } }], landings: [], production: {}, payment: NO_PAY }, 'action');
+  render(<PlanScreen />);
+  await tap(/^Edit: Tactical action/);
+  expect(button('Land one Infantry')).not.toHaveClass(DASHED);
+  await tap('Land one Infantry');
+  expect(button('Land one Infantry')).toHaveClass(DASHED);
+  expect(button('Land one Infantry').title).toMatch(/Infantry/);
+  expect(id).toBeTruthy();
+});
+
+test('the shop of a tactical action: a unit that leads to a warning is dashed and says why, a clean one is plain; it is still bought and warned of', async () => {
+  tactical(HOME);
+  render(<PlanScreen />);
+  await tap(/^Edit: Tactical action/);
+  await tap(/^Production/);
+  const stage = document.querySelector('.stage-dialog') as HTMLElement;
+  // The home planet pays for a cruiser; a war sun needs its technology and twelve resources.
+  expect(button('Cruiser', stage)).not.toHaveClass(DASHED);
+  expect(button('War Sun', stage)).toHaveClass(DASHED);
+  expect(button('War Sun', stage).title).not.toBe('War Sun');
+  expect(button('War Sun', stage)).toBeEnabled();
+  await tap('War Sun', stage);
+  expect([...stage.querySelectorAll('.warning-list li')].length).toBeGreaterThan(0);
+});
+
+test('the payment: an exhausted planet and a trade good the player does not have are dashed and say why', async () => {
+  // The first action exhausts Nestphar; the second pays with it again.
+  edits.addEntry(1, { type: 'tactical', systemId: HOME, moves: [], landings: [], production: { cruiser: 1 }, payment: { planets: ['nestphar'], tradeGoods: 0 } }, 'action');
+  edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: { infantry: 2 }, payment: { planets: ['nestphar'], tradeGoods: 0 } }, 'action');
+  render(<PlanScreen />);
+  await userEvent.click(screen.getAllByRole('button', { name: /^Edit: Tactical action/ })[1]);
+  await tap('Choose manually');
+  const planets = screen.getByRole('group', { name: 'Planets to pay with' });
+  const nestphar = within(planets).getByRole('button', { name: /Nestphar/ });
+  expect(nestphar).toHaveClass('would-warn');
+  expect(nestphar.title).toMatch(/exhausted/i);
+  expect(nestphar).toBeEnabled();
+  expect(button('Add one trade good')).toHaveClass('would-warn');
+  expect(button('Add one trade good')).toBeEnabled();
 });

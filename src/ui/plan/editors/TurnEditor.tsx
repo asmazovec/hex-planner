@@ -23,6 +23,8 @@ import { Section } from '../../primitives/Section';
 import { ChoicesBlock } from '../blocks/ChoicesBlock';
 import { ComponentSlot } from '../blocks/ComponentSlot';
 import { PaymentBlock } from '../blocks/PaymentBlock';
+import type { Point } from '../../../state/projection';
+import { usePoint, useWhy } from '../options';
 
 /** What a component action can play. */
 const PLAYED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technology', 'promissory', 'ability', 'breakthrough', 'legendary', 'exploration'];
@@ -43,6 +45,8 @@ export interface TurnEditorProps {
   view: KernelView;
   /** The turn of a component action or a pass. */
   turn: Turn;
+  /** The turn at its place in the plan, as the timeline has it: what a press would cause is asked of it. Without it the turn is asked on the board of `view`. */
+  point?: Point;
   pack: DataPack;
   /** The turn's warnings: those its blocks do not show stand first, such as what an expedition lacks to pay. */
   warnings: Warning[];
@@ -62,8 +66,10 @@ export interface TurnEditorProps {
  * A component action or a pass as a turn: the component the action plays, first and as wide as the editor, and its note
  * in a part of their own, then what any turn holds; a pass has only that.
  */
-export function TurnEditor({ turn, pack, view, warnings, common, pickFirst, onChange, production, onDone, onRemove }: TurnEditorProps) {
+export function TurnEditor({ turn, point, pack, view, warnings, common, pickFirst, onChange, production, onDone, onRemove }: TurnEditorProps) {
   const { t } = useTranslation();
+  const asked = usePoint(view, pack, turn, point);
+  const why = useWhy(asked);
   const [manualPayment, setManualPayment] = useState(false);
   const [picking, setPicking] = useState(() => Boolean(pickFirst) && turn.action.kind === 'component' && turn.action.component === undefined);
   // What the owner holds ready just before the entry stands first in the choice; the rest can be played too, and the plan warns.
@@ -101,7 +107,7 @@ export function TurnEditor({ turn, pack, view, warnings, common, pickFirst, onCh
           )}
           {cost && (
             <PaymentBlock
-              need={cost.amount} kind={cost.kind} payment={payment} view={view} player={player} pack={pack} manual={manualPayment}
+              need={cost.amount} kind={cost.kind} payment={payment} view={view} player={player} pack={pack} manual={manualPayment} of="play" why={why}
               onManual={open => { setManualPayment(open); if (!open) onChange(withPlayPayment(turn, autoPayOn(view.table, view.board, pack, player, cost.amount, cost.kind))); }}
               onChange={next => onChange(withPlayPayment(turn, next))}
             />
@@ -122,7 +128,7 @@ export function TurnEditor({ turn, pack, view, warnings, common, pickFirst, onCh
               {made && (
                 <PaymentBlock
                   need={productionDueOnBoard(view.table, view.board, pack, player, made.units, turn)} payment={producedPayment} view={view} player={player} pack={pack}
-                  manual={production.manual}
+                  manual={production.manual} of="produced" why={why}
                   onManual={open => { production.onManual(open); if (!open) onChange(withProducedPayment(view.table, view.board, pack, turn, effects, false)); }}
                   onChange={next => onChange(withPlayEffects(turn, { ...effects, payment: next }))}
                 />

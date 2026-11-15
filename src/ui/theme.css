@@ -364,6 +364,10 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .tile:active .hex { stroke: var(--hex-stroke-pressed); transition-duration: var(--motion-fast); }
 .tile-selected .hex { stroke: var(--text-strong); stroke-width: 3; }
 .tile-valid .hex { stroke: var(--accent); stroke-width: 3.5; }
+/* A control whose press leads to a warning: the look of a draft button beyond its stock, for any button. It is never disabled by this. */
+button.would-warn { border-style: dashed; border-color: color-mix(in srgb, var(--warning) 75%, transparent); }
+button.would-warn:not([aria-pressed='true']) { background: transparent; color: var(--text-dim); }
+button.would-warn:not([aria-pressed='true']) > b, button.would-warn:not([aria-pressed='true']) > span { opacity: 0.6; }
 /* An option that leads to a warning, everywhere: a dashed edge and a dimmed body, so it reads by its shape whatever the accent is. It still takes a tap. */
 .tile-warned .hex { stroke: var(--warning); stroke-width: 3; stroke-dasharray: 9 7; fill-opacity: 0.55; }
 .tile-active .hex { stroke: var(--gold); stroke-width: 3.5; fill: var(--gold-soft); }

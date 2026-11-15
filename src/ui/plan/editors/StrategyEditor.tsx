@@ -29,6 +29,8 @@ import { MapPickButton } from '../../primitives/MapPickButton';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { EditorPart } from '../../primitives/EditorPart';
 import { StepHints } from '../../feedback/StepHints';
+import type { Point } from '../../../state/projection';
+import { usePoint, useWhy } from '../options';
 
 /** What the next tap on the map chooses. */
 export type MapPick = 'system' | 'build' | 'dock';
@@ -41,6 +43,8 @@ export interface StrategyEditorProps {
   round: Round;
   /** The card turn being edited, and the writer of its changes: a changed turn is handed back whole. */
   turn: Turn;
+  /** The turn at its place in the plan, as the timeline has it: what a press would cause is asked of it. Without it the turn is asked on the board of `view`. */
+  point?: Point;
   onChange: (turn: Turn) => void;
   warnings: Warning[];
   manualPayment: boolean;
@@ -66,10 +70,11 @@ export interface StrategyEditorProps {
 
 /** A strategy card played: first the card, then its primary or its secondary; either stays open, and a switch starts the play over. */
 export function StrategyEditor({
-  pack, view, round, turn: given, warnings, manualPayment, picking,
+  pack, view, round, turn: given, point, warnings, manualPayment, picking,
   onChange, onManualPayment, onPick, onOpenShop, onStartTactical, onOpenTactical, onDone, onRemove, common,
 }: StrategyEditorProps) {
   const { t } = useTranslation();
+  const why = useWhy(usePoint(view, pack, given, point, { manual: manualPayment, round }));
   const { table, board } = view;
   if (!isCardTurn(given)) return null;
   const turn = given;
@@ -163,7 +168,7 @@ export function StrategyEditor({
       {sections()}
       {(cost.amount > 0 || payment.planets.length > 0 || payment.tradeGoods > 0) && (
         <PaymentBlock
-          need={cost.amount} payment={payment} view={view} player={player} pack={pack} manual={manualPayment} kind={cost.kind}
+          need={cost.amount} payment={payment} view={view} player={player} pack={pack} manual={manualPayment} kind={cost.kind} of="card" why={why}
           onManual={toggleManual} onChange={next => onChange(withCard(turn, { effects: { ...effects, payment: next } }))}
         >
           {list(placer.at('payment'))}

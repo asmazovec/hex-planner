@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { GroundStack, PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { emptyHoldings, upgradesOf } from '../../../domain/holdings';
 import { standing, productionCost } from '../../../domain/replay';
-import { boardAt, boardBefore, systemWarningsAt, timelineOf } from '../../../state/projection';
+import { boardAt, boardBefore, causesKept, pointOf, systemWarningsAt, timelineOf, type Candidate } from '../../../state/projection';
+import { reasonOf } from '../../feedback/WarningText';
 import { unitStats } from '../../../domain/unitStats';
 import type { PlanetDef, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
@@ -329,10 +330,26 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
     if (limit === null || structurePlayer === undefined) continue;
     shopStock[kind] = limit - structuresOf(board, structurePlayer).reduce((sum, held) => sum + (held.structures[kind] ?? 0), 0);
   }
+  /**
+   * The turn that takes the purchases, at its place in the plan: what one more bought would cause is asked of the kernel
+   * for it (the price, the production limit, the fleet pool, the capacity, the reinforcements, the rule of a structure). A
+   * purchase by hand has no turn and no rule check, so only the empty reinforcements mark it.
+   */
+  const buyingTurn = onPurchase ? turnById(onPurchase.entryId) : tactical;
+  const buyingPoint = buyingTurn && side === mine ? pointOf(line, buyingTurn, manualPayments.includes(buyingTurn.id)) : undefined;
+  const whyBuy = (candidate: Candidate): string | undefined =>
+    (buyingPoint ? reasonOf(causesKept(buyingPoint, candidate), buyingPoint.table, buyingPoint.board, pack, t) : undefined);
+  const candidateOf = (kind: TokenKind, planet: PlanetDef | null): Candidate | undefined => {
+    if (isStructure(kind)) return purchases.changeStructure && planet ? { kind: 'build', structure: kind, planet: planet.id } : undefined;
+    const planetId = pack.units[kind]?.ground ? planet?.id ?? null : null;
+    return { kind: 'produce', unit: kind, planet: planetId, ...(onPurchase ? { system: slot } : {}) };
+  };
   /** The shop as rows by where a purchase goes: ships to the space area, ground forces and structures to a planet. */
   const draftItem = (item: ShopItem, index: number | undefined, planet: PlanetDef | null): UnitDraftItem => {
     const name = planet && planets.length > 1 ? t('stage.unitOn', { unit: item.label, planet: planet.name }) : item.label;
+    const candidate = mode === 'build' ? candidateOf(item.kind, planet) : undefined;
     return {
+      warns: candidate && whyBuy(candidate),
       kind: item.kind, picked: boughtAt(item.kind, index), price: item.price === undefined ? undefined : priceText(item.price),
       takeLabel: name, returnLabel: t('stage.giveBack', { unit: name }),
       // One dock to a planet (85.4): a second one was never placed, and now the button says so.

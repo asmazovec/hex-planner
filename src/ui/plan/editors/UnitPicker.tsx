@@ -17,6 +17,8 @@ import { systemName, systemTitle } from '../../map/systemName';
 import { limitsSystem, ofSource, placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { SectionTitle } from '../../primitives/SectionTitle';
+import type { Point } from '../../../state/projection';
+import { usePoint, useWhy } from '../options';
 
 export interface UnitPickerProps {
   /** The table and the board just before the turn, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
@@ -24,6 +26,8 @@ export interface UnitPickerProps {
   pack: DataPack;
   /** The tactical turn: only the flights of `source` are edited here, and the changed turn is handed back whole. */
   turn: Turn;
+  /** The turn at its place in the plan, as the timeline has it: what a press would cause is asked of it. Without it the turn is asked on the board of `view`. */
+  point?: Point;
   source: string;
   /** What is wrong with this flight: over the cargo by the cargo, the rest by the fleet line. */
   warnings?: Warning[];
@@ -67,8 +71,10 @@ function CargoPips({ load, capacity }: { load: number; capacity: number }) {
  * what is taken from each system on the way. Its cross removes the route. Nothing is chosen at first; limits warn, never forbid.
  * Every place a unit is taken from is a row of a `UnitDraft`: a button to take per kind, and the tray of what was taken.
  */
-export function UnitPicker({ pack, view, turn, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
+export function UnitPicker({ pack, view, turn, point, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
   const { t } = useTranslation();
+  // What one more of a kind would cause, asked of the kernel as a button is drawn: over the capacity, beyond what stands there, from under a command token.
+  const why = useWhy(usePoint(view, pack, turn, point));
   const { table, board } = view;
   const action = tacticalOf(turn);
   const player = turn.player;
@@ -119,6 +125,7 @@ export function UnitPicker({ pack, view, turn, source, warnings = [], onChange, 
       ? { picked: pickedOf(from, unit), left: standingAt(from, unit) - pickedOf(from, unit) }
       : { picked: picked(from, unit), left: available(from, unit) - picked(from, unit) }),
     takeLabel: t('plan.picker.take', { unit: unitName(unit) }), returnLabel: t('plan.picker.put', { unit: unitName(unit) }),
+    warns: why({ kind: 'fly', source, from, unit }),
   });
   const change = (from: string, kind: TokenKind, by: 1 | -1) => (isStructure(kind)
     ? onChange(withStructureCount(at, turn, source, from, kind, pickedOf(from, kind) + by))

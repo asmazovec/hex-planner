@@ -25,8 +25,9 @@ const flight = (before: Entry[]) => {
 test('promissory:ms the two infantry placed are offered on the planet and taken aboard', async () => {
   const { table, live } = flight([play('h1')]);
   quote(table.pack, id, 'you may place 2 infantry from your reinforcements on any planet you control');
-  expect(takeButton('Infantry', 'Home One').className).not.toContain('draft-take-over');
+  // The carrier first: with no ship taken yet, a unit taken aboard would be over the capacity, and its button says so.
   await take('Carrier');
+  expect(takeButton('Infantry', 'Home One').className).not.toContain('draft-take-over');
   await take('Infantry', 'Home One');
   await take('Infantry', 'Home One');
   expect(live.warnings().filter(w => w.code === 'unitsMissing')).toEqual([]);

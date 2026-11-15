@@ -17,8 +17,9 @@ test('mech:sol_mech the mech deployed with Orbital Drop is offered on the planet
   const table = bench({ faction: 'sol', expansions: ['pok'], units: { [HOME]: { carrier: 1 } }, entries: [drop, move] });
   quote(table.pack, id, 'place 1 mech on that planet');
   const live = showFlight(table, move, HOME);
-  expect(takeButton('Mech', 'Home One').className).not.toContain('draft-take-over');
+  // The carrier first: with no ship taken yet, a unit taken aboard would be over the capacity, and its button says so.
   await take('Carrier');
+  expect(takeButton('Mech', 'Home One').className).not.toContain('draft-take-over');
   await take('Mech', 'Home One');
   expect(live.warnings().filter(w => w.code === 'unitsMissing')).toEqual([]);
 });

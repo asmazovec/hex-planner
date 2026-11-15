@@ -6,6 +6,7 @@ import type { Expedition, Payment, Turn } from '../../../game/actions';
 import { withAct } from '../../../game/edit/turn';
 import { autoPayOn, sliceAutoPaymentOn, techSlicePlanetsOn } from '../../../game/planQueries';
 import { PaymentBlock } from '../blocks/PaymentBlock';
+import { usePoint, useWhy } from '../options';
 import type { SliceOwners } from '../../../domain/thundersEdge';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
@@ -39,6 +40,7 @@ export function ExpeditionEditor({
   turn, index, view, owners, pack, warnings = [], manualPayment, onManualPayment, onChange, onDone, onRemove,
 }: ExpeditionEditorProps) {
   const { t } = useTranslation();
+  const why = useWhy(usePoint(view, pack, turn));
   const act = turn.acts[index] as Expedition;
   const sliceId = act.slice;
   const payment = act.payment;
@@ -78,7 +80,7 @@ export function ExpeditionEditor({
       </Section>
       {paidWith && (
         <PaymentBlock
-          need={paidWith.amount} kind={paidWith.kind} payment={payment} view={view} player={player} pack={pack}
+          need={paidWith.amount} kind={paidWith.kind} payment={payment} view={view} player={player} pack={pack} of={{ act: index }} why={why}
           manual={manualPayment}
           onManual={open => {
             onManualPayment(open);

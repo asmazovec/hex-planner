@@ -34,6 +34,8 @@ import { WarningList } from '../../feedback/WarningText';
 import { StepHints } from '../../feedback/StepHints';
 import { MapPickButton } from '../../primitives/MapPickButton';
 import { Vanishing } from '../../primitives/Vanishing';
+import type { Point } from '../../../state/projection';
+import { usePoint, useWhy } from '../options';
 
 export interface TacticalEditorProps {
   /** The table and the board just before the turn, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
@@ -41,6 +43,8 @@ export interface TacticalEditorProps {
   pack: DataPack;
   /** The tactical turn being edited, and the writer of its changes: a changed turn is handed back whole. */
   turn: Turn;
+  /** The turn at its place in the plan, as the timeline has it: what a press would cause is asked of it. Without it the turn is asked on the board of `view`. */
+  point?: Point;
   onChange: (turn: Turn) => void;
   warnings: Warning[];
   manualPayment: boolean;
@@ -72,10 +76,11 @@ export interface TacticalEditorProps {
  * block shows its own warnings. The flight of a source is a step of its own (UnitPicker), shown in its place.
  */
 export function TacticalEditor({
-  pack, view, turn, warnings, manualPayment, choosing, onChoose,
+  pack, view, turn, point, warnings, manualPayment, choosing, onChoose,
   onChange, onOpenPicker, leaving = [], onLeft, onManualPayment, onOpenShop, onOpenBattle, onOpenFleet, onDone, onRemove, common,
 }: TacticalEditorProps) {
   const { t } = useTranslation();
+  const why = useWhy(usePoint(view, pack, turn, point, { manual: manualPayment }));
   const { table, board } = view;
   const action = tacticalOf(turn);
   const target = action.system;
@@ -204,7 +209,7 @@ export function TacticalEditor({
             <Section title={t('plan.tactical.landing')} optional collapsible warnings={list(placer.at('landing'))}>
               <LandingBlock
                 view={view} pack={pack} player={player} planets={planets} units={landable} arrived={here} lost={groundLost}
-                landedOn={landedOn} onLand={setLanding}
+                landedOn={landedOn} onLand={setLanding} why={why}
                 structures={hasStructures(afloat) || offers.structures.length > 0 || action.invasion.some(l => hasStructures(l.structures)) ? {
                   arrived: afloat, reinforced: offers.structures,
                   landedOn: (planetId: string, kind: StructureKind) => action.invasion.find(l => l.planet === planetId && l.from === undefined)?.structures?.[kind] ?? 0,
@@ -219,7 +224,7 @@ export function TacticalEditor({
               {custodiansAt !== undefined && (
                 <PaymentBlock
                   label={t('plan.tactical.custodians')} need={CUSTODIANS_COST} kind="influence" payment={action.custodians ?? { planets: [], tradeGoods: 0 }}
-                  view={view} player={player} pack={pack} manual={custodiansManual}
+                  view={view} player={player} pack={pack} manual={custodiansManual} of="custodians" why={why}
                   onManual={open => {
                     setCustodiansManual(open);
                     if (!open) onChange(withCustodiansSet(turn, autoPayOn(table, board, pack, player, CUSTODIANS_COST, 'influence')));
@@ -252,7 +257,7 @@ export function TacticalEditor({
 
           {(cost > 0 || payment.planets.length > 0 || payment.tradeGoods > 0) && (
             <PaymentBlock
-              need={cost} payment={payment} view={view} player={player} pack={pack} manual={manualPayment}
+              need={cost} payment={payment} view={view} player={player} pack={pack} manual={manualPayment} of="production" why={why}
               onManual={toggleManual} onChange={paid => onChange(withProductionPayment(turn, paid))}
             >
               {list(placer.at('payment'))}

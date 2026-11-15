@@ -22,8 +22,9 @@ const flight = (faction: string) => {
 test('ability:orbital_drop the two infantry dropped are offered on the planet and taken aboard', async () => {
   const { table, live } = flight('sol');
   quote(table.pack, id, 'place 2 infantry from your reinforcements on 1 planet you control');
-  expect(takeButton('Infantry', 'Home One').className).not.toContain('draft-take-over');
+  // The carrier first: with no ship taken yet, a unit taken aboard would be over the capacity, and its button says so.
   await take('Carrier');
+  expect(takeButton('Infantry', 'Home One').className).not.toContain('draft-take-over');
   await take('Infantry', 'Home One');
   await take('Infantry', 'Home One');
   expect(live.entry().moves).toContainEqual({ from: 'h1', units: { infantry: 2 } });

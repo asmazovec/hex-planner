@@ -9,6 +9,7 @@ import { tableColours } from '../../units/sprites';
 import { UnitDraft, type UnitDraftRow } from '../../units/UnitDraft';
 import { UnitTile } from '../../units/UnitTile';
 import type { KernelView } from '../kernelView';
+import type { Why } from '../options';
 
 export interface LandingBlockProps {
   /** The table and the board just before the action: who stands on the planets, how they are now, and what the components make of their numbers. */
@@ -24,6 +25,8 @@ export interface LandingBlockProps {
   lost?: Record<string, UnitCounts>;
   landedOn: (planetId: string, unit: UnitId) => number;
   onLand: (planetId: string, unit: UnitId, count: number) => void;
+  /** What one more landed would cause, as the kernel says: the button is then drawn as one beyond what arrived. */
+  why?: Why;
   /** The structures that stand in the space area after the flights, and where the action puts them at its end; without it the rows hold ground forces only. */
   structures?: {
     arrived: StructureCounts;
@@ -47,7 +50,7 @@ const isStructure = (kind: string): kind is StructureKind => kind === 'pds' || k
  * The landing is one draft with a row per planet: the stock is what arrived, less what landed on every planet, so a
  * kind that ran out changes its look in all the rows at once and counts what lands beyond it (the domain warns, nothing is forbidden); the tray of a row holds what lands there.
  */
-export function LandingBlock({ view, pack, player, planets, units, arrived, lost = {}, landedOn, onLand, structures, from }: LandingBlockProps) {
+export function LandingBlock({ view, pack, player, planets, units, arrived, lost = {}, landedOn, onLand, why, structures, from }: LandingBlockProps) {
   const { t } = useTranslation();
   const { table, board } = view;
   const colours = tableColours(table);
@@ -68,6 +71,7 @@ export function LandingBlock({ view, pack, player, planets, units, arrived, lost
     left: (source.units[unit] ?? 0) - committedFrom(source.planet.id, unit), price: source.planet.name.slice(0, 3),
     takeLabel: t('plan.tactical.landOneFrom', { unit: unitName(unit), planet: source.planet.name }),
     returnLabel: t('plan.tactical.giveBackFrom', { unit: unitName(unit), planet: source.planet.name }),
+    warns: why?.({ kind: 'land', planet: planetId, unit, from: source.planet.id }),
   })));
 
   const rows: UnitDraftRow[] = planets.map(planet => {
@@ -94,11 +98,13 @@ export function LandingBlock({ view, pack, player, planets, units, arrived, lost
         ...units.map(unit => ({
           kind: unit, picked: landedOn(planet.id, unit),
           takeLabel: t('plan.tactical.landOne', { unit: unitName(unit) }), returnLabel: t('stage.giveBack', { unit: unitName(unit) }),
+          warns: why?.({ kind: 'land', planet: planet.id, unit }),
         })),
         ...fromItems(planet.id),
         ...kinds.map(kind => ({
           kind, picked: structures?.landedOn(planet.id, kind) ?? 0,
           takeLabel: t('plan.tactical.landOne', { unit: t(`unit.${kind}`) }), returnLabel: t('stage.giveBack', { unit: t(`unit.${kind}`) }),
+          warns: why?.({ kind: 'land', planet: planet.id, unit: kind }),
         })),
       ],
       aside: (standing.length > 0 || enemies.length > 0) && (

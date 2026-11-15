@@ -164,7 +164,8 @@ test('a unit taken or returned adds and removes no control: every kind keeps its
   await userEvent.click(take('Cruiser'));
   await userEvent.click(take('Cruiser'));
   expect(take('Cruiser')).toHaveClass('draft-take-over');
-  expect(take('Cruiser')).toHaveAttribute('title', 'Take one Cruiser: none left, the next one is taken beyond the stock');
+  // The title says the stock is out, and what the kernel says one more would cause.
+  expect(take('Cruiser').title).toMatch(/^Take one Cruiser: none left, the next one is taken beyond the stock · .*missing 1 × Cruiser/);
   expect(places()).toEqual(before);
   // Nothing forbids one more than stands there: it flies in the plan, the button counts it, and the domain warns.
   await userEvent.click(take('Cruiser'));

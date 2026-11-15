@@ -8,6 +8,8 @@ import type { PlayerId } from '../../../game/types';
 import type { KernelView } from '../kernelView';
 import { Section } from '../../primitives/Section';
 import { Stepper } from '../../primitives/Stepper';
+import type { PaymentOf } from '../../../game/options';
+import type { Why } from '../options';
 
 export interface PaymentBlockProps {
   need: number;
@@ -22,6 +24,9 @@ export interface PaymentBlockProps {
   kind?: PaymentKind;
   /** The block's name when it is not the payment of the action. */
   label?: string;
+  /** Which payment of the turn this is, and what a planet or one more trade good would cause, as the kernel says: such a choice is drawn dashed and says why. */
+  of?: PaymentOf;
+  why?: Why;
   onManual: (open: boolean) => void;
   onChange: (payment: Payment) => void;
   /** The warnings about this payment. */
@@ -29,7 +34,7 @@ export interface PaymentBlockProps {
 }
 
 /** Shows the automatic payment; the manual choice of planets and trade goods opens on request. */
-export function PaymentBlock({ need, payment, view, player, pack, manual, kind = 'resources', label, onManual, onChange, children }: PaymentBlockProps) {
+export function PaymentBlock({ need, payment, view, player, pack, manual, kind = 'resources', label, of, why, onManual, onChange, children }: PaymentBlockProps) {
   const { t } = useTranslation();
   const { table, board } = view;
   const value = (id: string): number => planetValue(table, board, pack, player, id, kind);
@@ -57,14 +62,21 @@ export function PaymentBlock({ need, payment, view, player, pack, manual, kind =
       {manual && (
         <>
           <div className="pay-planets" role="group" aria-label={t('plan.payment.planets')}>
-            {choices.map(id => (
-              <button key={id} type="button" aria-pressed={payment.planets.includes(id)} onClick={() => toggle(id)}>
-                {planetText(id)}
-              </button>
-            ))}
+            {choices.map(id => {
+              const warns = of === undefined ? undefined : why?.({ kind: 'pay', of, planet: id });
+              return (
+                <button
+                  key={id} type="button" className={warns ? 'would-warn' : undefined} title={warns ? `${planetText(id)}: ${warns}` : undefined}
+                  aria-pressed={payment.planets.includes(id)} onClick={() => toggle(id)}
+                >
+                  {planetText(id)}
+                </button>
+              );
+            })}
           </div>
           <Stepper
             name={t('plan.payment.tradeGood')} value={payment.tradeGoods} of={board.players[player]?.tradeGoods ?? 0} min={0}
+            plusWarns={of === undefined ? undefined : why?.({ kind: 'payGoods', of })}
             onChange={tradeGoods => onChange({ ...payment, tradeGoods })}
           />
         </>

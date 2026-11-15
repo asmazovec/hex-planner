@@ -584,7 +584,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const flown = slot.entry;
         return (
           <UnitPickerHost
-            entryId={flown.id} pack={pack} view={boards.view(flown.id)} source={slot.source}
+            entryId={flown.id} pack={pack} view={boards.view(flown.id)} point={pointOf(forecastKernel, flown)} source={slot.source}
             warnings={rowWarnings[flown.id] ?? []}
             onClose={() => closePicker(flown, slot.source)}
             onFly={() => {
@@ -600,7 +600,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const systemId = edited.action.system;
         return (
           <TacticalEditorHost
-            entryId={edited.id} pack={pack} view={boards.view(edited.id)}
+            entryId={edited.id} pack={pack} view={boards.view(edited.id)} point={pointOf(forecastKernel, edited, manualPayment)}
             warnings={rowWarnings[edited.id] ?? []}
             manualPayment={manualPayment} choosing={choosing}
             onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) { drawers.closeRight(); setView('map'); } }}
@@ -621,7 +621,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const played = slot.entry;
         return (
           <StrategyEditorHost
-            key={played.id} entryId={played.id} roundNumber={round.number} pack={pack} view={boards.view(played.id)}
+            key={played.id} entryId={played.id} roundNumber={round.number} pack={pack} view={boards.view(played.id)} point={pointOf(forecastKernel, played, manualPayments.includes(played.id))}
             warnings={rowWarnings[played.id] ?? []} manualPayment={manualPayments.includes(played.id)} picking={cardPick}
             onManualPayment={open => toggleManualPayment(played.id, open)}
             onPick={target => { update(state => ({ ...state, next: target ? { kind: 'card', pick: target } : IDLE })); if (target) { drawers.closeRight(); setView('map'); } }}
@@ -662,7 +662,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           <TurnHost key={turn.id} entryId={turn.id} view={boards.view(turn.id)} pack={pack}>
             {({ turn: played, update: change }) => (
               <TurnEditor
-                turn={played} pack={pack} view={boards.view(turn.id)} warnings={rowWarnings[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
+                turn={played} point={pointOf(forecastKernel, played)} pack={pack} view={boards.view(turn.id)} warnings={rowWarnings[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
                 onChange={change}
                 production={{
                   picking: next.kind === 'produce',
