@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
+import type { GroundStack, PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { emptyHoldings, upgradesOf } from '../../../domain/holdings';
 import { standing, productionCost } from '../../../domain/replay';
 import { boardAt, boardBefore, systemWarningsAt, timelineOf } from '../../../state/projection';
@@ -175,6 +175,19 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
     const key = stackKey(holderOf(planetId), kind, index);
     bought[key] = (bought[key] ?? 0) + 1;
     entered[key] = (entered[key] ?? 0) + 1;
+  }
+
+  /**
+   * The structures the entry holds on planets its player does not control: the replay warns and does not place them
+   * (24.2, 24.3), so the board has none to draw, while the row of the shop counts them. The hex draws them all the same.
+   */
+  const enteredStructures: GroundStack[] = [];
+  for (const { kind, planetId } of purchases.structures ?? []) {
+    const index = planets.findIndex(p => p.id === planetId);
+    if (index < 0 || controllerOf(planetId) === mine) continue;
+    const known = enteredStructures.find(s => s.kind === kind && s.planet === index);
+    if (known) known.count += 1;
+    else enteredStructures.push({ kind, owner: holderOf(planetId), count: 1, planet: index });
   }
 
   /**
@@ -395,7 +408,7 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
 
   return {
     table, board, shown: shownBoard ?? board, viewer, others: othersBySeat(table, viewer, pack, t), planets, target, setPlanet, mode, setMode, mine, side, seated, colours, kindName,
-    adjusting, tapNote, handover, onToken, ringed: (key: string) => inBuild && (bought[key] ?? 0) > 0,
+    adjusting, tapNote, handover, onToken, enteredStructures, ringed: (key: string) => inBuild && (bought[key] ?? 0) > 0,
     shopItems, buy, boughtTotal, spent, meterRows, entryWarnings, boardWarnings, lossesFor, fights,
     productionRows, constructionRows, shopStock, buyAt, unbuyAt, fleetItems, removeShip, fleetOver,
   };

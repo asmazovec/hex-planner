@@ -97,7 +97,7 @@ export function HexStage(props: HexStageProps) {
             <g transform={`translate(${-x} ${-y})`}>
               <TileView
                 slotKey={slot} pack={pack} table={table} board={board} viewer={viewer} ingress={mapSource(table, board).fracture.ingress.includes(slot)}
-                stage={{ target, onPlanet: setPlanet, onToken: stage.onToken, ringed: item => stage.ringed(item.key) }}
+                stage={{ target, onPlanet: setPlanet, onToken: stage.onToken, ringed: item => stage.ringed(item.key), entered: stage.enteredStructures }}
               />
             </g>
           </svg>

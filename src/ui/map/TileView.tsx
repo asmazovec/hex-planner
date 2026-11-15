@@ -1,7 +1,7 @@
 import { useMemo, type KeyboardEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { HEX_INNER, hexLayout, type HexLayout, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack } from '../../domain/hexLayout';
+import { HEX_INNER, hexLayout, type HexLayout, type HexLayoutInput, type LayoutObstacle, type GroundStack, type PlacedPlanet, type PlacedStack, type SpaceStack } from '../../domain/hexLayout';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
 import { rotateLanes } from '../../domain/lanes';
 import { isOnMap, tileIdOf } from '../../domain/replay';
@@ -19,7 +19,8 @@ import { playerStyle } from '../primitives/player';
 import { nameOfPlayer } from '../players/names';
 import { WORMHOLE_SIGNS } from './systemName';
 
-export type Highlight = 'valid' | 'dim' | 'active' | 'source' | 'path';
+/** `warned`: an option of the choice the map is making that leads to a warning; it can still be chosen. */
+export type Highlight = 'valid' | 'warned' | 'dim' | 'active' | 'source' | 'path';
 
 export interface TileViewProps {
   slotKey: string;
@@ -29,6 +30,8 @@ export interface TileViewProps {
   /** Whose eyes the tile looks through: their units stand first, the others after them by seat. The viewer of the table by default. */
   viewer?: PlayerId;
   highlight?: Highlight;
+  /** What choosing this tile would cause, for a `warned` one: the text of the warning. */
+  note?: string;
   selected?: boolean;
   /** A Fracture system sits beside the map, not in a slot: its tile id and centre are given here. */
   fracture?: { tileId: string; index: number; x: number; y: number };
@@ -52,7 +55,21 @@ export interface TileViewProps {
     onPlanet: (index: number) => void;
     onToken: (item: PlacedStack) => void;
     ringed: (item: PlacedStack) => boolean;
+    /** Structures an entry holds that the board did not place (24.2: on a planet its player does not control): they stand on the hex all the same, as the row of the shop counts them. */
+    entered?: GroundStack[];
   };
+}
+
+/** The stacks of the board with what an entry holds beyond it: one more of a stack that stands, or a stack of its own. */
+function withEntered(stacks: { space: SpaceStack[]; ground: GroundStack[] }, entered: GroundStack[] = []): { space: SpaceStack[]; ground: GroundStack[] } {
+  if (entered.length === 0) return stacks;
+  const ground = stacks.ground.map(stack => ({ ...stack }));
+  for (const extra of entered) {
+    const known = ground.find(s => s.kind === extra.kind && s.owner === extra.owner && s.planet === extra.planet);
+    if (known) known.count += extra.count;
+    else ground.push({ ...extra });
+  }
+  return { space: stacks.space, ground };
 }
 
 /** The planet is drawn at this radius and scaled to its place. */
@@ -180,7 +197,7 @@ export function PlanetMark({ planet, held, holderColor, exhausted, values }: { p
 }
 
 export function TileView({
-  slotKey, pack, table, board, viewer = table.viewer, highlight, selected, fracture, ingress, seat, onTap, onPointerDown, quiet = false, liftInto = null, stage,
+  slotKey, pack, table, board, viewer = table.viewer, highlight, note, selected, fracture, ingress, seat, onTap, onPointerDown, quiet = false, liftInto = null, stage,
 }: TileViewProps) {
   const { t } = useTranslation();
   const { x, y } = fracture ?? slotToPixel(slotKey);
@@ -217,7 +234,7 @@ export function TileView({
   };
   const colours = tableColours(table);
   const seated = othersOf(table, viewer);
-  const { space, ground } = tileStacks(table, board, viewer, slotKey, planets);
+  const { space, ground } = withEntered(tileStacks(table, board, viewer, slotKey, planets), stage?.entered);
   const tokens = board.systems[slotKey]?.tokens ?? [];
   const hasCommandToken = tokens.includes(viewer);
   const seatX = tile && seat ? NUMBER_X + (String(tile.number).length + (worm ? worm.length + 1 : 0)) * NUMBER_CHAR + SEAT_RADIUS + 1.5 : 0;
@@ -341,6 +358,7 @@ export function TileView({
       onKeyDown={onKeyDown}
       onPointerDown={e => onPointerDown?.(slotKey, e)}
     >
+      {note && <title>{note}</title>}
       <polygon points={hexPoints(HEX_INNER)} className={`hex ${hexKind}`} />
       {lanes.map(lane => (
         <path key={lane.join('-')} d={lanePath(lane)} data-lane={lane.join('-')} className="tile-lane" />
