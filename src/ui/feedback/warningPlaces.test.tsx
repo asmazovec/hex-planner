@@ -292,7 +292,7 @@ describe('the tactical editor', () => {
   test('the activation speaks in the block of the system: no token left to spend, or one already there', () => {
     editor([{ code: 'poolNegative', params: { pool: 'tactic', have: -1 }, step: 'activation' }, { code: 'systemHasToken', params: { systemId: HOME } }]);
     expect(blockOf(/below zero/)).toMatch(/^Active system/);
-    expect(blockOf(/already holds your token/)).toMatch(/^Active system/);
+    expect(blockOf(/already holds this player's command token/)).toMatch(/^Active system/);
   });
 
   test('more lost in battle than there was stands in the battle', () => {

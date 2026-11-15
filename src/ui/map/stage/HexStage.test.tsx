@@ -558,7 +558,7 @@ describe('build', () => {
     addTactical();
     open({ initialMode: 'build' });
     await tap('Cruiser');
-    expect(screen.getByText(/no unit of yours with Production/)).toBeVisible();
+    expect(screen.getByText(/no unit of this player with Production/)).toBeVisible();
     cleanup();
     store().setDock(quann(), true);
     open({ initialMode: 'build' });
