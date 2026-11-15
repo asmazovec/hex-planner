@@ -85,12 +85,24 @@ test('cancelling the system choice leaves no entry', async () => {
 const WAY = '1,1';
 const hoverPath = (slot: string) => { document.elementFromPoint = () => tile(slot); };
 
+/** The button that starts the choice of a source, while the tactical editor shows it. */
+const sourceButton = () => screen.queryByRole('button', { name: 'Add source' });
+/** A source is chosen only after «Add source»: pressed here unless a choice or a route is already under way. */
+async function startSource() {
+  // The flight step of a source stands in the place of the editor: the button is back with the editor.
+  if (!sourceButton() && screen.queryByText(/^Flight /)) await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+  const button = sourceButton();
+  const under = (choiceHint()?.textContent ?? '').match(/Tap the hexes in order|Tap the system the ships come from/);
+  if (button && button.getAttribute('aria-pressed') !== 'true' && !under) await userEvent.click(button);
+}
 async function addRouteByTaps(...slots: string[]) {
+  await startSource();
   for (const slot of slots) await userEvent.click(tile(slot));
 }
 
 test('a route by taps: source, hexes in order, the active system; nothing is chosen at first', async () => {
   await chooseSystem();
+  await startSource();
   await userEvent.click(tile(HOME));
   expect(tactical().moves).toEqual([]);
   expect(screen.getByRole('status')).toHaveTextContent('Tap the hexes in order');
@@ -190,6 +202,52 @@ describe('the system and the sources, chosen from the panel', () => {
     await userEvent.click(tile(TARGET));
     expect(entries()).toHaveLength(0);
     expect(screen.getByRole('status')).toHaveTextContent('Tap the system');
+  });
+
+  test('with the active system chosen the map picks nothing by itself: a tap or a stroke adds no source until «Add source» is pressed', async () => {
+    await chooseSystem();
+    expect(choiceHint()).toBeNull();
+    expect(addSource()).toHaveAttribute('aria-pressed', 'false');
+    // A tap on another system opens what it opens on the map at any time: the big hex. No route starts.
+    await userEvent.click(tile(HOME));
+    expect(tile(HOME)).not.toHaveClass('tile-path');
+    expect(choiceHint()).toBeNull();
+    expect(tactical().moves).toEqual([]);
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
+    // A stroke of the finger is the map's to move: it draws no arrow.
+    fireEvent.pointerDown(tile(HOME), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
+    hoverPath(TARGET);
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 30, clientY: 30 });
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 30, clientY: 30 });
+    expect(tactical().moves).toEqual([]);
+    expect(document.querySelector('.route')).toBeNull();
+    document.elementFromPoint = () => null;
+    // The button starts the choice; the route that reaches the active system ends it.
+    await userEvent.click(addSource());
+    expect(addSource()).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(tile(HOME));
+    expect(tile(HOME)).toHaveClass('tile-path');
+    await userEvent.click(tile(TARGET));
+    expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(addSource()).toHaveAttribute('aria-pressed', 'false');
+    expect(choiceHint()).toBeNull();
+    await userEvent.click(tile(WAY));
+    expect(tile(WAY)).not.toHaveClass('tile-path');
+    expect(tactical().moves).toEqual([{ from: HOME, units: { carrier: 1 } }]);
+  });
+
+  test('a stroke of the finger starts the route once «Add source» is pressed', async () => {
+    await chooseSystem();
+    await userEvent.click(addSource());
+    fireEvent.pointerDown(tile(HOME), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
+    hoverPath(TARGET);
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
+    expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
+    // The route is recorded and its flight step stands in the panel: the map chooses nothing more.
+    expect(screen.getByText('Flight Nestphar → Quann')).toBeVisible();
+    expect(choiceHint()).toBeNull();
   });
 
   test('choosing a source only starts the route: nothing is recorded until it reaches the active system', async () => {
@@ -299,6 +357,7 @@ describe('a route of drags and taps', () => {
 
   test('a drag, a lifted finger, a tap, and a drag again make one route', async () => {
     await chooseSystem();
+    await startSource();
     press(HOME);
     moveTo(WAY);
     lift();
@@ -325,6 +384,7 @@ describe('a route of drags and taps', () => {
 
   test('a drag, then a tap on the active system finishes it', async () => {
     await chooseSystem();
+    await startSource();
     press(HOME);
     moveTo(WAY);
     lift();
@@ -357,17 +417,20 @@ describe('a route of drags and taps', () => {
 
   test('a stroke over the active system and past it does not put it inside the route', async () => {
     await chooseSystem();
+    await startSource();
     press(HOME);
     moveTo(TARGET);
     moveTo(WAY);
     lift();
     expect(tile(WAY)).not.toHaveClass('tile-path');
+    await startSource();
     await userEvent.click(tile(TARGET));
     expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
   });
 
   test('adding a source drops the route under way', async () => {
     await chooseSystem();
+    await startSource();
     press(HOME);
     moveTo(WAY);
     lift();
@@ -616,6 +679,7 @@ test('with a route a tap on the active system cancels nothing', async () => {
 
 test('a drag through hexes records the way, and pulling it back removes the step', async () => {
   await chooseSystem();
+  await startSource();
   fireEvent.pointerDown(tile(HOME), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
   hoverPath(WAY);
   fireEvent.pointerMove(window, { pointerId: 1, clientX: 2, clientY: 2 });
@@ -632,6 +696,7 @@ test('a drag through hexes records the way, and pulling it back removes the step
 test('an arrow drag opens the same picker, in both directions', async () => {
   await chooseSystem();
   document.elementFromPoint = () => tile(TARGET);
+  await startSource();
   fireEvent.pointerDown(tile(HOME), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
   fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
   expect(tactical().moves.map(m => m.from)).toEqual([HOME]);
@@ -639,6 +704,7 @@ test('an arrow drag opens the same picker, in both directions', async () => {
 
   edits.updateEntry(tactical().id, { moves: [] });
   document.elementFromPoint = () => tile(HOME);
+  await startSource();
   fireEvent.pointerDown(tile(TARGET), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
   fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
   expect(tactical().moves.map(m => m.from)).toEqual([HOME]);
@@ -1003,8 +1069,9 @@ test('a tap on an empty slot opens nothing', async () => {
   expect(screen.queryByRole('dialog')).toBeNull();
 });
 
-test('during a tactical action a tile tap opens no big hex', async () => {
+test('while a source is being chosen a tile tap opens no big hex', async () => {
   await chooseSystem();
+  await startSource();
   await userEvent.click(tile(HOME));
   expect(screen.queryByRole('dialog')).toBeNull();
 });
@@ -1267,6 +1334,7 @@ describe('leaving', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
     await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
     await userEvent.click(tile(WAY));
+    await startSource();
     await userEvent.click(tile(HOME));
     expect(screen.getByRole('status')).toHaveTextContent('Tap the hexes in order');
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
@@ -1275,6 +1343,7 @@ describe('leaving', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
     await userEvent.click(tile(WAY));
     expect(tile(HOME)).not.toHaveClass('tile-path');
+    await startSource();
     await userEvent.click(tile(HOME));
     // The tap starts a new route rather than continuing or undoing the old one.
     expect(screen.getByRole('status')).toHaveTextContent('Tap the hexes in order');
@@ -1318,7 +1387,8 @@ describe('leaving', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Plan & map' }));
     await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
     await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
-    await addRouteByTaps(TARGET, HOME, TARGET);
+    await userEvent.click(tile(TARGET));
+    await addRouteByTaps(HOME, TARGET);
     expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
     await userEvent.click(screen.getByRole('button', { name: 'Game' }));
     expect(tactical().moves).toEqual([]);
@@ -2083,6 +2153,7 @@ describe('a route from a system without ships', () => {
 
   test('a stroke from it to the active system makes it a source, and its flight step says no ships stand there', async () => {
     await chooseSystem();
+    await startSource();
     press(WAY);
     moveTo(TARGET);
     lift();
@@ -2092,6 +2163,7 @@ describe('a route from a system without ships', () => {
 
   test('a stroke from the active system to it does the same', async () => {
     await chooseSystem();
+    await startSource();
     press(TARGET);
     moveTo(WAY);
     lift();
@@ -2100,15 +2172,18 @@ describe('a route from a system without ships', () => {
 
   test('a stroke lifted half way goes on by taps, and through a system with ships', async () => {
     await chooseSystem();
+    await startSource();
     press(WAY);
     moveTo(HOME);
     lift();
+    await startSource();
     await userEvent.click(tile(TARGET));
     expect(tactical().moves).toEqual([{ from: WAY, units: {}, via: [HOME] }]);
   });
 
   test('while it is pulled or tapped the hint says no ships are there, and lights no reach', async () => {
     await chooseSystem();
+    await startSource();
     press(WAY);
     moveTo(HOME);
     expect(screen.getByRole('status')).toHaveTextContent('No ships where the route starts. Distance: 1');
@@ -2140,7 +2215,7 @@ describe('a source left with nothing chosen', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(tactical().moves).toEqual([]);
     expect(tactical().systemId).toBe(TARGET);
-    expect(screen.getByText('Drag the first arrow or add a source.')).toBeVisible();
+    expect(screen.getByText('Add the first source.')).toBeVisible();
     expect(document.querySelector('.route-line')).toBeNull();
   });
 
@@ -2224,6 +2299,7 @@ describe('a source left with nothing chosen', () => {
     await addRouteByTaps(WAY, TARGET);
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add source' }));
     fireEvent.click(tile(WAY));
     fireEvent.click(tile(TARGET));
     act(() => { vi.advanceTimersByTime(1000); });

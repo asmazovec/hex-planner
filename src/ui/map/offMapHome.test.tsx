@@ -47,6 +47,7 @@ describe.each([['ghost', '51'], ['crimson', '118']])('the off-map home of %s', (
     await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
     await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
     await userEvent.click(tile(gate()));
+    await userEvent.click(screen.getByRole('button', { name: 'Add source' }));
     await userEvent.click(tile(home));
     await userEvent.click(tile(gate()));
     const entry = game().plans[0].rounds[0].entries[0] as { moves: { from: string }[] };

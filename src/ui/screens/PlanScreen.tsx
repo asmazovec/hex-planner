@@ -322,6 +322,12 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         }
         return;
       }
+      // With no route under way the map chooses nothing by itself: a source is chosen only after «Add source», and
+      // until then a tap on a system opens its big hex, as on the map at any time.
+      if (tapPath === null) {
+        update(state => ({ ...state, stage: { slot, mode: 'control', for: { kind: 'map' } } }));
+        return;
+      }
       update(state => ({ ...state, next: step.path ? { kind: 'route', path: step.path } : IDLE }));
       if (step.route) openRoute(step.route);
       return;
@@ -442,18 +448,21 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const shownArea = shownEntry ? focusRect(systemsOf(shownEntry)) : null;
 
   /**
-   * In the tactical editor a drag from any system of the map draws an arrow, with ships of mine there or without: nothing
-   * is forbidden. A route under way goes on from its last hex only, and any other drag moves the map.
+   * In the tactical editor a finger moves the map until «Add source» is pressed: then a drag from any system draws an
+   * arrow, with ships there or without (nothing is forbidden). A route under way goes on from its last hex only, and
+   * any other drag moves the map. A route that reaches the active system, or a choice called off, gives the map back.
    */
   const startsArrow = (slot: string): boolean => {
-    if (activeSystem === null || !entryView || choosing !== null) return false;
+    if (activeSystem === null || !entryView) return false;
     if (tapPath !== null) return slot === tapPath.at(-1);
-    return onBoard(slot);
+    return choosing === 'source' && onBoard(slot);
   };
 
   const key = hintKey(pick);
+  // A stroke that began on the source says how far it reaches, in place of the request to tap a source.
   const choiceHint = key === 'plan.tactical.tapHint' ? [t(key), speedNote].filter(Boolean).join(' ')
-    : key ? t(key) : speedNote;
+    : key === 'plan.tactical.addSourceHint' && speedNote ? speedNote
+      : key ? t(key) : speedNote;
   // The map is built on the game screen; an unfinished one says so while nothing else is asked of the map.
   const emptyCount = emptySlots(shownTable, pack).length;
   const mapHint = !choiceHint && emptyCount > 0;

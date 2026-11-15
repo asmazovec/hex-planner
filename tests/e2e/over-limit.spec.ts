@@ -33,6 +33,7 @@ test('cargo taken beyond the capacity and beyond the stock rides on board, count
   await page.locator('.action-list').getByRole('button', { name: 'Tactical action', exact: true }).click();
   await tapTile(page, 66);
   await expect(page.getByText("Active system: Hope's End")).toBeVisible();
+  await page.getByRole('button', { name: 'Add source' }).click();
   await tapTile(page, 58);
   await tapTile(page, 110);
   await tapTile(page, 66);

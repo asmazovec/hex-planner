@@ -74,6 +74,7 @@ async function startFlight(page: Page, language: Language, home: number): Promis
   await page.getByRole('button', { name: words.add }).click();
   await page.locator('.action-list').getByRole('button', { name: words.tactical, exact: true }).click();
   await tapTile(page, language, 66);
+  await page.getByRole('button', { name: /^(Add source|Добавить источник)$/ }).click();
   await tapTile(page, language, home);
   await tapTile(page, language, 110);
   await tapTile(page, language, 66);

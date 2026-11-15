@@ -141,6 +141,7 @@ async function startFlight(page: Page): Promise<void> {
   await addAction(page, 'Tactical action');
   await tapTile(page, 66);
   await expect(page.getByText("Active system: Hope's End")).toBeVisible();
+  await page.getByRole('button', { name: 'Add source' }).click();
   await tapTile(page, 58);
   await tapTile(page, 110);
   await tapTile(page, 66);
@@ -332,6 +333,7 @@ test('a kind landed to the last one changes its look to "beyond the stock" on ev
   // Horizon lies next to home and has three planets.
   await addAction(page, 'Tactical action');
   await tapTile(page, 110);
+  await page.getByRole('button', { name: 'Add source' }).click();
   await tapTile(page, 58);
   await tapTile(page, 110);
   const ships = panel(page).locator('.unit-picker');
@@ -582,6 +584,22 @@ test('the switch of the shown player is pressed again and again where it stands,
     await settle(page);
     expect(await sol.boundingBox()).toEqual(box);
   }
+});
+
+test('«Add source» starts the choice and calls it off at one point', async ({ page }) => {
+  await addAction(page, 'Tactical action');
+  await tapTile(page, 66);
+  await expect(page.getByText("Active system: Hope's End")).toBeVisible();
+  const add = page.getByRole('button', { name: 'Add source' });
+  await pressRepeatedly(page, add, 6);
+  await expect(add).toHaveAttribute('aria-pressed', 'false');
+  // With a source in the action the button stands where it stood.
+  await add.click();
+  await tapTile(page, 58);
+  await tapTile(page, 66);
+  await panel(page).getByRole('button', { name: 'Take one Carrier' }).first().click();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await pressRepeatedly(page, add, 4);
 });
 
 test('rounds are added, removed and undone one after another under the finger', async ({ page }) => {

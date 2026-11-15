@@ -123,6 +123,7 @@ test('the ships removed beyond the fleet pool fit the panel of the big hex', asy
   await stage(page).getByRole('button', { name: 'Close' }).click();
   await addTactical(page);
   await tapTile(page, 66);
+  await page.getByRole('button', { name: 'Add source' }).click();
   await tapTile(page, 58);
   await tapTile(page, 110);
   await tapTile(page, 66);
@@ -146,6 +147,7 @@ test('the landing on three planets fits the panel of the plan', async ({ page })
   await stage(page).getByRole('button', { name: 'Close' }).click();
   await addTactical(page);
   await tapTile(page, 110);
+  await page.getByRole('button', { name: 'Add source' }).click();
   await tapTile(page, 58);
   await tapTile(page, 110);
   const ships = panel(page).locator('.unit-picker');

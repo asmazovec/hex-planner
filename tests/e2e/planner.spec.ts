@@ -38,8 +38,16 @@ async function centreWhenStill(target: Locator): Promise<{ x: number; y: number 
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
-/** One pointer drags a route hex by hex, as a finger does. */
+/** A source is chosen only after «Add source»: pressed unless a choice or a route is already under way. */
+async function addSource(page: Page): Promise<void> {
+  const button = page.getByRole('button', { name: 'Add source' });
+  const drafting = await page.getByRole('status').filter({ hasText: 'Tap the hexes in order' }).count() > 0;
+  if (!drafting && await button.count() === 1 && await button.getAttribute('aria-pressed') === 'false') await button.click();
+}
+
+/** One pointer drags a route hex by hex, as a finger does: a new route after «Add source», or on from the last hex of one under way. */
 async function dragRoute(page: Page, hexes: number[]): Promise<void> {
+  await addSource(page);
   const points = [];
   for (const n of hexes) points.push(await centreWhenStill(tile(page, n)));
   await page.mouse.move(points[0].x, points[0].y);
@@ -300,6 +308,22 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
   await tile(page, 66).click();
   await expect(page.getByText(`Active system: ${HOPE}`)).toBeVisible();
 
+  // With the active system chosen the map is the finger's to move: a stroke from a system draws nothing, picks no
+  // source, and the map goes with the finger. A source is chosen only after «Add source».
+  await expect(page.getByRole('button', { name: 'Add source' })).toHaveAttribute('aria-pressed', 'false');
+  const from = await centreWhenStill(tile(page, 58));
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(from.x - 90, from.y + 70, { steps: 8 });
+  await page.mouse.up();
+  const moved = await centreWhenStill(tile(page, 58));
+  expect(Math.abs(moved.x - from.x) + Math.abs(moved.y - from.y)).toBeGreaterThan(60);
+  await expect(page.locator('.tile-path')).toHaveCount(0);
+  await expect(page.locator('.route-line')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Remove source/ })).toHaveCount(0);
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Reset view' }).click();
+
   // A real finger: a stroke lifted half way, then a tap removes nothing it should not, then the stroke goes on.
   await dragRoute(page, [58, 110]);
   const hint = page.getByRole('status');
@@ -316,6 +340,7 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
   await expect(page.getByRole('button', { name: `${HOME} via ${HORIZON}, ${ASTEROIDS}`, exact: false })).toBeVisible();
 
   // Taps first, the finger after.
+  await addSource(page);
   await tile(page, 110).click();
   await tile(page, 48).click();
   await dragRoute(page, [48, 66]);
@@ -340,6 +365,7 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
   await expect(page.getByRole('button', { name: new RegExp(`^Active system: ${ANG}`) })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Remove source/ })).toHaveCount(0);
   await expect(page.locator('.route-line')).toHaveCount(0);
+  await addSource(page);
   await tile(page, 58).click();
   await tile(page, 61).click();
   await expect(page.getByText(`Flight ${HOME} → ${ANG}`)).toBeVisible();
@@ -367,6 +393,7 @@ test('a route is drawn from a system without ships, and left with nothing taken 
   const drawn = await routes.count();
 
   // No ships of mine stand in the asteroids: the finger still draws from there, and the hint says so while it does.
+  await addSource(page);
   const from = await centreWhenStill(tile(page, 79));
   const to = await centreWhenStill(tile(page, 66));
   await page.mouse.move(from.x, from.y);
@@ -391,6 +418,7 @@ test('a route is drawn from a system without ships, and left with nothing taken 
 
   // The same by taps, and with smooth motion turned off it goes at once.
   await page.evaluate(() => { document.documentElement.dataset.motion = 'off'; });
+  await addSource(page);
   await tile(page, 79).click();
   await tile(page, 66).click();
   await expect(page.getByText(`Flight ${ASTEROIDS} → ${HOPE}`)).toBeVisible();
@@ -411,6 +439,7 @@ async function startTactical(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Add action' }).click();
   await page.getByRole('button', { name: 'Tactical action' }).click();
   await tile(page, 66).click();
+  await addSource(page);
 }
 
 const pathSlots = (page: Page) => page.evaluate(() => [...document.querySelectorAll<SVGElement>('.tile-path[data-slot]')].map(el => el.dataset.slot ?? ''));
