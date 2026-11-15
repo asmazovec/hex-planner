@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, test } from 'vitest';
 import { PLAYER_COLOURS } from '../units/sprites';
-import theme from '../theme.css?raw';
+import { readFileSync } from 'node:fs';
 import { accentOf, applyAccent, contrast } from './accent';
 
+const theme = readFileSync('src/ui/theme.css').toString('utf8');
 const themed = (name: string): string => new RegExp(`${name}: (#[0-9a-f]{6});`).exec(theme)![1];
 const SURFACES = ['--bg', '--surface', '--surface-2'].map(themed);
 
