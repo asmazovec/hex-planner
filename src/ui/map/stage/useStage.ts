@@ -105,8 +105,6 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
   const viewer: PlayerId = viewerGiven ?? table.viewer;
   /** Whose hand this hex is in: the shown player's, or the player's whose action it was opened from. */
   const mine: PlayerId = ownerGiven ?? (turnById(tacticalId) ?? turnById(adjustmentId))?.player ?? viewer;
-  /** Whom the shop buys and places for: the one whose hand the hex is in. Another player's units are placed with that player shown. */
-  const side = mine;
   const colours = tableColours(table);
   /** The players other than the one whose hand the hex is in, by seat. */
   const seated = othersBySeat(table, mine, pack, t);
@@ -195,9 +193,9 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
    * By hand, a structure goes to the player chosen in the toggle; when they do not control the target planet, placing it
    * hands them the planet. A card's structures are always mine.
    */
-  const handsOver = (planet: PlanetDef | undefined): boolean => !purchases.changeStructure && planet !== undefined && controllerOf(planet.id) !== side;
+  const handsOver = (planet: PlanetDef | undefined): boolean => !purchases.changeStructure && planet !== undefined && controllerOf(planet.id) !== mine;
   const handover = (mode === 'setup' || mode === 'build') && targetPlanet !== undefined && handsOver(targetPlanet)
-    ? { planet: targetPlanet.name, player: side } : null;
+    ? { planet: targetPlanet.name, player: mine } : null;
 
   /** One more of a kind: on the planet chosen on the hex, or on the planet of the shop's row (`null` is the space area). */
   const buy = (kind: TokenKind, at: number | null = target) => {
@@ -211,9 +209,9 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
         return;
       }
       // A structure is its controller's (85): placed for another player, it hands them the planet first, as the note said.
-      if (handsOver(planet)) setup.setPlanetControl(planet.id, side);
+      if (handsOver(planet)) setup.setPlanetControl(planet.id, mine);
       changeStructure(kind, planet.id, 1);
-      if (mode === 'build') setNews(bumped(news, stackKey(side, kind, index), 1));
+      if (mode === 'build') setNews(bumped(news, stackKey(mine, kind, index), 1));
       return;
     }
     const ground = Boolean(pack.units[kind]?.ground);
@@ -288,21 +286,20 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
 
   const sideFaction = faction;
   /** The player the shop buys for, and the board whose holdings its prices follow: what they held just before the action, or at the end of the round. */
-  const sidePlayer: PlayerId | undefined = table.players.find(p => p.id === side)?.id;
-  const sideBoard = side === mine ? onPurchase?.view?.board ?? beforeTactical ?? board : board;
+  const sidePlayer: PlayerId | undefined = table.players.find(p => p.id === mine)?.id;
+  const sideBoard = onPurchase?.view?.board ?? beforeTactical ?? board;
   const sideHoldings = sidePlayer === undefined ? emptyHoldings() : shelfOf(sideBoard, sidePlayer);
   const sideUpgrades = upgradesOf(sideHoldings, pack);
   const inBuild = mode === 'build';
   const units = UNIT_ORDER.filter(u => pack.units[u]);
   const boughtOf = (kind: TokenKind): number => Object.entries(bought)
-    .filter(([key]) => { const k = parseKey(key); return k.kind === kind && (isStructure(kind) || k.owner === side); })
+    .filter(([key]) => { const k = parseKey(key); return k.kind === kind && (isStructure(kind) || k.owner === mine); })
     .reduce((sum, [, n]) => sum + n, 0);
-  /** A new structure by hand is drawn for the player chosen in the toggle; a card builds mine. */
-  const structureColour = colours[purchases.changeStructure ? mine : side];
+  const structureColour = colours[mine];
   const shopItems: ShopItem[] = [
     ...(only === 'build' ? [] : units.map((kind): ShopItem => ({
       // Without a planet, ground forces stand in space as cargo; only the capacity warns.
-      kind, label: kindName(kind), colour: colours[side],
+      kind, label: kindName(kind), colour: colours[mine],
       price: inBuild ? unitStats(sideFaction, kind, sideUpgrades.includes(kind), pack)?.cost : undefined,
     }))),
     ...(only === 'units' ? [] : STRUCTURES.map((kind): ShopItem => ({
@@ -312,14 +309,13 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
   /** The keys of what was bought of a kind in one row of the shop: a structure of any holder, a unit of the chosen player. */
   const boughtKeys = (kind: TokenKind, index: number | undefined): string[] => Object.keys(entered).filter(key => {
     const k = parseKey(key);
-    return entered[key] > 0 && k.kind === kind && k.planet === index && (isStructure(kind) || k.owner === side);
+    return entered[key] > 0 && k.kind === kind && k.planet === index && (isStructure(kind) || k.owner === mine);
   });
   const boughtAt = (kind: TokenKind, index: number | undefined): number => boughtKeys(kind, index).reduce((sum, key) => sum + entered[key], 0);
   /**
    * The figures still in the reinforcements of the player the shop buys for (96.2, 24.4): the limit less what the forecast
    * already holds on the board, purchases included; below zero by what was bought beyond them. Fighters and infantry have tokens and never run out.
    */
-  const structurePlayer = purchases.changeStructure || side === mine ? actor : sidePlayer;
   const shopStock: Partial<Record<TokenKind, number>> = {};
   const reinforcements = sidePlayer === undefined ? {} : reinforcementsOf(board, pack, sidePlayer);
   for (const unit of units) {
@@ -327,8 +323,8 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
   }
   for (const kind of STRUCTURES) {
     const limit = pack.structures.find(s => s.id === kind)?.limit ?? null;
-    if (limit === null || structurePlayer === undefined) continue;
-    shopStock[kind] = limit - structuresOf(board, structurePlayer).reduce((sum, held) => sum + (held.structures[kind] ?? 0), 0);
+    if (limit === null) continue;
+    shopStock[kind] = limit - structuresOf(board, actor).reduce((sum, held) => sum + (held.structures[kind] ?? 0), 0);
   }
   /**
    * The turn that takes the purchases, at its place in the plan: what one more bought would cause is asked of the kernel
@@ -336,7 +332,7 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
    * purchase by hand has no turn and no rule check, so only the empty reinforcements mark it.
    */
   const buyingTurn = onPurchase ? turnById(onPurchase.entryId) : tactical;
-  const buyingPoint = buyingTurn && side === mine ? pointOf(line, buyingTurn, manualPayments.includes(buyingTurn.id)) : undefined;
+  const buyingPoint = buyingTurn ? pointOf(line, buyingTurn, manualPayments.includes(buyingTurn.id)) : undefined;
   const whyBuy = (candidate: Candidate): string | undefined =>
     (buyingPoint ? reasonOf(causesKept(buyingPoint, candidate), buyingPoint.table, buyingPoint.board, pack, t) : undefined);
   const candidateOf = (kind: TokenKind, planet: PlanetDef | null): Candidate | undefined => {
@@ -393,13 +389,13 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
   const removeShip = (kind: TokenKind, amount: 1 | -1) => { if (fightingFor) editTurn(fightingFor.id, turn => withFleetRemoval(turn, kind as UnitId, amount)); };
 
   const sideUnits: UnitCounts = Object.fromEntries(units.map(unit => [unit, boughtOf(unit)]));
-  const boughtTotal = Object.keys(bought).filter(key => parseKey(key).owner === side).reduce((sum, key) => sum + bought[key], 0);
+  const boughtTotal = Object.keys(bought).filter(key => parseKey(key).owner === mine).reduce((sum, key) => sum + bought[key], 0);
   // TODO(P2-210) #ws:ui-warnings #type:dup #size:m #warning-channel #duplicate-of-domain — Перебор ресурсов, флота и мест на борту решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build
   /** My shop counts along: what it costs against what I can pay, and what the system holds after it. */
   const payer = onPurchase?.view?.board ?? beforeTactical ?? board;
   /** What the purchase owes as the check asks it (the combined cost, a hero's free units); a purchase with no entry has the sum of its units. */
   const ownEntry = onPurchase ? turnById(onPurchase.entryId) : tactical;
-  const spent = ownEntry && side === mine ? productionDueOnBoard(table, payer, pack, actor, sideUnits, ownEntry) : productionCost(sideUnits, sideFaction, sideHoldings, pack);
+  const spent = ownEntry ? productionDueOnBoard(table, payer, pack, actor, sideUnits, ownEntry) : productionCost(sideUnits, sideFaction, sideHoldings, pack);
   const spendable = spendableOn(table, payer, pack, actor);
   const meters = { ships: fleetIn(table, board, pack, actor, slot), ...capacityIn(table, board, pack, actor, slot) };
   const pool = fleetLimit(table, board, pack, actor);
@@ -424,7 +420,7 @@ export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode
   ];
 
   return {
-    table, board, shown: shownBoard ?? board, viewer, others: othersBySeat(table, viewer, pack, t), planets, target, setPlanet, mode, setMode, mine, side, seated, colours, kindName,
+    table, board, shown: shownBoard ?? board, viewer, others: othersBySeat(table, viewer, pack, t), planets, target, setPlanet, mode, setMode, mine, seated, colours, kindName,
     adjusting, tapNote, handover, onToken, enteredStructures, ringed: (key: string) => inBuild && (bought[key] ?? 0) > 0,
     shopItems, buy, boughtTotal, spent, meterRows, entryWarnings, boardWarnings, lossesFor, fights,
     productionRows, constructionRows, shopStock, buyAt, unbuyAt, fleetItems, removeShip, fleetOver,

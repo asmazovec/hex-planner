@@ -73,7 +73,7 @@ export function HexStage(props: HexStageProps) {
   const { t } = useTranslation();
   const stage = useStage(props);
   if (!stage) return null;
-  const { table, board, shown, viewer, others, planets, target, setPlanet, mode, setMode, mine, side, seated, colours } = stage;
+  const { table, board, shown, viewer, others, planets, target, setPlanet, mode, setMode, mine, seated, colours } = stage;
 
   const seatName = (o: { name: string; faction: string }): string => shortName(pack, o.faction, o.name);
   /** An opponent in a player choice: the short name, and the tag for a crowded line. */
@@ -121,8 +121,8 @@ export function HexStage(props: HexStageProps) {
           {mode === 'build' && (
             <BuildPanel
               table={table} viewer={viewer} pack={pack} board={board} production={stage.productionRows} construction={stage.constructionRows} stock={stage.shopStock}
-              colour={colours[side]} onTake={stage.buyAt} onReturn={stage.unbuyAt} structuresOnly={structuresOnly}
-              boughtTotal={stage.boughtTotal} spent={stage.spent} mine={side === mine} meters={stage.meterRows} warnings={stage.entryWarnings} boardWarnings={stage.boardWarnings}
+              colour={colours[mine]} onTake={stage.buyAt} onReturn={stage.unbuyAt} structuresOnly={structuresOnly}
+              boughtTotal={stage.boughtTotal} spent={stage.spent} meters={stage.meterRows} warnings={stage.entryWarnings} boardWarnings={stage.boardWarnings}
             />
           )}
           {(mode === 'setup' || mode === 'build') && stage.handover && (

@@ -26,8 +26,6 @@ export interface BuildPanelProps {
   structuresOnly: boolean;
   boughtTotal: number;
   spent: number;
-  /** My own purchases count along against what I can pay and hold; an opponent's do not. */
-  mine: boolean;
   meters: MeterRow[];
   warnings: Warning[];
   /** What the board itself breaks on this system's planets, for any player. */
@@ -39,7 +37,7 @@ export interface BuildPanelProps {
  * hold a figure and, in the look of "beyond the stock", after that too (the domain warns); a tap on a bought one, or on its ringed token, takes it back. Units are produced and structures
  * built, so each stands under its own heading; a hex opened for one of them shows only it.
  */
-export function BuildPanel({ table, viewer = table.viewer, pack, board, production, construction, stock, colour, onTake, onReturn, structuresOnly, boughtTotal, spent, mine, meters, warnings, boardWarnings }: BuildPanelProps) {
+export function BuildPanel({ table, viewer = table.viewer, pack, board, production, construction, stock, colour, onTake, onReturn, structuresOnly, boughtTotal, spent, meters, warnings, boardWarnings }: BuildPanelProps) {
   const { t } = useTranslation();
   const draft = (rows: ShopRow[]) => (
     <UnitDraft
@@ -61,7 +59,7 @@ export function BuildPanel({ table, viewer = table.viewer, pack, board, producti
         <span>{t('stage.bought', { n: boughtTotal })}</span>
         <b>{spent}</b>
       </div>
-      {mine && !structuresOnly && (
+      {!structuresOnly && (
         <div className="stage-meters" role="group" aria-label={t('stage.meters')}>
           {meters.map(({ key, now, of, over }) => (
             <div key={key} className={over ? 'stage-meter stage-meter-over' : 'stage-meter'}>
@@ -71,7 +69,7 @@ export function BuildPanel({ table, viewer = table.viewer, pack, board, producti
           ))}
         </div>
       )}
-      {mine && <WarningList warnings={warnings} table={table} board={board} pack={pack} />}
+      <WarningList warnings={warnings} table={table} board={board} pack={pack} />
       <p className="muted">{t('stage.buildNote')}</p>
     </>
   );
