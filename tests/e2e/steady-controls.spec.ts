@@ -775,6 +775,11 @@ test('the parts of the expedition and the seat of the Fracture switch under the 
   // Taken by another player and given back; the last row first, so that a row above it changes while it is pressed.
   for (let i = 5; i >= 0; i -= 1) await pressRepeatedly(page, parts.nth(i), 3);
   for (let i = 0; i < 6; i += 1) await pressRepeatedly(page, parts.nth(i), 3);
+  // Who took a part is chosen above the parts: the choice stays where it is, and so do the parts under it.
+  const takers = expedition.locator('.player-choice button');
+  const takerCount = await takers.count();
+  expect(takerCount).toBeGreaterThan(1);
+  for (let i = 0; i < takerCount; i += 1) await pressRepeatedly(page, takers.nth(i), 3);
 
   const fracture = page.getByRole('group', { name: 'Fracture', exact: true });
   await pressRepeatedly(page, fracture.locator('.panel-head button'), 4);

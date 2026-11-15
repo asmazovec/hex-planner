@@ -113,6 +113,21 @@ test('the counter shows taken parts, mine from the plan and others by tapping', 
   expect(part('3 trade goods')).toBeDisabled();
 });
 
+test('a part goes to the player chosen above the parts: the first of the others until another is chosen', async () => {
+  await openPanel();
+  const takers = within(within(widget()).getByRole('group', { name: 'Who took the part' })).getAllByRole('button');
+  expect(takers).toHaveLength(5);
+  expect(takers[0]).toHaveAttribute('aria-pressed', 'true');
+  await userEvent.click(part('Secret objective'));
+  expect(useGame.getState().saved!.start.expedition.slices.secret).toBe('p2');
+  await userEvent.click(takers[2]);
+  await userEvent.click(part('5 resources'));
+  expect(useGame.getState().saved!.start.expedition.slices).toMatchObject({ secret: 'p2', res5: 'p4' });
+  // A part taken by hand is freed by another tap, whoever is chosen now.
+  await userEvent.click(part('Secret objective'));
+  expect(useGame.getState().saved!.start.expedition.slices.secret ?? null).toBeNull();
+});
+
 test('a part taken by another player cannot be chosen in the expedition of a turn', async () => {
   useGame.getState().setSlice('inf5', 'p2');
   render(<PlanScreen />);
