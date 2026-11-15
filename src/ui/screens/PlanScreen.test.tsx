@@ -1078,12 +1078,12 @@ test('while a source is being chosen a tile tap opens no big hex', async () => {
 
 test('production without a dock warns once something is built, and still works', async () => {
   await chooseSystem();
-  expect(screen.queryByText(/no unit of yours with Production/)).toBeNull();
+  expect(screen.queryByText(/no unit of this player with Production/)).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: /^Production / }));
-  expect(screen.queryByText(/no unit of yours with Production/)).toBeNull();
+  expect(screen.queryByText(/no unit of this player with Production/)).toBeNull();
   await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cruiser' }));
   expect(tactical().production).toEqual({ cruiser: 1 });
-  expect(within(screen.getByRole('dialog')).getByText(/no unit of yours with Production/)).toBeVisible();
+  expect(within(screen.getByRole('dialog')).getByText(/no unit of this player with Production/)).toBeVisible();
 });
 
 test('a merged entry names its system and opens the big hex in its own mode', async () => {
@@ -1306,7 +1306,7 @@ describe('leaving', () => {
 
   test('a change of round during the reading closes it and clears the highlight', async () => {
     edits.addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
-    useGame.getState().addRound(viewerNow());
+    useGame.getState().addRound();
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: 'Round 1' }));
     await userEvent.click(screen.getByRole('button', { name: /^Tactical action · Quann/ }));
@@ -1515,24 +1515,29 @@ test('the status section makes one entry of tokens and points, and the menu has 
   expect(phase('Status').getByText(/Planets refresh at the start of the next round/)).toBeVisible();
 });
 
-test('status points: every player in a stepper with a running total, in the summary and the players panel', async () => {
+test('status points: each player in the stepper of their own status turn with a running total, in the summary and the players panel', async () => {
   useGame.getState().setFaction(opponentAt(0), 'sol');
   render(<PlanScreen />);
   await userEvent.click(phase('Status').getByRole('button', { name: 'Tokens and points' }));
   const row = within(screen.getByRole('listitem', { name: 'Tokens and points' }));
-  // My faction, a named opponent and the unnamed ones.
+  // The turn enters the points of its own player; another player's are entered in that player's turn.
   expect(row.getByRole('group', { name: 'Arborec' })).toBeVisible();
-  expect(row.getByRole('group', { name: 'Sol' })).toBeVisible();
-  expect(row.getByRole('group', { name: 'Player 6' })).toBeVisible();
-  expect(row.getByRole('button', { name: 'Remove one Sol' })).toBeDisabled();
-
+  expect(row.queryByRole('group', { name: 'Sol' })).toBeNull();
+  expect(row.getByRole('button', { name: 'Remove one Arborec' })).toBeDisabled();
   await userEvent.click(row.getByRole('button', { name: 'Add one Arborec' }));
-  await userEvent.click(row.getByRole('button', { name: 'Add one Sol' }));
-  await userEvent.click(row.getByRole('button', { name: 'Add one Sol' }));
-  const opponent = game().opponents[0].id;
-  expect(entries()[0]).toMatchObject({ vp: 1, opponentVp: { [opponent]: 2 } });
-  expect(row.getByRole('group', { name: 'Sol' })).toHaveTextContent('total 2');
+  expect(row.getByRole('group', { name: 'Arborec' })).toHaveTextContent('total 1');
   expect(cell('VP')).toHaveTextContent('0 → 1');
+
+  const opponent = opponentAt(0);
+  act(() => { useGame.getState().addStatusTurn(1, opponent); });
+  await userEvent.click(screen.getByRole('button', { name: /^Edit: Sol: Tokens and points/ }));
+  const theirs = within(screen.getByRole('listitem', { name: /Sol: Tokens and points/ }));
+  expect(theirs.queryByRole('group', { name: 'Arborec' })).toBeNull();
+  await userEvent.click(theirs.getByRole('button', { name: 'Add one Sol' }));
+  await userEvent.click(theirs.getByRole('button', { name: 'Add one Sol' }));
+  expect(theirs.getByRole('group', { name: 'Sol' })).toHaveTextContent('total 2');
+  expect(useGame.getState().saved!.plans[0].rounds[0].turns.map(turn => (turn.action.kind === 'status' ? turn.action.points : undefined)))
+    .toEqual([{ p1: 1 }, { [opponent]: 2 }]);
 
   await userEvent.click(screen.getByRole('button', { name: 'Players' }));
   const totals = [...document.querySelectorAll('.player-card .player-vp')].map(el => el.textContent);

@@ -172,8 +172,9 @@ export function planOf(table: Table, plan: Plan, pack?: DataPack): Round[] {
         turns.push(turnOf(table, entry, pack, linked));
       }
     }
-    // The cards of an old round are mine: the viewer's.
-    const made: Round = { number: round.number, picks: { [table.viewer]: { strategyCard: round.strategyCard, backupCard: round.backupCard, held: heldCards(round, count) } }, turns };
+    // The cards of an old round are mine: the viewer's. A round with no card chosen keeps none, as the app writes it.
+    const chosen = round.strategyCard !== null || round.backupCard !== null;
+    const made: Round = { number: round.number, picks: chosen ? { [table.viewer]: { strategyCard: round.strategyCard, backupCard: round.backupCard, held: heldCards(round, count) } } : {}, turns };
     planned.set(round, { table, pack, round: made });
     return made;
   });

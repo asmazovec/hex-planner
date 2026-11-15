@@ -259,8 +259,9 @@ describe('the players are equal', () => {
     const left = removePlayer(four(), 'p1');
     expect(factionsOf(left)).toEqual([['p1', 'hacan'], ['p2', 'arborec'], ['p3', 'mentak']]);
     expect(left.table.viewer).toBe('p1');
-    // The plan keeps the cards of the one at the tablet.
-    expect(left.plans[0].rounds.map(round => Object.keys(round.picks))).toEqual([['p1']]);
+    // The mark at the tablet writes nothing into the rounds: a player who chose no card has no key there, whoever sits at the tablet.
+    expect(four().plans[0].rounds[0].picks).toEqual({});
+    expect(setViewer(four(), 'p3').plans[0].rounds[0].picks).toEqual({});
     const third = setViewer(four(), 'p3');
     expect(removePlayer(third, 'p3').table.viewer).toBe('p1');
   });
@@ -271,13 +272,13 @@ describe('the players are equal', () => {
     expect(seatedPlayers(left.table).find(p => p.id === 'p2')?.faction).toBe('arborec');
   });
 
-  test('the tablet is a mark on one player: it moves to any of them, and the plan keeps the cards of that one', () => {
+  test('the tablet is a mark on one player: it moves to any of them, and the rounds of the plan stay as they are', () => {
     const draft = four();
     const moved = setViewer(draft, 'p3');
     expect(moved.table.viewer).toBe('p3');
     expect(moved.table.players).toEqual(draft.table.players);
     expect(moved.start).toEqual(draft.start);
-    expect(moved.plans[0].rounds.map(round => Object.keys(round.picks))).toEqual([['p3']]);
+    expect(moved.plans).toBe(draft.plans);
     expect(setViewer(moved, 'p3')).toBe(moved);
     expect(setViewer(moved, 'p9')).toBe(moved);
   });

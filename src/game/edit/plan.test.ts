@@ -66,7 +66,9 @@ describe('cards and rounds', () => {
   });
 
   test('rounds are added after the last and removed with the gap closed; one stays', () => {
-    const rounds = withRoundAdded(withRoundAdded([round()], ['p1']), ['p1']);
+    const rounds = withRoundAdded(withRoundAdded([round()]));
+    // A new round keeps no cards for anyone: a player with nothing chosen has no key in it.
+    expect(rounds[2].picks).toEqual({});
     expect(rounds.map(r => r.number)).toEqual([1, 2, 3]);
     expect(withoutRound(rounds, 2).map(r => r.number)).toEqual([1, 2]);
     expect(withoutRound([round()], 1)).toHaveLength(1);

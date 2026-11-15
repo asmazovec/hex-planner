@@ -17,7 +17,7 @@ import { heldCards, type HomeNote } from '../../domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
 import type { DataPack, ExpansionId, MapLayout, StartHoldings } from '../../domain/types';
 import { SAVED_FORMAT, type SavedGame, type StartEdits } from '../save';
-import { emptyRound, NO_PICKS, type Round } from '../round';
+import { emptyRound, type Round } from '../round';
 import { homeOf, sheetUnitsOf } from '../setup';
 import type { Action, Turn } from '../actions';
 import type { Player, PlayerId, Slot, Table, TileRef, UnitCounts } from '../types';
@@ -425,12 +425,6 @@ export function addPlayer(saved: SavedGame): SavedGame {
   return settled(saved, seatedAs(saved, [...players, fresh], start));
 }
 
-/** The rounds keep the strategy cards of the player at the tablet: each round that keeps none for `player` begins to. */
-function withCardsKept(saved: SavedGame, player: PlayerId): SavedGame {
-  if (saved.plans.every(plan => plan.rounds.every(round => player in round.picks))) return saved;
-  return mapRounds(saved, round => (player in round.picks ? round : { ...round, picks: { ...round.picks, [player]: NO_PICKS } }));
-}
-
 /**
  * Removes a player and what they hold on the map; later seats shift down. Any player may leave, the one at the tablet
  * too (the first of the rest by seat sits at it then); the last three stay.
@@ -463,7 +457,7 @@ export function removePlayer(saved: SavedGame, player: PlayerId): SavedGame {
     },
   };
   const seated = seatedAs(withoutPlayerInPlans(cleared, leaving), rest);
-  return settled(saved, withCardsKept(seated, seated.table.viewer));
+  return settled(saved, seated);
 }
 
 /**
@@ -500,16 +494,8 @@ export function swapSeats(saved: SavedGame, a: PlayerId, b: PlayerId): SavedGame
 export function setViewer(saved: SavedGame, player: PlayerId): SavedGame {
   const { table } = saved;
   if (table.viewer === player || !real(table).some(p => p.id === player)) return saved;
-  const was = table.viewer;
-  // The cards the one who had the tablet chose stay theirs; a round where they chose none keeps none for them.
-  const unkept = mapRounds({ ...saved, table: { ...table, viewer: player } }, round => {
-    const picks = round.picks[was];
-    if (!picks || picks.strategyCard !== null || picks.backupCard !== null) return round;
-    const { [was]: gone, ...rest } = round.picks;
-    void gone;
-    return { ...round, picks: rest };
-  });
-  return withCardsKept(unkept, player);
+  // The cards of a round are each player's own: the mark at the tablet changes none of them.
+  return { ...saved, table: { ...table, viewer: player } };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -611,7 +597,7 @@ export function createSaved(
       expedition: { slices: {}, thundersEdgeSystem: null }, fracture: { active: false, ingress: [], seat: null },
     },
     // The plan keeps the strategy cards of the player at the tablet.
-    plans: [{ id: planId, name: 'Plan 1', rounds: [emptyRound(1, [viewer])] }],
+    plans: [{ id: planId, name: 'Plan 1', rounds: [emptyRound(1)] }],
     activePlanId: planId,
   };
   return input.faction ? setFaction(blank, viewer, input.faction) : blank;

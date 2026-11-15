@@ -35,9 +35,8 @@ export interface Round { number: number; picks: Record<PlayerId, Picks>; turns: 
 /** A player's cards of a round; none chosen for a player whose cards the round does not keep. */
 export const picksOf = (round: Round, player: PlayerId): Picks => round.picks[player] ?? NO_PICKS;
 
-/** A round with nothing in it, keeping the cards of `planned` (those whose cards the plan follows). */
-export const emptyRound = (number: number, planned: readonly PlayerId[] = []): Round =>
-  ({ number, picks: Object.fromEntries(planned.map(player => [player, NO_PICKS])), turns: [] });
+/** A round with nothing in it: no cards chosen by anyone, no turns. */
+export const emptyRound = (number: number): Round => ({ number, picks: {}, turns: [] });
 
 export interface Moment { board: Board; events: GameEvent[]; violations: Warning[] }
 

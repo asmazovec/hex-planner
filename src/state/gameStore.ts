@@ -122,7 +122,7 @@ export interface GameStore {
   /** A strategy card of `player` in a round: backup, then primary, then removed. */
   setStrategyCard(roundNo: number, player: PlayerId, initiative: number): void;
   /** A round more, keeping the strategy cards of `planned`. */
-  addRound(planned: PlayerId): void;
+  addRound(): void;
   /** Later rounds take its number; the last round of a plan stays. */
   deleteRound(roundNo: number): void;
   copyPlan(): void;
@@ -336,7 +336,7 @@ export const useGame = create<GameStore>((set, get) => {
     setStatus: (id, status) => commit(s => editTurnRound(s, id, r => withTurnStatus(r, id, status))),
     setStrategyCard: (roundNo, player, initiative) =>
       commit(s => editRound(s, roundNo, r => withCardCycled(r, initiative, seatedCount(s.table), player))),
-    addRound: planned => commit(s => editPlan(s, plan => ({ ...plan, rounds: withRoundAdded(plan.rounds, [planned]) }))),
+    addRound: () => commit(s => editPlan(s, plan => ({ ...plan, rounds: withRoundAdded(plan.rounds) }))),
     deleteRound: roundNo => commit(s => editPlan(s, plan => {
       const rounds = withoutRound(plan.rounds, roundNo);
       return rounds === plan.rounds ? plan : { ...plan, rounds };

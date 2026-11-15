@@ -39,7 +39,7 @@ describe('gameStore', () => {
   });
 
   test('запись статуса одна на раунд: повторный вызов возвращает её же', () => {
-    act().addRound(viewerNow());
+    act().addRound();
     const id = edits.addStatusEntry(1);
     expect(round().entries).toEqual([expect.objectContaining({ id, type: 'statusTokens', phase: 'status', tactic: 0, fleet: 0, strategy: 0 })]);
     const before = game();
@@ -102,7 +102,7 @@ describe('gameStore', () => {
 
   test('canUndo ложно после новой партии, история ограничена 50 состояниями', () => {
     expect(act().canUndo).toBe(false);
-    for (let i = 0; i < 60; i++) act().addRound(viewerNow());
+    for (let i = 0; i < 60; i++) act().addRound();
     let steps = 0;
     while (act().canUndo) { act().undo(); steps++; }
     expect(steps).toBe(50);
@@ -160,17 +160,17 @@ describe('gameStore', () => {
   });
 
   test('автосохранение вызывается после действия', async () => {
-    act().addRound(viewerNow());
+    act().addRound();
     await vi.waitFor(() => expect(saveGame).toHaveBeenLastCalledWith(act().saved));
   });
 
   test('автосохранение: сбой записи выставляет saveError и не теряет состояние', async () => {
     vi.mocked(saveGame).mockRejectedValue(new Error('quota'));
-    act().addRound(viewerNow());
+    act().addRound();
     await vi.waitFor(() => expect(act().saveError).not.toBeNull());
     expect(plan().rounds).toHaveLength(2);
     vi.mocked(saveGame).mockResolvedValue(undefined);
-    act().addRound(viewerNow());
+    act().addRound();
     await vi.waitFor(() => expect(act().saveError).toBeNull());
     expect(plan().rounds).toHaveLength(3);
   });
@@ -178,7 +178,7 @@ describe('gameStore', () => {
   test('openGame загружает партию и сбрасывает историю', async () => {
     const other = structuredClone(act().saved!);
     vi.mocked(loadGame).mockResolvedValue(other);
-    act().addRound(viewerNow());
+    act().addRound();
     await act().openGame('x');
     expect(loadGame).toHaveBeenCalledWith('x');
     expect(act().saved).toEqual(other);
@@ -762,7 +762,7 @@ describe('the store holds the saved game', () => {
   });
 
   test('an edit of one round keeps the other rounds as they were', () => {
-    act().addRound(viewerNow());
+    act().addRound();
     const second = rounds()[1];
     act().addTurn(1, pass());
     expect(rounds()[1]).toBe(second);

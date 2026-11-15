@@ -369,7 +369,7 @@ test('a plan and a round can be deleted, the last of each stays, and undo brings
   act(() => useGame.getState().undo());
   expect(game().plans).toHaveLength(2);
   await userEvent.click(screen.getByRole('button', { name: 'Add round' }).parentElement!.querySelector('button')!);
-  act(() => { useGame.getState().addRound(viewerNow()); useGame.getState().addRound(viewerNow()); });
+  act(() => { useGame.getState().addRound(); useGame.getState().addRound(); });
   edits.addEntry(3, { type: 'pass' }, 'action');
   await userEvent.click(screen.getByRole('button', { name: 'Delete round 1' }));
   const { rounds } = game().plans.find(p => p.id === game().activePlanId)!;

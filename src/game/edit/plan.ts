@@ -115,9 +115,8 @@ export function withCardCycled(round: Round, initiative: number, playerCount: nu
   return withForTokenOfRound({ ...round, picks: { ...round.picks, [player]: { strategyCard, backupCard, held: heldOf(strategyCard, backupCard, playerCount) } } });
 }
 
-/** A round after the last one, with nothing in it; it keeps the cards of `planned`. */
-export const withRoundAdded = (rounds: Round[], planned: readonly PlayerId[]): Round[] =>
-  [...rounds, emptyRound(Math.max(0, ...rounds.map(r => r.number)) + 1, planned)];
+/** A round after the last one, with nothing in it. */
+export const withRoundAdded = (rounds: Round[]): Round[] => [...rounds, emptyRound(Math.max(0, ...rounds.map(r => r.number)) + 1)];
 
 /** A round goes and the later ones close the gap; at least one stays. */
 export function withoutRound(rounds: Round[], number: number): Round[] {

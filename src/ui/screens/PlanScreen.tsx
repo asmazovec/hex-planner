@@ -725,7 +725,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           onSelectRound={number => { closePanels(); setRoundNo(number); }}
           onAddRound={() => {
             closePanels();
-            addRound(shownPlayer);
+            addRound();
             setRoundNo(Math.max(...plan.rounds.map(r => r.number)) + 1);
           }}
           onDeleteRound={() => { closePanels(); deleteRound(round.number); }}
