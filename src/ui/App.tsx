@@ -5,6 +5,7 @@ import { readyToPlay } from '../game/edit/table';
 import { shareLinkQuery } from '../domain/shareLink';
 import { useGame } from '../state/gameStore';
 import { Banner } from './feedback/Banner';
+import { applyAccent } from './common/accent';
 import { downloadGame } from './common/download';
 import { ErrorBanner } from './common/ErrorBanner';
 import { ExportReminder } from './common/ExportReminder';
@@ -14,6 +15,8 @@ import { ShareConflict } from './common/ShareConflict';
 import { RowIcon } from './primitives/Icon';
 import { GameScreen } from './screens/GameScreen';
 import { PlanScreen } from './screens/PlanScreen';
+import { useShownPlayer } from './screens/plan/shownPlayer';
+import { playerColour } from './units/sprites';
 
 const SCREENS = ['game', 'plan'] as const;
 type Screen = (typeof SCREENS)[number];
@@ -52,6 +55,13 @@ export function App() {
     const opened = useGame.getState().saved;
     if (opened && readyToPlay(opened.table, loadPack(opened.table.expansions))) { setScreen('plan'); setToMap(false); }
   };
+
+  // What is selected wears the colour of the shown player; with no game open, the theme's own blue.
+  const { shown: shownPlayer } = useShownPlayer(openSaved?.table);
+  const accentColour = openSaved?.table.players.find(p => p.id === shownPlayer)?.color;
+  useEffect(() => {
+    applyAccent(accentColour === undefined ? null : playerColour(accentColour));
+  }, [accentColour]);
 
   const dataMismatch = openSaved !== null && openSaved.dataVersion !== loadPack(openSaved.table.expansions).version;
 

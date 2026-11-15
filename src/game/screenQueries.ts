@@ -21,8 +21,8 @@ export const allTurns = (round: Round): Turn[] =>
   round.turns.flatMap(turn => [turn, ...(turn.action.kind === 'strategic' ? turn.action.nested ?? [] : [])]);
 
 /** The signed counts of the merged correction of a system and kind: space first, then by planet. */
-export function mergedCountsOf(round: Round, kind: AdjustmentKind, systemId: string): MergedCount[] {
-  const action = mergedTurn(round, kind, systemId)?.action;
+export function mergedCountsOf(round: Round, kind: AdjustmentKind, systemId: string, player?: PlayerId): MergedCount[] {
+  const action = mergedTurn(round, kind, systemId, player)?.action;
   const delta = action?.kind === 'correction' ? action.delta : undefined;
   const counts = (units: UnitCounts, planetId: string | null): MergedCount[] =>
     (Object.keys(units) as UnitId[]).map(unit => ({ unit, planetId, count: units[unit] ?? 0 }));

@@ -62,7 +62,7 @@ export function ChoicesBlock({ id, turn, view, pack, onChange }: ChoicesBlockPro
       case 'system': { const name = systemNameOf(map, pack, value); return name.planets.length > 0 ? name.planets.join(' / ') : name.number; }
       case 'player': {
         const who = table.players.find(p => p.id === value);
-        return shortName(pack, who?.faction ?? '', who === undefined || who.id === table.viewer ? t('plan.mine') : nameOfPlayer(table, pack, who.id, t));
+        return shortName(pack, who?.faction ?? '', nameOfPlayer(table, pack, value, t));
       }
       case 'unit': return t(`unit.${value}`);
       case 'component': return componentById(pack, value)?.name ?? value;

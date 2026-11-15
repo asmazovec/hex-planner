@@ -1,7 +1,7 @@
 import { emptyRound, picksOf } from '../../game/round';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { emptySlots } from '../../game/edit/table';
+import { emptySlots, seatedPlayers } from '../../game/edit/table';
 import { EXPEDITION_SLICES } from '../../domain/payment';
 import { isOnMap, systemSlots } from '../../domain/replay';
 import { shownOf } from '../../game/shelf';
@@ -40,7 +40,7 @@ import type { MapPan } from '../map/edgePan';
 import { useArrowDrag } from '../map/useArrowDrag';
 import type { ActionType } from '../plan/ActionMenu';
 import { ActionMenu } from '../plan/ActionMenu';
-import { othersBySeat, playerName, shortName } from '../players/names';
+import { playerName, playerShortName } from '../players/names';
 import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
 import { ExpeditionEditor } from '../plan/editors/ExpeditionEditor';
 import { TransactionStep } from '../plan/editors/TransactionStep';
@@ -67,10 +67,11 @@ import { adjustmentIn, backFrom, cardIn, choosesForTe, find, hintKey, IDLE, LIST
 import { useBoards } from './plan/useBoards';
 import { useDrawers } from './plan/useDrawers';
 import { useFlightLoop } from './plan/useFlightLoop';
+import { useShownPlayer } from './plan/shownPlayer';
 import { leaveKey, useLeavingSources } from './plan/useLeavingSources';
 import { StepHints } from '../feedback/StepHints';
 import { EditorPart } from '../primitives/EditorPart';
-import { PlayerChoice, PlayerDot, playerStyle, playerTag } from '../primitives/player';
+import { PlayerChoice, PlayerDot, playerOptions, playerStyle } from '../primitives/player';
 
 const STAGE_MODE: Record<AdjustmentKind, StageMode> = { setup: 'setup', losses: 'battle', build: 'build' };
 
@@ -98,8 +99,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const [viewResets, setViewResets] = useState(0);
   const [manualPayments, setManualPayments] = useState<string[]>([]);
   const [view, setView] = useState<'map' | 'plan'>('map');
-  /** The opponent (a player of the table) whose expected actions are being added; null for my own. */
-  const [actingAs, setActingAs] = useState<PlayerId | null>(null);
+  /** The one player the whole screen shows: the totals, the first level of the list, the new action, the cards, the components and the big hex are theirs. */
+  const { shown: shownPlayer, show } = useShownPlayer(saved?.table);
   /** What the panel holds, what the next tap on the map chooses and the big hex. */
   const [rawPick, setPick] = useState<PickState>(START);
 
@@ -138,8 +139,6 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const hasTe = saved?.table.expansions.includes('te') ?? false;
   const drawers = useDrawers(hasTe, choosesForTe(next));
   const [componentGroup, setComponentGroup] = useState(componentsTab.read);
-  /** Whose components the drawer shows: an opponent's id, null for mine. */
-  const [componentsOf, setComponentsOf] = useState<string | null>(null);
   const boards = useBoards(saved, plan?.id, pack);
   const leavers = useLeavingSources();
 
@@ -184,7 +183,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
 
   const closeStage = useCallback(() => setPick(state => ({ ...state, stage: null })), []);
 
-  if (!saved || !plan || !round) {
+  if (!saved || !plan || !round || shownPlayer === undefined) {
     return <section className="screen"><p className="muted">{t('plan.noGame')}</p></section>;
   }
 
@@ -210,13 +209,13 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     update(state => ({ ...state, panel: LIST, next: IDLE, openId: null }));
   };
 
-  /** Who the next entry belongs to, while that opponent is still in the game. */
   const { table: planTable } = forecastKernel;
-  const actor = planTable.players.some(p => p.id === actingAs && p.id !== planTable.viewer && p.seat < 100) ? actingAs ?? undefined : undefined;
-  /** Whose action stands in an editor now; a new tactical action is the card's owner's or the one it is added for. */
-  const handOwner: PlayerId | undefined = picking
-    ? tacticalOwner(forecastKernel.rounds.find(r => r.number === round.number) ?? emptyRound(round.number), tactical?.byCard, actor ?? planTable.viewer)
-    : (entry ?? cardEntry ?? adjustmentEntry)?.player ?? planTable.viewer;
+  /** The turn a step of an editor stands in: an act, or a component action or a pass. */
+  const heldTurn = panel.kind === 'turn' || panel.kind === 'act' ? find(round, panel.entryId) : undefined;
+  /** Whose action stands in an editor now; a new tactical action is the card's owner's, or else the shown player's as every new action is. */
+  const handOwner: PlayerId = picking
+    ? tacticalOwner(forecastKernel.rounds.find(r => r.number === round.number) ?? emptyRound(round.number), tactical?.byCard, shownPlayer)
+    : (entry ?? cardEntry ?? adjustmentEntry ?? heldTurn)?.player ?? shownPlayer;
 
   const onPick = (type: ActionType) => {
     flight.stop();
@@ -226,7 +225,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       setView('map');
       return;
     }
-    const id = addTurn(planTable, round.number, type, actor);
+    const id = addTurn(round.number, type, shownPlayer);
     if (type === 'strategic') {
       drawers.closeTe();
       update(state => ({ ...state, panel: { kind: 'card', entryId: id }, next: IDLE }));
@@ -242,7 +241,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   /** An agenda that was resolved: an entry of the agenda phase, opened to choose the card. */
   const onAddAgenda = () => {
     flight.stop();
-    const id = addTurn(planTable, round.number, 'adjustment', undefined, 'agenda');
+    const id = addTurn(round.number, 'adjustment', shownPlayer, 'agenda');
     update(state => ({ ...state, panel: { kind: 'adjustment', entryId: id }, next: IDLE }));
   };
 
@@ -292,7 +291,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     if (tactical) {
       if (!onBoard(slot)) return;
       if (tactical.entryId === null) {
-        const id = addTactical(planTable, round.number, slot, handOwner === undefined || handOwner === planTable.viewer ? undefined : handOwner, tactical.byCard);
+        const id = addTactical(round.number, slot, handOwner, tactical.byCard);
         update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: tactical.card }, next: IDLE }));
         setView('plan');
         return;
@@ -381,13 +380,14 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const shownBoard = boardAt(shownLine, round.number);
   // A type an entry upgrades cannot be toggled by hand, even if the baseline holds it too: a tap would change nothing.
   const roundsSoFar = plan.rounds.filter(r => r.number <= round.number);
-  const lockedUpgrades = upgradeRoundsOf(shownTable.viewer, roundsSoFar, shownFilter, pack);
+  const lockedUpgrades = Object.fromEntries(shownTable.players.map(p => [p.id, upgradeRoundsOf(p.id, roundsSoFar, shownFilter, pack)]));
   const holdingSources = holdingRoundsOf(roundsSoFar, shownFilter);
   // What the players hold and have on the board, read from the board the map shows.
   const seen = shownOf(shownTable, shownBoard, pack);
   const structures = Object.fromEntries(Object.entries(seen.players).map(([id, p]) => [id, p.structures]));
   const upgraded = Object.fromEntries(Object.entries(seen.players).map(([id, p]) => [id, upgradesOf(p.shelf, pack)]));
-  const heldCount = holdingCount(seen.players[shownTable.viewer]?.shelf ?? emptyHoldings());
+  const shownHoldings = seen.players[shownPlayer]?.shelf ?? emptyHoldings();
+  const heldCount = holdingCount(shownHoldings);
   // Warfare's free action has its card's status: the card marked done turns its arrow done.
   const kernelRound = forecastKernel.rounds.find(r => r.number === round.number);
   const tacticals = allTurns(round).filter(isTacticalTurn);
@@ -399,7 +399,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const map = mapSource(shownTable, shownBoard);
   /** A system ships can be in: a tile of the map or an off-map home beside it. */
   const onBoard = (slot: string): boolean => slot in offMap || isOnMap(map, slot);
-  const arrows = planArrows(shownTable, shownBoard, pack, tacticalsAt, kernelRound ? tacticalNumbers(kernelRound) : {}, focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
+  const arrows = planArrows(shownTable, shownBoard, pack, tacticalsAt, kernelRound ? tacticalNumbers(kernelRound) : {}, focusId, tactical !== null || mapMode !== 'now', leavers.leaving, shownPlayer);
 
   /** The action in hand, as its owner plays it. */
   const entryView = entry ? boards.view(entry.id) : undefined;
@@ -436,7 +436,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     path: draft?.path ?? [],
     reach: route?.reach ?? [],
     // Any system can be chosen; for a source those with ships are the ones lit.
-    options: !choosing || !entryView ? [] : choosing === 'system' ? tileSystemsOn(entryView.table, entryView.board, pack) : sourceSystemsOn(entryView.table, entryView.board, pack, entry?.player ?? entryView.table.viewer),
+    options: !choosing || !entryView ? [] : choosing === 'system' ? tileSystemsOn(entryView.table, entryView.board, pack) : sourceSystemsOn(entryView.table, entryView.board, pack, entry?.player ?? shownPlayer),
   });
   const { mapBoard, layer: flightLayer } = flight.scene(tacticals, shownBoard, arrows);
   const shownArea = shownEntry ? focusRect(systemsOf(shownEntry)) : null;
@@ -471,25 +471,22 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     toggleDrawer('components');
   };
   const componentsOpen = drawers.open === 'components';
-  /** The stack opens on my components; a tab of the fan changes the group, and the tab of the open group folds the fan. */
-  const openComponents = () => {
-    setComponentsOf(null);
-    toggleComponents();
-  };
+  /** The stack opens on the components of the shown player; a tab of the fan changes the group, and the tab of the open group folds the fan. */
+  const openComponents = toggleComponents;
   const pickComponentGroup = (group: ComponentGroup) => {
     if (group === componentGroup) return toggleComponents();
     componentsTab.write(group);
     setComponentGroup(group);
   };
-  const shownHoldings = seen.players[componentsOf ?? shownTable.viewer]?.shelf ?? emptyHoldings();
   const toggleTe = () => {
     // While the panel stands aside for the map, the button brings it back.
     if (teChoosing) stopTeChoice();
     else toggleDrawer('te');
   };
 
-  /** The opponent whose action stands in an editor now: the panel says so in their colour. */
-  const inHand = handOwner === undefined || handOwner === planTable.viewer ? undefined : planTable.players.find(p => p.id === handOwner);
+  /** A player other than the shown one whose action stands in an editor now: the panel says so in their colour. */
+  const inHand = handOwner === shownPlayer ? undefined : planTable.players.find(p => p.id === handOwner);
+  const seated = seatedPlayers(planTable);
   const stageFor = stage?.for;
   const stagedTurn = stageFor?.kind === 'component' ? turnIn(round, stageFor.id) : undefined;
 
@@ -525,7 +522,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             <>
               {isTurn && (
                 <TurnActs
-                  pack={pack} view={view} turn={turn} warnings={rowWarnings[entry.id] ?? []} owners={owners}
+                  pack={pack} view={view} turn={turn} warnings={rowWarnings[entry.id] ?? []} owners={owners} shown={shownPlayer}
                   onChange={change}
                   // Back from a step returns to the editor as it stands, not as it was first opened.
                   onOpen={index => update(state => ({ ...state, panel: { kind: 'act', entryId: entry.id, index, back: state.panel.kind === 'turn' ? { kind: 'turn', entryId: entry.id } : state.panel }, next: IDLE }))}
@@ -694,11 +691,11 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     <section className="plan-screen" data-view={view}>
       <header className="plan-header">
         <PlanTabs
-          saved={saved!} roundNo={round.number} onSelectPlan={closePanels}
+          saved={saved!} roundNo={round.number} player={shownPlayer} onSelectPlan={closePanels}
           onSelectRound={number => { closePanels(); setRoundNo(number); }}
           onAddRound={() => {
             closePanels();
-            addRound(planTable.viewer);
+            addRound(shownPlayer);
             setRoundNo(Math.max(...plan.rounds.map(r => r.number)) + 1);
           }}
           onDeleteRound={() => { closePanels(); deleteRound(round.number); }}
@@ -713,7 +710,6 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             </div>
           )}
         />
-        <SummaryBar table={shownTable} now={boardAt(timelineOf(saved!, plan.id, 'now', pack), round.number)} forecast={boardAt(forecastKernel, round.number)} pack={pack} factOnly={shownFilter === 'now'} />
       </header>
       <div className="plan-body">
         <Drawer open={leftOpen} className={`drawer-left drawer-${leftDrawer}`} onDismiss={closeDrawer}>
@@ -722,11 +718,11 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
               ? (
                 <div className="players-panel">
                   <PlayerList
-                    live={{ upgraded, structures, locked: { [shownTable.viewer]: lockedUpgrades }, points: Object.fromEntries(Object.entries(seen.players).map(([id, p]) => [id, p.vp])) }}
+                    live={{ upgraded, structures, locked: lockedUpgrades, points: Object.fromEntries(Object.entries(seen.players).map(([id, p]) => [id, p.vp])) }}
                   />
                 </div>
               )
-              : <MapLegend colour={playerColour(planTable.players.find(p => p.id === planTable.viewer)?.color ?? 1)} pack={pack} />}
+              : <MapLegend colour={playerColour(planTable.players.find(p => p.id === shownPlayer)?.color ?? 1)} pack={pack} />}
           </div>
         </Drawer>
         {/* Beside the map, not in it: it stands over the scrim and rides on the edge of its drawer. */}
@@ -736,7 +732,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         </div>
         <div className="plan-map">
           <HexMap
-            table={shownTable} board={mapBoard} pack={pack} highlights={highlights} arrows={arrows}
+            table={shownTable} board={mapBoard} viewer={shownPlayer} pack={pack} highlights={highlights} arrows={arrows}
             arrowPreview={draft} focusRect={shownArea} resetSignal={viewResets} onTileTap={onTileTap}
             overlay={flightLayer} still={flight.still} quietAll={flight.quiet} animateOnly={flight.animated}
             onTilePointerDown={(slot, e) => { if (startsArrow(slot)) arrow.onTilePointerDown(slot, e, tapPath ?? undefined); }} startsArrow={startsArrow} panRef={mapPan}
@@ -766,10 +762,10 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           <Drawer open={rightOpen} className="drawer-under">
             <div key={rightDrawer} className="drawer-swap">
               {rightDrawer === 'components'
-                ? <ComponentsPanel start={saved!.start} pack={pack} table={shownTable} board={shownBoard} rounds={holdingSources} group={componentGroup} chosen={componentsOf} onChoose={setComponentsOf} />
+                ? <ComponentsPanel start={saved!.start} pack={pack} table={shownTable} board={shownBoard} rounds={holdingSources} group={componentGroup} player={shownPlayer} />
                 : (
                   <ThundersEdgePanel
-                    table={shownTable} start={saved!.start} map={mapSource(shownTable, shownBoard)} pack={pack} owners={owners}
+                    table={shownTable} viewer={shownPlayer} start={saved!.start} map={mapSource(shownTable, shownBoard)} pack={pack} owners={owners}
                     onPlace={() => update(state => ({ ...state, next: { kind: 'placeTe' } }))} onMark={() => update(state => ({ ...state, next: { kind: 'markIngress' } }))}
                   />
                 )}
@@ -777,6 +773,14 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           </Drawer>
         </div>
         <div className="plan-panel">
+          {/* Pinned over whatever the panel holds and wherever it is scrolled: whose plan this is, and what they have. */}
+          <div className="plan-pinned">
+            <PlayerChoice
+              label={t('plan.shownLabel')} chosen={value => value === shownPlayer} onPick={value => { if (value !== null) show(value); }}
+              options={playerOptions(seated, pack, id => playerShortName(planTable, pack, id, t))}
+            />
+            <SummaryBar table={shownTable} player={shownPlayer} now={boardAt(timelineOf(saved!, plan.id, 'now', pack), round.number)} forecast={boardAt(forecastKernel, round.number)} pack={pack} factOnly={shownFilter === 'now'} />
+          </div>
           <div className="plan-scroll">
             {inHand && (
               <div className="acting-as" style={playerStyle('--owner', inHand.color)}>
@@ -788,30 +792,13 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
               <>
                 <PlanName key={`${plan.id}:${plan.name}:${i18n.language}`} plan={plan} />
                 <EntryList
-                  pack={pack} viewOf={id => boards.view(id)} roundNo={round.number} turns={forecastKernel.rounds.find(r => r.number === round.number)?.turns ?? []}
+                  pack={pack} viewOf={id => boards.view(id)} roundNo={round.number} shown={shownPlayer} turns={forecastKernel.rounds.find(r => r.number === round.number)?.turns ?? []}
                   warnings={rowWarnings} end={{ table: forecastKernel.table, board: boardAt(forecastKernel, round.number) }}
                   openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} onShow={onShowEntry}
                   onStatusAdded={id => update(state => ({ ...state, openId: id }))} onAddAgenda={onAddAgenda}
                   onDone={done => { if (done.action.kind === 'tactical' && done.action.movement.some(f => hasUnits(f.units))) flight.start(done.id, shownFilter); }}
-                  strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={saved.table.expansions} playerCount={planTable.players.filter(p => p.seat < 100).length} round={round.number} player={planTable.viewer} picks={picksOf(round, planTable.viewer)} />}
-                  addAction={(
-                    <ActionMenu
-                      onPick={onPick}
-                      lead={(
-                        <PlayerChoice
-                          label={t('plan.actingLabel')}
-                          chosen={value => (value === null ? !actor : actor === value)} onPick={value => setActingAs(value)}
-                          options={[
-                            { value: null, label: t('plan.mine'), color: planTable.players.find(p => p.id === planTable.viewer)?.color ?? 1 },
-                            ...othersBySeat(planTable, planTable.viewer, pack, t).map(o => {
-                              const name = shortName(pack, o.faction, t('players.player', { n: o.seat }));
-                              return { value: o.id, label: name, color: o.color, tag: playerTag(name, Boolean(pack.factions[o.faction]), o.seat) };
-                            }),
-                          ]}
-                        />
-                      )}
-                    />
-                  )}
+                  strategy={<StrategyCards key={`${plan.id}:${round.number}:${shownPlayer}`} expansions={saved.table.expansions} playerCount={seated.length} round={round.number} player={shownPlayer} picks={picksOf(round, shownPlayer)} />}
+                  addAction={<ActionMenu onPick={onPick} />}
                 />
               </>
             )}
@@ -820,7 +807,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       </div>
       {stage && stageFor && (
         <HexStage
-          key={stage.slot} slot={stage.slot} roundNo={round.number} pack={pack} initialMode={stage.mode} only={stage.only}
+          key={`${stage.slot}:${shownPlayer}`} slot={stage.slot} roundNo={round.number} viewer={shownPlayer} pack={pack} initialMode={stage.mode} only={stage.only}
           owner={stageFor.kind === 'card' ? cardEntry?.player : stageFor.kind === 'component' ? stagedTurn?.player : undefined}
           onPurchase={stageFor.kind === 'card' && cardEntry ? cardTarget(cardEntry.id, stage.slot)
             : stageFor.kind === 'component' && stagedTurn ? componentTarget(stagedTurn.id, stage.slot) : undefined}

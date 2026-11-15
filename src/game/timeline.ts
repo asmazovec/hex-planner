@@ -110,7 +110,7 @@ export function timeline(table: Table, pack: DataPack, rounds: Round[], filter: 
       if (phase === 'status') beginStatus(turn);
       if (phase === 'action' && isTurn(factsOf(turn), pack)) take(turnStart(table, board, pack, turn));
       const before = board;
-      // The status phase ends with its status entry (81.4, 81.6), and what its end brings is part of that turn.
+      // The status phase ends with its first status entry (81.4, 81.6), and what its end brings is part of that turn; each player may have a status entry of their own, and the later ones find the phase ended.
       const closing = turn.action.kind === 'status' ? (b: Board) => { board = b; finishStatus(); return { board, violations: lead.splice(0) }; } : undefined;
       const resolution = resolveTurn(table, board, turn, pack, { track, moments: lead.splice(0), ...(closing ? { closing } : {}) });
       board = resolution.board;

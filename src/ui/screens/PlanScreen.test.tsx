@@ -381,18 +381,18 @@ describe('an opponent in the plan', () => {
   const noPay = { planets: [], tradeGoods: 0 };
   const rival = () => game().opponents[0];
   beforeEach(() => useGame.getState().setFaction(opponentAt(0), 'sol'));
-  const whose = () => within(screen.getByRole('group', { name: 'Whose action' }));
+  const whose = () => within(screen.getByRole('group', { name: 'Shown player' }));
 
-  test('the choice of whose action comes first, and the entry then belongs to them', async () => {
+  test('the switch of the shown player comes first, and the entry then belongs to them', async () => {
     render(<PlanScreen />);
-    expect(whose().getByRole('button', { name: 'Mine' })).toHaveAttribute('aria-pressed', 'true');
+    expect(whose().getByRole('button', { name: 'Arborec' })).toHaveAttribute('aria-pressed', 'true');
     await userEvent.click(whose().getByRole('button', { name: /Sol/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
     await userEvent.click(screen.getByRole('button', { name: 'Pass' }));
     expect(entries()[0].owner).toBe(rival().id);
   });
 
-  test('with many players a rival takes three letters, the colour is the edge of the cell and the full name stays for the reader', () => {
+  test('with many players each takes three letters, the colour is the edge of the cell and the full name stays for the reader', () => {
     useGame.getState().setFaction(opponentAt(1), 'hacan');
     render(<PlanScreen />);
     const hacan = whose().getByRole('button', { name: 'Hacan' });
@@ -400,14 +400,17 @@ describe('an opponent in the plan', () => {
     expect(hacan.style.getPropertyValue('--owner')).toBe(`var(--player-${game().opponents[1].color})`);
     expect(whose().getByRole('button', { name: 'Player 4' })).toHaveTextContent(/^4$/);
     expect(hacan.querySelector('.owner-dot')).toBeNull();
-    expect(whose().getByRole('button', { name: 'Mine' })).toHaveTextContent(/^Mine$/);
+    // The player at the tablet stands among the others, by seat, under the same kind of name.
+    expect(whose().getAllByRole('button')[0]).toHaveTextContent(/^Arb$/);
+    expect(whose().getAllByRole('button')).toHaveLength(6);
   });
 
-  test('with few players a rival keeps the whole name', () => {
+  test('with few players each keeps the whole name', () => {
     useGame.getState().newGame({ expansions: ['pok'], playerCount: 4, faction: 'arborec' }, pack);
     useGame.getState().setFaction(opponentAt(0), 'hacan');
     render(<PlanScreen />);
     expect(whose().getByRole('button', { name: 'Hacan' })).toHaveTextContent(/^Hacan$/);
+    expect(whose().getByRole('button', { name: 'Arborec' })).toHaveTextContent(/^Arborec$/);
   });
 
   test('their row wears their colour and says whose it is', async () => {
@@ -424,14 +427,19 @@ describe('an opponent in the plan', () => {
     expect(screen.getByRole('listitem', { name: 'Pass' })).not.toHaveClass('entry-rival');
   });
 
-  test('a tactical action of theirs spends their token, not mine, and the panel says whose it is', async () => {
+  test('a tactical action of theirs spends their token, not mine, and with me shown again the panel says whose it is', async () => {
     render(<PlanScreen />);
     await userEvent.click(whose().getByRole('button', { name: /Sol/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
     await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
-    expect(document.querySelector('.acting-as')).toHaveTextContent('Sol');
+    // The shown player's own action needs no word about whose it is.
+    expect(document.querySelector('.acting-as')).toBeNull();
     await userEvent.click(tile(TARGET));
     expect(tactical()).toMatchObject({ owner: rival().id, systemId: TARGET });
+    // The totals and the map are Sol's while Sol is shown.
+    expect(cell('Tactic')).toHaveTextContent('3 → 2');
+    expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: 'Command token' })).toBeInTheDocument();
+    await userEvent.click(whose().getByRole('button', { name: 'Arborec' }));
     expect(cell('Tactic')).toHaveTextContent(/^Tactic3$/);
     expect(document.querySelector('.acting-as')).toHaveTextContent('Sol');
     expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: /Command token of/ })).toBeInTheDocument();

@@ -2,13 +2,15 @@ import { useTranslation } from 'react-i18next';
 import type { DataPack } from '../../domain/types';
 import type { StartEdits } from '../../game/save';
 import type { MapSource } from '../../game/space';
-import type { Table } from '../../game/types';
+import type { PlayerId, Table } from '../../game/types';
 import { ExpeditionWidget, type SliceOwners } from './ExpeditionWidget';
 import { FractureControl } from './FractureControl';
 import { DrawerSheet } from '../overlays/Drawer';
 
 export interface ThundersEdgePanelProps {
   table: Table;
+  /** The player the screen shows: a part taken by hand goes to one of the others. */
+  viewer: PlayerId;
   start: StartEdits;
   map: MapSource;
   pack: DataPack;
@@ -19,11 +21,11 @@ export interface ThundersEdgePanelProps {
 }
 
 /** The expedition and the Fracture, which are not plan entries, except for a part taken with a turn. */
-export function ThundersEdgePanel({ table, start, map, pack, owners, onPlace, onMark }: ThundersEdgePanelProps) {
+export function ThundersEdgePanel({ table, viewer, start, map, pack, owners, onPlace, onMark }: ThundersEdgePanelProps) {
   const { t } = useTranslation();
   return (
     <DrawerSheet className="te-panel" title={t('thundersEdge.title')}>
-      <ExpeditionWidget placed={start.expedition.thundersEdgeSystem} map={map} pack={pack} table={table} owners={owners} byHand={start.expedition.slices} onPlace={onPlace} />
+      <ExpeditionWidget placed={start.expedition.thundersEdgeSystem} map={map} pack={pack} table={table} viewer={viewer} owners={owners} byHand={start.expedition.slices} onPlace={onPlace} />
       <FractureControl table={table} fracture={start.fracture} pack={pack} onMark={onMark} />
     </DrawerSheet>
   );

@@ -7,7 +7,7 @@
 import { withLeadershipTokens, withProduction, withStructure, withSystem } from '../../domain/strategy';
 import type { CardEffects, StructureKind, UnitId } from '../../domain/types';
 import type { Turn, Strategic, Secondary } from '../actions';
-import type { Round } from '../round';
+import { picksOf, type Round } from '../round';
 import { autoPayOn } from '../planQueries';
 import type { Board, DataPack, PlayerId, Table } from '../types';
 import { cardCostOn, cardEntryOf, effectsOf, isCardTurn, isPrimary, primaryForTokenOf, type CardTurn } from './strategicRead';
@@ -82,20 +82,22 @@ export const withTokens = (turn: Turn, tokens: CardEffects['tokens'], leadership
 // ---------------------------------------------------------------------------------------------------------------------
 // What the round decides about the cards.
 
-/** How a player plays a card: its primary is free on a card they hold, and for a player whose cards the round does not keep; it costs a token otherwise. */
+/**
+ * How a player plays a card, the same for every player (83.3): the primary of a card they hold in the round is free,
+ * that of any other card costs a strategy token. A card is a player's own once it is chosen for them in the round's
+ * strategy block; a round that keeps no cards for a player and one where they chose none mean the same.
+ */
 export function playOfOn(round: Round, player: PlayerId, card: number, primary: boolean): Pick<CardPatch, 'side' | 'forToken'> {
   if (!primary) return { side: 'secondary', forToken: undefined };
-  const picks = round.picks[player];
-  return { side: 'primary', forToken: picks !== undefined && !picks.held.includes(card) ? true : undefined };
+  return { side: 'primary', forToken: picksOf(round, player).held.includes(card) ? undefined : true };
 }
 
 const isMainPrimary = (turn: Turn, held: number[]): boolean =>
   isCardTurn(turn) && isPrimary(turn) && !primaryForTokenOf(turn, held) && turn.status !== 'cancelled';
 
-/** What a tapped card starts as in a turn: the primary of a card its player holds and has not played yet this round, the secondary otherwise. A player whose cards the round does not keep: the primary. */
+/** What a tapped card starts as in a turn, for every player alike: the primary of a card its player holds and has not played yet this round, the secondary otherwise. */
 export function startsAsPrimaryOn(round: Round, card: number, turn: Turn): boolean {
-  const picks = round.picks[turn.player];
-  if (picks === undefined) return true;
+  const picks = picksOf(round, turn.player);
   const played = round.turns.some(other => other.id !== turn.id && other.player === turn.player && isMainPrimary(other, picks.held) && (other.action as Strategic).card === card);
   return picks.held.includes(card) && !played;
 }

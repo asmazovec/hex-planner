@@ -22,6 +22,8 @@ export function listOf(game: Game, pack: DataPack, roundIndex = 0, warnings: Rec
   const round = game.plans[0].rounds[roundIndex];
   return {
     pack, viewOf: (id: string) => kernelViewOf(game, pack, id), roundNo: round.number, warnings,
+    // The player at the tablet is the one shown until the switch says otherwise.
+    shown: line.kernel.table.viewer,
     turns: line.kernel.rounds.find(r => r.number === round.number)?.turns ?? [],
     end: { table: line.kernel.table, board: boardAtRound(line, round.number) },
   };

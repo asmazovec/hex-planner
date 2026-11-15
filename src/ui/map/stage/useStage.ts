@@ -75,12 +75,11 @@ export interface MeterRow {
  * What the big hex edits and how: placing, losses and purchases, for the player whose hand it is in or for another.
  * The units and structures of the others have no entry to hold what was lost or bought, so those strips last as long as the hex stays open.
  */
-export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onPurchase, manualPayments = [], tacticalId, adjustmentId, owner: ownerGiven, shownBoard }: HexStageProps) {
+export function useStage({ slot, roundNo, viewer: viewerGiven, pack, initialMode = 'setup', only, onPurchase, manualPayments = [], tacticalId, adjustmentId, owner: ownerGiven, shownBoard }: HexStageProps) {
   const { t } = useTranslation();
   const saved = useGame(s => s.saved);
   const setup = useSetupWrites();
   const [mode, setMode] = useState<StageMode>(initialMode);
-  const [chosenSide, setSide] = useState<PlayerId | null>(null);
   const [chosenPlanet, setPlanet] = useState(0);
   const [news, setNews] = useState<Record<string, number>>({});
   const [lost, setLost] = useState<Record<string, number>>({});
@@ -101,17 +100,21 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const target = Math.min(chosenPlanet, Math.max(0, planets.length - 1));
   const targetPlanet = planets.at(target);
   const planetIdOf = (planet: number | undefined): string | null => (planet === undefined ? null : planets[planet]?.id ?? null);
-  /** Whose hand this hex is in: the viewer's, or the player's whose expected action is being set up. */
-  const mine: PlayerId = ownerGiven ?? (turnById(tacticalId) ?? turnById(adjustmentId))?.player ?? table.viewer;
-  const side = only ? mine : chosenSide ?? mine;
+  /** The player the screen shows: the hex looks through their eyes. */
+  const viewer: PlayerId = viewerGiven ?? table.viewer;
+  /** Whose hand this hex is in: the shown player's, or the player's whose action it was opened from. */
+  const mine: PlayerId = ownerGiven ?? (turnById(tacticalId) ?? turnById(adjustmentId))?.player ?? viewer;
+  /** Whom the shop buys and places for: the one whose hand the hex is in. Another player's units are placed with that player shown. */
+  const side = mine;
   const colours = tableColours(table);
-  const seated = othersBySeat(table, table.viewer, pack, t);
+  /** The players other than the one whose hand the hex is in, by seat. */
+  const seated = othersBySeat(table, mine, pack, t);
   const actor = mine;
   const faction = table.players.find(p => p.id === actor)?.faction ?? '';
   /** Who controls the planet on the board, or nobody. */
   const controllerOf = (planetId: string): PlayerId | null => ownerOf(board, planetId) ?? null;
-  /** Whose a structure on the planet is: its controller's, the viewer's on a planet no one controls. */
-  const holderOf = (planetId: string): PlayerId => controllerOf(planetId) ?? table.viewer;
+  /** Whose a structure on the planet is: its controller's, and on a planet no one controls theirs whose hand the hex is in. */
+  const holderOf = (planetId: string): PlayerId => controllerOf(planetId) ?? mine;
   const hasDock = (planetId: string): boolean => (board.planets[planetId]?.structures.spacedock ?? 0) > 0;
   const kindName = (kind: TokenKind): string => (kind === 'pds' ? t('map.pds') : kind === 'spacedock' ? t('map.spaceDock') : t(`unit.${kind}`));
 
@@ -128,13 +131,13 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const change = (kind: 'setup' | 'losses', unit: UnitId, planetId: string | null, amount: number) => {
     if (kind === 'losses' && fightingFor) editTurn(fightingFor.id, turn => withLoss(turn, unit, planetId, amount));
     else if (kind === 'setup' && adjusting && (adjusting.action.kind === 'correction' || adjusting.action.kind === 'agenda')) setup.adjustSetup(adjusting.id, adjusting.action.delta, slot, unit, planetId, amount);
-    else setup.changeAdjustment(roundNo, { kind, systemId: slot, unit, planetId, amount }, table.viewer);
+    else setup.changeAdjustment(roundNo, { kind, systemId: slot, unit, planetId, amount }, mine);
   };
   const changeStructure = (kind: StructureKind, planetId: string, amount: 1 | -1) => setup.changeStructure(pack, kind, planetId, amount);
 
   const tacticals = turns.filter((e): e is TacticalTurn => isTacticalTurn(e) && e.action.system === slot && e.status !== 'cancelled');
-  /** The action that takes the purchases: the one this hex was opened from, otherwise the round's last one of mine here. */
-  const tactical = onPurchase ? undefined : (fightingFor && tacticals.includes(fightingFor) ? fightingFor : tacticals.filter(e => e.player === table.viewer).at(-1));
+  /** The action that takes the purchases: the one this hex was opened from, otherwise the round's last one here of the player whose hand the hex is in. */
+  const tactical = onPurchase ? undefined : (fightingFor && tacticals.includes(fightingFor) ? fightingFor : tacticals.filter(e => e.player === mine).at(-1));
   /** The board the tactical entry pays and places with: the end of the round may differ. */
   const beforeTactical = tactical && boardBefore(line, tactical.id);
   const produced = tactical && beforeTactical ? productionSites(table, beforeTactical, pack, tactical) : [];
@@ -143,12 +146,12 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** The same production by the row it was bought in: the tray of a row holds what was entered there. */
   const enteredHere = tactical && beforeTactical ? productionEntered(table, beforeTactical, pack, tactical) : [];
   const purchases: PurchaseTarget = onPurchase ?? {
-    bought: [...produced, ...mergedCountsOf(round, 'build', slot)],
-    entered: [...enteredHere, ...mergedCountsOf(round, 'build', slot)],
+    bought: [...produced, ...mergedCountsOf(round, 'build', slot, mine)],
+    entered: [...enteredHere, ...mergedCountsOf(round, 'build', slot, mine)],
     change: (unit, planetId, amount) => {
       const held = enteredHere.some(p => p.unit === unit && p.planetId === planetId);
       if (tactical && beforeTactical && (amount > 0 || held)) changeProduction(tactical, unit, planetId, amount);
-      else setup.changeAdjustment(roundNo, { kind: 'build', systemId: slot, unit, planetId, amount }, table.viewer);
+      else setup.changeAdjustment(roundNo, { kind: 'build', systemId: slot, unit, planetId, amount }, mine);
     },
   };
   const keyOfBought = ({ unit, planetId }: BoughtUnit): string => {
@@ -201,10 +204,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     }
     const ground = Boolean(pack.units[kind]?.ground);
     const planetId = ground ? planet?.id ?? null : null;
-    if (side !== mine) {
-      changeEnemy(side, kind, planetId, 1);
-      if (mode === 'build') setNews(bumped(news, stackKey(side, kind, ground && planet ? index : undefined), 1));
-    } else if (mode === 'build') purchases.change(kind, planetId, 1);
+    if (mode === 'build') purchases.change(kind, planetId, 1);
     else change('setup', kind, planetId, 1);
   };
 
@@ -245,8 +245,8 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   };
   const onToken = (stack: PlacedStack) => {
     setTapNote(null);
-    // The control mode edits no units, and in an opponent's expected action only their own units are theirs to touch.
-    if (mode === 'control' || (mine !== table.viewer && stack.owner !== mine)) return;
+    // The control mode edits no units, and in an action of a player other than the shown one only that player's units are theirs to touch.
+    if (mode === 'control' || (mine !== viewer && stack.owner !== mine)) return;
     (mode === 'build' ? unbuy : takeOff)(stack, planetIdOf(stack.planet));
   };
 
@@ -257,7 +257,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     setLost(bumped(lost, key, -1));
   };
 
-  const myLosses = fightingFor ? lossesOf(fightingFor) : mine === table.viewer ? mergedCountsOf(round, 'losses', slot).filter(c => c.count < 0) : [];
+  const myLosses = fightingFor ? lossesOf(fightingFor) : mergedCountsOf(round, 'losses', slot, mine).filter(c => c.count < 0);
   /** What one player lost here: mine from the entries, an opponent's from this view. */
   const lossesFor = (owner: string): LossPicture[] => [
     ...(owner === mine ? myLosses.map(c => ({
@@ -268,11 +268,11 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   ];
 
   /** Who takes part in a battle here: whoever has units or structures in the system, or has already lost some in it. */
-  const stacks = tileStacks(table, board, table.viewer, slot, planets);
+  const stacks = tileStacks(table, board, viewer, slot, planets);
   const present = new Set([...stacks.space, ...stacks.ground].map(stack => stack.owner));
   const fights = (owner: string): boolean => present.has(owner) || lossesFor(owner).length > 0;
 
-  const sideFaction = side === mine ? faction : seated.find(o => o.id === side)?.faction ?? '';
+  const sideFaction = faction;
   /** The player the shop buys for, and the board whose holdings its prices follow: what they held just before the action, or at the end of the round. */
   const sidePlayer: PlayerId | undefined = table.players.find(p => p.id === side)?.id;
   const sideBoard = side === mine ? onPurchase?.view?.board ?? beforeTactical ?? board : board;
@@ -390,11 +390,11 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   // Capacity and fleet pool as placed by hand; an entry's own check already says it for what the entry does (16.3, 37.1).
   const boardWarnings = [
     ...structureWarningsOn(board, planets.map(planet => planet.id)),
-    ...(onPurchase ? [] : systemWarningsAt(line, roundNo, slot).filter(w => !repeats(w))),
+    ...(onPurchase ? [] : systemWarningsAt(line, roundNo, slot, viewer).filter(w => !repeats(w))),
   ];
 
   return {
-    table, board, shown: shownBoard ?? board, viewerColor: table.players.find(p => p.id === table.viewer)?.color ?? 1, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours, kindName,
+    table, board, shown: shownBoard ?? board, viewer, others: othersBySeat(table, viewer, pack, t), planets, target, setPlanet, mode, setMode, mine, side, seated, colours, kindName,
     adjusting, tapNote, handover, onToken, ringed: (key: string) => inBuild && (bought[key] ?? 0) > 0,
     shopItems, buy, boughtTotal, spent, meterRows, entryWarnings, boardWarnings, lossesFor, fights,
     productionRows, constructionRows, shopStock, buyAt, unbuyAt, fleetItems, removeShip, fleetOver,

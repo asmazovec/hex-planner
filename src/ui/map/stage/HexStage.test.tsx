@@ -48,7 +48,10 @@ const open = (props: Partial<HexStageProps> = {}, usePack = pack) =>
   render(<HexStage slot={SLOT} roundNo={1} pack={usePack} onClose={onClose} {...props} />);
 const tap = (name: string | RegExp) => userEvent.click(screen.getByRole('button', { name }));
 const mode = (name: 'Setup' | 'Battle' | 'Create' | 'Control') => tap(name);
-const side = (name: string | RegExp) => userEvent.click(within(screen.getByRole('group', { name: 'Whose units' })).getByRole('button', { name }));
+/** The turns of the round as the store keeps them: whose each is, and what it changes by hand. */
+const records = () => useGame.getState().saved!.plans[0].rounds[0].turns.map(turn => ({
+  player: turn.player, ...(turn.action.kind === 'correction' ? { purpose: turn.action.purpose, delta: turn.action.delta } : {}),
+}));
 const addMine = (units: UnitCounts, ground?: Record<string, UnitCounts>) =>
   edits.addEntry(1, { type: 'adjustment', label: 'start', delta: { units: { systemId: SLOT, units }, ground } }, 'strategy');
 const merged = (kind: string) => entries().find((e): e is Extract<Entry, { type: 'adjustment' }> => e.type === 'adjustment' && e.kind === kind);
@@ -149,13 +152,12 @@ describe('the stage as a window', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  test('the owner toggle lists me and each opponent, underlined in their colours', () => {
+  test('the hex has no choice of whose units these are: it works for the player the screen shows', () => {
     open();
-    const owners = within(screen.getByRole('group', { name: 'Whose units' }));
-    expect(owners.getAllByRole('button').map(b => b.textContent)).toEqual(['Mine', 'Player 2', 'Player 3', 'Player 4']);
-    const third = owners.getByRole('button', { name: 'Player 3' });
-    expect(third.style.getPropertyValue('--owner')).toBe(`var(--player-${game().opponents[1].color})`);
-    expect(third.querySelector('.owner-dot')).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Whose units' })).toBeNull();
+    cleanup();
+    open({ viewer: opponent(1) });
+    expect(screen.queryByRole('group', { name: 'Whose units' })).toBeNull();
   });
 
   test('a mode can be given, the shop limited, and the toggle goes with a limit', () => {
@@ -207,19 +209,25 @@ describe('setup', () => {
     expect(screen.queryByText(/Bought/)).toBeNull();
   });
 
-  test('enemy units go to the chosen opponent with undo, and any owner can be tapped', async () => {
-    open();
-    await side('Player 3');
+  test('with another player shown, units go to that player as a record of theirs, with undo; a unit of any owner placed at the start can be tapped off', async () => {
+    open({ viewer: opponent(1) });
     await tap('Cruiser');
-    expect(game().enemyUnits[SLOT]).toEqual({ [opponent(1)]: { cruiser: 1 } });
-    await side('Player 2');
+    expect(records()).toEqual([{ player: opponent(1), purpose: 'setup', delta: { units: { systemId: SLOT, units: { cruiser: 1 } } } }]);
     await tap('Infantry');
-    expect(game().enemyGround).toEqual({ [quann()]: { [opponent(0)]: { infantry: 1 } } });
-    await tap('Cruiser ×1 (Player 3)');
-    expect(game().enemyUnits[SLOT]).toBeUndefined();
+    expect(records()).toEqual([{ player: opponent(1), purpose: 'setup', delta: { units: { systemId: SLOT, units: { cruiser: 1 } }, ground: { [quann()]: { infantry: 1 } } } }]);
+    // Their own token wears no name while they are shown.
+    await tap('Cruiser ×1');
+    expect(records()).toEqual([{ player: opponent(1), purpose: 'setup', delta: { units: { systemId: SLOT, units: {} }, ground: { [quann()]: { infantry: 1 } } } }]);
     store().undo();
-    expect(game().enemyUnits[SLOT][opponent(1)]).toEqual({ cruiser: 1 });
-    expect(entries()).toEqual([]);
+    expect(records()[0].delta?.units?.units).toEqual({ cruiser: 1 });
+    cleanup();
+    // A record of mine in the same system is another record: each player has their own.
+    store().setUnits(SLOT, opponent(0), { cruiser: 1 });
+    open();
+    await tap('Cruiser');
+    expect(records().map(r => r.player)).toEqual([opponent(1), viewerNow()]);
+    await tap('Cruiser ×1 (Player 2)');
+    expect(game().enemyUnits[SLOT]?.[opponent(0)]).toBeUndefined();
   });
 
   test('structures: a picture adds to the target planet, a token removes', async () => {
@@ -235,26 +243,29 @@ describe('setup', () => {
     expect(game().docks).not.toContain(quann());
   });
 
-  test('a structure follows the owner toggle: placed for a player who does not hold the planet, it hands them the planet, and says so first', async () => {
+  test('a structure is the shown player\'s: placed where they do not hold the planet, it hands them the planet, and says so first', async () => {
     store().setPlanetControl(quann(), opponent(1));
     open();
     expect(screen.getByText('A structure gives control of the planet: Quann → you.')).toBeVisible();
-    await side('Player 3');
+    cleanup();
+    open({ viewer: opponent(1) });
     expect(screen.queryByText(/gives control of the planet/)).toBeNull();
-    await side('Player 2');
-    expect(screen.getByText('A structure gives control of the planet: Quann → Player 2.')).toBeVisible();
+    cleanup();
+    open({ viewer: opponent(0) });
+    expect(screen.getByText('A structure gives control of the planet: Quann → you.')).toBeVisible();
     await tap('PDS');
     expect(game().planetOwner[quann()]).toBe(opponent(0));
-    expect(screen.getByRole('button', { name: 'PDS ×1 (Player 2)' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'PDS ×1' })).toBeVisible();
     expect(screen.queryByText(/gives control of the planet/)).toBeNull();
   });
 
-  test('the shop draws structures in the chosen player\'s colour, as it draws their units', async () => {
+  test('the shop draws structures in the shown player\'s colour, as it draws their units', async () => {
     open();
     const ink = (name: string) => screen.getByRole('button', { name }).innerHTML.match(/stroke="(#[0-9a-f]+)"/i)?.[1];
     expect(ink('PDS')).toBe(ink('Carrier'));
     const mine = ink('PDS');
-    await side('Player 2');
+    cleanup();
+    open({ viewer: opponent(0) });
     expect(ink('PDS')).toBe(ink('Carrier'));
     expect(ink('PDS')).not.toBe(mine);
   });
@@ -627,7 +638,7 @@ describe('build', () => {
     expect(total()).toBe('2');
   });
 
-  test('a price follows my upgrade and the faction of the chosen owner', async () => {
+  test('a price follows the upgrade and the faction of the player the hex works for', async () => {
     store().setFaction(viewerNow(), 'muaat');
     store().setFaction(opponentAt(0), 'sol');
     open({ initialMode: 'build' });
@@ -637,26 +648,26 @@ describe('build', () => {
     store().setStartHolding('p1', 'technology:pws2', true);
     open({ initialMode: 'build' });
     expect(warsun().getByText('10')).toBeVisible();
-    await side('Sol');
+    cleanup();
+    open({ initialMode: 'build', viewer: opponentAt(0) });
     expect(warsun().getByText('12')).toBeVisible();
   });
 
-  test('enemy purchases edit their units and can be taken back, old ones cannot', async () => {
+  test('with another player shown, purchases are a record of theirs and can be taken back, what stood before cannot', async () => {
     store().setUnits(SLOT, opponent(0), { cruiser: 1 });
-    const { container } = open({ initialMode: 'build' });
-    await tap('Cruiser ×1 (Player 2)');
-    expect(game().enemyUnits[SLOT][opponent(0)]).toEqual({ cruiser: 1 });
-    await side('Player 2');
+    const { container } = open({ initialMode: 'build', viewer: opponent(0) });
+    await tap('Cruiser ×1');
+    expect(records()).toEqual([]);
     await tap('Cruiser');
-    expect(game().enemyUnits[SLOT][opponent(0)]).toEqual({ cruiser: 2 });
+    expect(records()).toEqual([{ player: opponent(0), purpose: 'build', delta: { units: { systemId: SLOT, units: { cruiser: 1 } } } }]);
     const key = `${opponent(0)}|cruiser|-`;
     expect(ring(container, key)).not.toBeNull();
     expect(total()).toBe('2');
-    expect(entries()).toEqual([]);
-    await tap('Cruiser ×2 (Player 2)');
     expect(game().enemyUnits[SLOT][opponent(0)]).toEqual({ cruiser: 1 });
+    await tap('Cruiser ×2');
+    expect(records()).toEqual([]);
     expect(ring(container, key)).toBeNull();
-    await tap('Cruiser ×1 (Player 2)');
+    await tap('Cruiser ×1');
     expect(game().enemyUnits[SLOT][opponent(0)]).toEqual({ cruiser: 1 });
   });
 
@@ -810,33 +821,30 @@ describe('fix round 1', () => {
     expect(hasRing('p1|infantry|0')).toBe(false);
   });
 
-  test('enemy ground units go to the target planet; both ways of removing them find them there', async () => {
+  test('with another player shown, their ground units go to the target planet; both ways of removing them find them there', async () => {
     store().setTile(SLOT, TWO);
-    open();
-    await side('Player 2');
+    open({ viewer: opponent(0) });
     await tap(new RegExp(`^${nameOf(second)}:`));
     await tap('Infantry');
     await tap('Infantry');
-    expect(game().enemyGround).toEqual({ [second]: { [opponent(0)]: { infantry: 2 } } });
-    expect(game().enemyUnits[SLOT]).toBeUndefined();
-    await tap('Infantry ×2 (Player 2)');
-    expect(game().enemyGround[second][opponent(0)]).toEqual({ infantry: 1 });
+    expect(records()).toEqual([{ player: opponent(0), purpose: 'setup', delta: { units: { systemId: SLOT, units: {} }, ground: { [second]: { infantry: 2 } } } }]);
+    await tap('Infantry ×2');
+    expect(records()[0].delta?.ground).toEqual({ [second]: { infantry: 1 } });
     await mode('Battle');
-    await tap('Infantry ×1 (Player 2)');
-    expect(game().enemyGround).toEqual({});
-    await userEvent.click(within(screen.getByRole('group', { name: 'Losses, Player 2' })).getByRole('button', { name: /Give back Infantry/ }));
-    expect(game().enemyGround).toEqual({ [second]: { [opponent(0)]: { infantry: 1 } } });
+    await tap('Infantry ×1');
+    expect(records().map(r => [r.player, r.purpose])).toEqual([[opponent(0), 'setup'], [opponent(0), 'losses']]);
+    await userEvent.click(within(screen.getByRole('group', { name: 'Losses, mine' })).getByRole('button', { name: /Give back Infantry/ }));
+    expect(records().map(r => [r.player, r.purpose])).toEqual([[opponent(0), 'setup']]);
   });
 
-  test('an enemy ground purchase is on the planet too, and its take-back', async () => {
+  test('with another player shown, a ground purchase of theirs is on the planet too, and its take-back', async () => {
     store().setTile(SLOT, TWO);
-    open({ initialMode: 'build' });
-    await side('Player 2');
+    open({ initialMode: 'build', viewer: opponent(0) });
     await tap(`Infantry, ${nameOf(second)}`);
-    expect(game().enemyGround).toEqual({ [second]: { [opponent(0)]: { infantry: 1 } } });
+    expect(records()).toEqual([{ player: opponent(0), purpose: 'build', delta: { units: { systemId: SLOT, units: {} }, ground: { [second]: { infantry: 1 } } } }]);
     expect(hasRing(`${opponent(0)}|infantry|1`)).toBe(true);
-    await tap('Infantry ×1 (Player 2)');
-    expect(game().enemyGround).toEqual({});
+    await tap('Infantry ×1');
+    expect(records()).toEqual([]);
   });
 
   test('enemy ground units left in the system are still removed from there', async () => {

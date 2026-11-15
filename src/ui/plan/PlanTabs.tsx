@@ -1,4 +1,5 @@
 import { picksOf } from '../../game/round';
+import type { PlayerId } from '../../game/types';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
@@ -39,6 +40,8 @@ export function PlanName({ plan }: { plan: { name: string } }) {
 export interface PlanTabsProps {
   saved: SavedGame;
   roundNo: number;
+  /** The shown player: a tab names their strategy card of the round. */
+  player: PlayerId;
   /** Called before the plan changes, so that what is open still closes in its own plan. */
   onSelectPlan: () => void;
   onSelectRound: (roundNo: number) => void;
@@ -55,7 +58,7 @@ export interface PlanTabsProps {
 const DRAG_START = 6;
 
 /** Copy and the plan tabs, then the rounds of the active plan and Undo. A tab is dragged along the row to change the order of the plans. */
-export function PlanTabs({ saved, roundNo, onSelectPlan, onSelectRound, onAddRound, onDeleteRound, onDeletePlan, afterRounds }: PlanTabsProps) {
+export function PlanTabs({ saved, roundNo, player, onSelectPlan, onSelectRound, onAddRound, onDeleteRound, onDeletePlan, afterRounds }: PlanTabsProps) {
   const { t } = useTranslation();
   const setActivePlan = useGame(s => s.setActivePlan);
   const movePlan = useGame(s => s.movePlan);
@@ -86,7 +89,7 @@ export function PlanTabs({ saved, roundNo, onSelectPlan, onSelectRound, onAddRou
         <button type="button" className="plan-copy" onClick={() => { onSelectPlan(); copyPlan(); }}>{t('plan.copy')}</button>
         {saved.plans.map(plan => {
           const shown = plan.rounds.find(r => r.number === roundNo);
-          const card = shown ? picksOf(shown, saved.table.viewer).strategyCard : null;
+          const card = shown ? picksOf(shown, player).strategyCard : null;
           const selected = plan.id === saved.activePlanId;
           const name = planDisplayName(plan.name, t);
           const dragging = drag.draggingId === plan.id ? ' plan-tab-dragging' : '';

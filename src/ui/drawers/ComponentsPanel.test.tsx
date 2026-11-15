@@ -276,7 +276,7 @@ describe('the components drawer', () => {
     await userEvent.click(within(mine).getByRole('button', { name: 'Add Ceasefire' }));
     expect(game().start.me.promissory).toContain('promissory:<color>_cf@me');
     // The opponent's sheet lists their notes the same way, and my note among those of others.
-    await userEvent.click(within(screen.getByRole('group', { name: 'Whose components' })).getByRole('button', { name: /Hacan/ }));
+    await userEvent.click(within(screen.getByRole('group', { name: 'Shown player' })).getByRole('button', { name: /Hacan/ }));
     expect(within(section('Promissory notes of Hacan')).getAllByTestId(/^component-promissory:/).length).toBeGreaterThan(5);
     expect(within(section('Notes of other players')).getByTestId(`component-${ta}`)).toHaveTextContent('Arborec');
   });
@@ -349,7 +349,7 @@ describe('the components drawer', () => {
 
   test('a rival is shown and edited the same way', async () => {
     await openDrawer();
-    await userEvent.click(within(screen.getByRole('group', { name: 'Whose components' })).getByRole('button', { name: /Hacan/ }));
+    await userEvent.click(within(screen.getByRole('group', { name: 'Shown player' })).getByRole('button', { name: /Hacan/ }));
     const technologies = section('Researched technologies');
     expect(within(technologies).getByText('Sarween Tools')).toBeVisible();
     expect(within(technologies).queryByText('Magen Defense Grid ΩΩ')).toBeNull();
@@ -485,7 +485,7 @@ describe('the stack and the fan of the component tabs', () => {
     useGame.getState().setStartHolding('p1', 'actionCard:sabo1', true);
     await openDrawer();
     expect(railNames()).toEqual(['Technologies · 1', 'Cards · 8', 'Faction · 1', 'Relics · 1', 'Objectives & laws']);
-    await userEvent.click(within(screen.getByRole('group', { name: 'Whose components' })).getByRole('button', { name: /Hacan/ }));
+    await userEvent.click(within(screen.getByRole('group', { name: 'Shown player' })).getByRole('button', { name: /Hacan/ }));
     expect(railNames()).toEqual(['Technologies · 2', 'Cards · 6', 'Faction · 1', 'Relics', 'Objectives & laws']);
   });
 

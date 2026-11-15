@@ -4,12 +4,12 @@ import type { DataPack } from '../../../domain/types';
 import type { Board, PlayerId } from '../../../game/types';
 import { mapSource } from '../../../game/space';
 import { HexRemove } from '../../primitives/Icon';
-import { PlayerChoice, playerTag, type PlayerOption } from '../../primitives/player';
+import { playerTag, type PlayerOption } from '../../primitives/player';
 import { Modal } from '../../overlays/Modal';
 import { WarningList } from '../../feedback/WarningText';
 import { slotToPixel } from '../geometry';
 import { systemName } from '../systemName';
-import { shortName } from '../../players/names';
+import { playerShortName, shortName } from '../../players/names';
 import type { PurchaseTarget } from './purchases';
 import { TileView } from '../TileView';
 import { useStage } from './useStage';
@@ -28,6 +28,8 @@ export interface HexStageProps {
   slot: string;
   /** The round the map shows: my taps go into its entries, and the hex shows its forecast. */
   roundNo: number;
+  /** The player the screen shows: the hex looks through their eyes, and a tap from the map places and removes their units. The player at the tablet when none is given. */
+  viewer?: PlayerId;
   pack: DataPack;
   initialMode?: StageMode;
   /** Limits the shop to structures or to units. */
@@ -71,7 +73,7 @@ export function HexStage(props: HexStageProps) {
   const { t } = useTranslation();
   const stage = useStage(props);
   if (!stage) return null;
-  const { table, board, shown, viewerColor, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours } = stage;
+  const { table, board, shown, viewer, others, planets, target, setPlanet, mode, setMode, mine, side, seated, colours } = stage;
 
   const seatName = (o: { name: string; faction: string }): string => shortName(pack, o.faction, o.name);
   /** An opponent in a player choice: the short name, and the tag for a crowded line. */
@@ -94,7 +96,7 @@ export function HexStage(props: HexStageProps) {
           <svg viewBox="-68 -62 136 124" role="group" aria-label={t('stage.hex')}>
             <g transform={`translate(${-x} ${-y})`}>
               <TileView
-                slotKey={slot} pack={pack} table={table} board={board} ingress={mapSource(table, board).fracture.ingress.includes(slot)}
+                slotKey={slot} pack={pack} table={table} board={board} viewer={viewer} ingress={mapSource(table, board).fracture.ingress.includes(slot)}
                 stage={{ target, onPlanet: setPlanet, onToken: stage.onToken, ringed: item => stage.ringed(item.key) }}
               />
             </g>
@@ -115,17 +117,10 @@ export function HexStage(props: HexStageProps) {
           {/* It answers a tap on the hex, so it stands at the top of the panel beside it. */}
           {stage.tapNote && <WarningList message={t(`stage.tapNote.${stage.tapNote}`)} />}
 
-          {(mode === 'setup' || mode === 'build') && !only && mine === table.viewer && (
-            <PlayerChoice
-              label={t('stage.owner')} chosen={value => side === value} onPick={value => setSide(value)}
-              options={[{ value: table.viewer, label: t('stage.mine'), color: viewerColor }, ...seated.map(seatOption)]}
-            />
-          )}
-
           {mode === 'setup' && <SetupPanel items={stage.shopItems} onPick={stage.buy} structuresOnly={structuresOnly} manyPlanets={manyPlanets} table={table} board={board} pack={pack} boardWarnings={stage.boardWarnings} />}
           {mode === 'build' && (
             <BuildPanel
-              table={table} pack={pack} board={board} production={stage.productionRows} construction={stage.constructionRows} stock={stage.shopStock}
+              table={table} viewer={viewer} pack={pack} board={board} production={stage.productionRows} construction={stage.constructionRows} stock={stage.shopStock}
               colour={colours[side]} onTake={stage.buyAt} onReturn={stage.unbuyAt} structuresOnly={structuresOnly}
               boughtTotal={stage.boughtTotal} spent={stage.spent} mine={side === mine} meters={stage.meterRows} warnings={stage.entryWarnings} boardWarnings={stage.boardWarnings}
             />
@@ -133,12 +128,13 @@ export function HexStage(props: HexStageProps) {
           {(mode === 'setup' || mode === 'build') && stage.handover && (
             <p className="muted">{t('stage.handover', {
               planet: stage.handover.planet,
-              player: stage.handover.player === table.viewer ? t('stage.you') : seatName(seated.find(o => o.id === stage.handover?.player) ?? { name: '', faction: '' }),
+              player: stage.handover.player === viewer ? t('stage.you') : playerShortName(table, pack, stage.handover.player, t),
             })}</p>
           )}
           {mode === 'battle' && (
             <BattlePanel
-              players={[{ id: table.viewer, heading: t('stage.lossesMine') }, ...seated.map(o => ({ id: o.id, heading: t('stage.lossesOf', { name: seatName(o) }) }))].filter(p => stage.fights(p.id))}
+              // The one whose hand the hex is in first; the shown player's losses are «mine», every other player's are named.
+              players={[mine, ...seated.map(o => o.id)].map(id => ({ id, heading: id === viewer ? t('stage.lossesMine') : t('stage.lossesOf', { name: playerShortName(table, pack, id, t) }) })).filter(p => stage.fights(p.id))}
               colours={colours} lossesFor={stage.lossesFor} planets={planets} kindName={stage.kindName}
             />
           )}
@@ -168,8 +164,8 @@ export function HexStage(props: HexStageProps) {
           )}
           {mode === 'control' && (
             <ControlPanel
-              table={table} pack={pack} tile={tile} rotation={mapValue?.split('@')[1]} planets={planets} shown={shown}
-              seated={seated.map(seatOption)} chosen={planets[target]?.id} onChoose={setPlanet}
+              table={table} viewer={viewer} pack={pack} tile={tile} rotation={mapValue?.split('@')[1]} planets={planets} shown={shown}
+              seated={others.map(seatOption)} chosen={planets[target]?.id} onChoose={setPlanet}
             />
           )}
         </div>

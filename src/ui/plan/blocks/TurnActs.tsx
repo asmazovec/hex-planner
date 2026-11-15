@@ -4,6 +4,7 @@ import { EXPEDITION_SLICES } from '../../../domain/payment';
 import type { SliceOwners } from '../../../domain/thundersEdge';
 import type { DataPack, Warning } from '../../../domain/types';
 import type { Turn } from '../../../game/actions';
+import type { PlayerId } from '../../../game/types';
 import { withNewAct, withoutAct } from '../../../game/edit/turn';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
@@ -21,6 +22,8 @@ export interface TurnActsProps {
   warnings: Warning[];
   /** Who holds each expedition part, so a full expedition offers none. */
   owners: SliceOwners;
+  /** The player the screen shows: a transaction in another player's turn starts with them. */
+  shown?: PlayerId;
   /** The turn with an act added or taken off. */
   onChange: (turn: Turn) => void;
   /** Opens the step of the act at this index. */
@@ -30,17 +33,17 @@ export interface TurnActsProps {
 /**
  * The first block of «В этом ходу», the part of an editor common to every turn: the acts the turn holds beside its
  * action, each a card that opens its own step, with a cross inside it. The block is named by what it can hold.
- * A transaction is added with the first opponent (or me in an opponent's turn); an expedition only with Thunder's Edge
- * while a part is free.
+ * A transaction is added with the shown player in another player's turn, and with the first other player by seat in
+ * their own; an expedition only with Thunder's Edge while a part is free.
  */
-export function TurnActs({ pack, view, turn, warnings, owners, onChange, onOpen }: TurnActsProps) {
+export function TurnActs({ pack, view, turn, warnings, owners, shown, onChange, onOpen }: TurnActsProps) {
   const { t } = useTranslation();
   const { table, board } = view;
   const acts = turn.acts;
   const te = table.expansions.includes('te');
   const placer = placeWarnings(warnings);
-  // The first other player at the table; in a rival's turn that is the viewer.
-  const first = turn.player !== table.viewer ? table.viewer : table.players.filter(p => p.id !== turn.player && p.seat <= 8).sort((a, b) => a.seat - b.seat)[0]?.id;
+  // The shown player when the turn is another's; otherwise the first other player at the table.
+  const first = shown !== undefined && turn.player !== shown ? shown : table.players.filter(p => p.id !== turn.player && p.seat <= 8).sort((a, b) => a.seat - b.seat)[0]?.id;
   const sliceFree = te && EXPEDITION_SLICES.some(s => !owners[s.id] && !board.common.expedition[s.id]);
   const add = (kind: 'transaction' | 'expedition') => {
     onChange(withNewAct(turn, kind, first));

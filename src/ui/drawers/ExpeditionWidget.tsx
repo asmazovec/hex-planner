@@ -22,6 +22,8 @@ export interface ExpeditionWidgetProps {
   map: MapSource;
   pack: DataPack;
   table: Table;
+  /** The player the screen shows: their own part is taken with a turn of the plan, a tap here gives one to another player. */
+  viewer: PlayerId;
   /** Who took each part, by player: at the start or by a turn of the plan. */
   owners: SliceOwners;
   /** The parts taken before the plan, which a tap here changes; a part a turn of the plan took is changed in that turn. */
@@ -31,12 +33,12 @@ export interface ExpeditionWidgetProps {
 }
 
 /** Counter of taken expedition parts; a tap marks a free part as taken by the player chosen above the parts and frees one taken by hand, the parts of the plan's turns come from the plan. */
-export function ExpeditionWidget({ placed, map, pack, table, owners, byHand, onPlace }: ExpeditionWidgetProps) {
+export function ExpeditionWidget({ placed, map, pack, table, viewer, owners, byHand, onPlace }: ExpeditionWidgetProps) {
   const { t } = useTranslation();
   const setSlice = useGame(s => s.setSlice);
   const setThundersEdge = useGame(s => s.setThundersEdge);
   const taken = Object.keys(owners).length;
-  const others = othersOf(table, table.viewer);
+  const others = othersOf(table, viewer);
   /** Whom a tap on a free part gives it to: the first of the other players until another is chosen. */
   const [chosen, setChosen] = useState<PlayerId | null>(null);
   const taker = others.find(p => p.id === chosen)?.id ?? others[0]?.id ?? null;
@@ -56,7 +58,7 @@ export function ExpeditionWidget({ placed, map, pack, table, owners, byHand, onP
       <div className="slice-grid">
         {EXPEDITION_SLICES.map(({ id }) => {
           const owner = owners[id];
-          const own = owner === table.viewer;
+          const own = owner === viewer;
           const name = owner === undefined ? undefined : own ? t('expedition.mine') : playerShortName(table, pack, owner, t);
           return (
             <button

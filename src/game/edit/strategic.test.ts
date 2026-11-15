@@ -131,17 +131,28 @@ describe.each(['sol', 'arborec'])('the edits of a card turn, %s', faction => {
     for (const i of [0, 1, 2, 3, 6]) {
       const { e, turn } = t.at(t.entries[i]);
       for (const card of [CARD.leadership, CARD.technology, CARD.warfare, CARD.trade]) {
-        expect(now.startsAsPrimaryOn(t.round, card, turn)).toBe(oldOld.startsAsPrimary(r, 3, card, e));
+        // The old rule of the one whose cards the round keeps is now the rule of every player.
+        expect(now.startsAsPrimaryOn(t.round, card, { ...turn, player: t.table.viewer })).toBe(oldOld.startsAsPrimary(r, 3, card, { ...e, owner: undefined } as never));
         for (const primary of [true, false]) {
-          for (const mine of [true, false]) {
-            const was = oldOld.playOf(r, 3, card, primary, mine);
-            // Mine is the viewer's play, whose cards the round keeps; the other is a player whose cards it does not.
-            const player = mine ? t.table.viewer : t.table.players.find(p => p.id !== t.table.viewer)!.id;
-            expect(now.playOfOn(t.round, player, card, primary)).toEqual({ side: was.type === 'strategic' ? 'primary' : 'secondary', forToken: was.forToken });
-          }
+          const was = oldOld.playOf(r, 3, card, primary, true);
+          expect(now.playOfOn(t.round, t.table.viewer, card, primary)).toEqual({ side: was.type === 'strategic' ? 'primary' : 'secondary', forToken: was.forToken });
         }
       }
     }
+    // A player with no card of the round chosen, with a key in the round or without one, holds none: any card starts
+    // as its secondary, and its primary is one played for a token (83.3).
+    const other = t.table.players.find(p => p.id !== t.table.viewer)!.id;
+    const { turn: any } = t.at(t.entries[0]);
+    for (const round of [t.round, { ...t.round, picks: { ...t.round.picks, [other]: { strategyCard: null, backupCard: null, held: [] } } }]) {
+      expect(now.startsAsPrimaryOn(round, CARD.trade, { ...any, player: other })).toBe(false);
+      expect(now.playOfOn(round, other, CARD.trade, true)).toEqual({ side: 'primary', forToken: true });
+      expect(now.playOfOn(round, other, CARD.trade, false)).toEqual({ side: 'secondary', forToken: undefined });
+    }
+    // Once the card is chosen for them it is their own: it starts as the primary, free.
+    const chosen = { ...t.round, picks: { ...t.round.picks, [other]: { strategyCard: CARD.trade, backupCard: null, held: [CARD.trade] } } };
+    expect(now.startsAsPrimaryOn(chosen, CARD.trade, { ...any, id: 'new', player: other })).toBe(true);
+    expect(now.playOfOn(chosen, other, CARD.trade, true)).toEqual({ side: 'primary', forToken: undefined });
+    expect(now.playOfOn(chosen, other, CARD.leadership, true)).toEqual({ side: 'primary', forToken: true });
     const synced = now.withForTokenOfRound(t.round);
     const oldSynced = oldOld.withForTokenOfRound(r, 3);
     expect(synced.turns.map(turn => (turn.action.kind === 'strategic' ? turn.action.forToken : undefined)))

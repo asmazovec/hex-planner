@@ -43,7 +43,7 @@ test('the summary shows now and forecast for every value', () => {
     type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {},
     payment: { planets: ['nestphar'], tradeGoods: 0 },
   }, 'action');
-  render(<SummaryBar table={kernelEndOf(game(), pack, 'now').table} now={kernelEndOf(game(), pack, 'now').board} forecast={kernelEndOf(game(), pack, 'forecast').board} pack={pack} />);
+  render(<SummaryBar table={kernelEndOf(game(), pack, 'now').table} player={kernelEndOf(game(), pack, 'now').table.viewer} now={kernelEndOf(game(), pack, 'now').board} forecast={kernelEndOf(game(), pack, 'forecast').board} pack={pack} />);
   const cell = (name: string) => screen.getByRole('group', { name });
   expect(cell('Resources')).toHaveTextContent('3 → 0');
   expect(cell('Influence')).toHaveTextContent('2 → 0');
@@ -56,7 +56,7 @@ test('the summary shows now and forecast for every value', () => {
 
 test('the fact shows what is, without the arrows of the plan', () => {
   edits.addEntry(1, { type: 'adjustment', label: 'x', delta: { tradeGoods: 2, fleet: -1 } }, 'action');
-  render(<SummaryBar table={kernelEndOf(game(), pack, 'now').table} now={kernelEndOf(game(), pack, 'now').board} forecast={kernelEndOf(game(), pack, 'forecast').board} pack={pack} factOnly />);
+  render(<SummaryBar table={kernelEndOf(game(), pack, 'now').table} player={kernelEndOf(game(), pack, 'now').table.viewer} now={kernelEndOf(game(), pack, 'now').board} forecast={kernelEndOf(game(), pack, 'forecast').board} pack={pack} factOnly />);
   const cell = (name: string) => screen.getByRole('group', { name });
   expect(cell('Trade goods')).toHaveTextContent(/^Trade goods0$/);
   expect(cell('Fleet')).toHaveTextContent(/^Fleet3$/);
@@ -68,7 +68,7 @@ test('the summary totals count the planets as a card attached to them makes them
   const printed = pack.planets.nestphar;
   state.attachments = { nestphar: ['relic:nanoforge'] };
   const { table, board } = viewOf(game(), state, pack);
-  render(<SummaryBar table={table} now={board} forecast={board} pack={pack} factOnly />);
+  render(<SummaryBar table={table} player={table.viewer} now={board} forecast={board} pack={pack} factOnly />);
   expect(screen.getByRole('group', { name: 'Resources' })).toHaveTextContent(`Resources${printed.resources + 2}`);
   expect(screen.getByRole('group', { name: 'Influence' })).toHaveTextContent(`Influence${printed.influence + 2}`);
 });
@@ -355,7 +355,7 @@ test('default plan names render localized; own names stay', () => {
 function PlanTabsLive() {
   const live = useGame(s => s.saved)!;
   return (
-    <PlanTabs saved={live} roundNo={1} onSelectRound={() => undefined} onSelectPlan={() => undefined} onAddRound={() => undefined} onDeleteRound={() => useGame.getState().deleteRound(1)} onDeletePlan={() => useGame.getState().deletePlan(live.activePlanId)} />
+    <PlanTabs saved={live} roundNo={1} player={live.table.viewer} onSelectRound={() => undefined} onSelectPlan={() => undefined} onAddRound={() => undefined} onDeleteRound={() => useGame.getState().deleteRound(1)} onDeletePlan={() => useGame.getState().deletePlan(live.activePlanId)} />
   );
 }
 

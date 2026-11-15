@@ -84,11 +84,11 @@ describe('a new tactical action and the sources left empty', () => {
   test('stored as the old body is, with the owner and the card', () => {
     const table = tableOf(gameNow()!);
     const mine = edits.addEntry(1, tacticalBody('B'), 'action');
-    const made = addTactical(table, 1, 'B', undefined, undefined);
+    const made = addTactical(1, 'B', table.viewer, undefined);
     expect(entries().find(e => e.id === made)).toEqual({ ...entries().find(e => e.id === mine), id: made });
     const card = edits.addEntry(1, { type: 'strategic', card: 6 }, 'action');
     const oldFree = edits.addEntry(1, tacticalBody('B', card), 'action', undefined);
-    const free = addTactical(table, 1, 'B', undefined, card);
+    const free = addTactical(1, 'B', table.viewer, card);
     expect(entries().find(e => e.id === free)).toEqual({ ...entries().find(e => e.id === oldFree), id: free });
   });
 

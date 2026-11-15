@@ -4,13 +4,15 @@ import { strategyCards } from '../../data/loadPack';
 import { componentById } from '../../domain/components';
 import { CARD } from '../../domain/strategy';
 import { standing } from '../../domain/replay';
+import type { TFunction } from 'i18next';
 import type { Turn } from '../../game/actions';
+import type { PlayerId } from '../../game/types';
 import { turnNumbers } from '../../game/numbering';
 import { mapSource } from '../../game/space';
 import type { DataPack, Phase, Warning } from '../../domain/types';
 import { addStatusTurn, moveTurn, removeTurn, setStatus } from '../../state/turnBridge';
 import { useReorderDrag } from '../common/useReorderDrag';
-import { shortName } from '../players/names';
+import { playerShortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
 import { StatusFields } from './StatusFields';
 import { TurnHost } from './editors/TurnHost';
@@ -32,6 +34,8 @@ export interface EntryListProps {
   viewOf: (entryId: string) => KernelView;
   /** The number of the round of the open plan. */
   roundNo: number;
+  /** The player the screen shows: their rows stand at the first level, every other player's at the second, in that player's colour and under their name. */
+  shown: PlayerId;
   /** The round as the kernel plays it: its turns are the rows. */
   turns: readonly Turn[];
   warnings: Record<string, Warning[]>;
@@ -60,14 +64,13 @@ export interface EntryListProps {
 const cardName = (view: KernelView, card: number | undefined): string | undefined =>
   strategyCards(view.table.expansions).find(c => c.initiative === card)?.name;
 
-/** A turn of a rival says whose it is before what it is. */
-function entryLabel(turn: Turn, view: KernelView, pack: DataPack, t: (key: string) => string): string {
-  const faction = turn.player === view.table.viewer ? '' : view.table.players.find(p => p.id === turn.player)?.faction ?? '';
+/** A turn of a player other than the shown one says whose it is before what it is. */
+function entryLabel(turn: Turn, shown: PlayerId, view: KernelView, pack: DataPack, t: TFunction): string {
   const name = bareLabel(turn, view, pack, t);
-  return pack.factions[faction] ? `${shortName(pack, faction, '')}: ${name}` : name;
+  return turn.player === shown ? name : `${playerShortName(view.table, pack, turn.player, t)}: ${name}`;
 }
 
-function bareLabel(turn: Turn, view: KernelView, pack: DataPack, t: (key: string) => string): string {
+function bareLabel(turn: Turn, view: KernelView, pack: DataPack, t: TFunction): string {
   const action = turn.action;
   const map = mapSource(view.table, view.board);
   switch (action.kind) {
@@ -109,7 +112,7 @@ function OrderHex({ number, label }: { number: number; label: string }) {
 
 /** A round's four phases, always shown. Entries move by the handle within a phase, get marked done or deleted. */
 export function EntryList({
-  pack, viewOf, roundNo, turns, warnings, end, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, onAddAgenda, strategy, addAction,
+  pack, viewOf, roundNo, shown: shownPlayer, turns, warnings, end, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, onAddAgenda, strategy, addAction,
 }: EntryListProps) {
   const { t } = useTranslation();
   const listRef = useRef<HTMLDivElement>(null);
@@ -141,10 +144,10 @@ export function EntryList({
             <ul className="entry-list">
               {inPhase.map(entry => {
                 const view = viewOf(entry.id);
-                const label = entryLabel(entry, view, pack, t);
+                const label = entryLabel(entry, shownPlayer, view, pack, t);
                 // The round has one status entry, so there is nothing to move it past.
                 const movable = entry.action.kind !== 'status';
-                const rival = entry.player === view.table.viewer ? undefined : view.table.players.find(p => p.id === entry.player);
+                const rival = entry.player === shownPlayer ? undefined : view.table.players.find(p => p.id === entry.player);
                 // A card speaks for Warfare's free action too: its warnings mark the card's row.
                 const free = entry.action.kind === 'strategic' ? entry.action.nested?.[0] : undefined;
                 const list = [...(warnings[entry.id] ?? []), ...(free ? warnings[free.id] ?? [] : [])];
@@ -197,8 +200,9 @@ export function EntryList({
               })}
             </ul>
             {phase === 'action' && addAction && <div className="phase-add">{addAction}</div>}
-            {phase === 'status' && !inPhase.some(e => e.action.kind === 'status') && (
-              <button type="button" onClick={() => onStatusAdded?.(addStatusTurn(roundNo, end.table.viewer))}>{t('plan.entries.statusTokens')}</button>
+            {/* Each player has a status entry of their own: the button adds the shown player's. */}
+            {phase === 'status' && !inPhase.some(e => e.action.kind === 'status' && e.player === shownPlayer) && (
+              <button type="button" onClick={() => onStatusAdded?.(addStatusTurn(roundNo, shownPlayer))}>{t('plan.entries.statusTokens')}</button>
             )}
             {/* Each agenda of the phase is an entry of its own: the button stays for the next one. */}
             {phase === 'agenda' && onAddAgenda && <button type="button" onClick={onAddAgenda}>{t('plan.agenda.add')}</button>}

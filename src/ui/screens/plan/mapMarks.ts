@@ -8,7 +8,7 @@ import { systemsAdjacent } from '../../../domain/replay';
 import type { DataPack } from '../../../domain/types';
 import { arrowsOf, sourcesOf, tacticalOf, viaOf } from '../../../game/edit/tactical';
 import { mapSource } from '../../../game/space';
-import type { Board, Table } from '../../../game/types';
+import type { Board, PlayerId, Table } from '../../../game/types';
 import { routeShapes } from '../../map/geometry';
 import type { Arrow } from '../../map/RouteArrows';
 import type { Highlight } from '../../map/TileView';
@@ -16,16 +16,17 @@ import type { Highlight } from '../../map/TileView';
 /**
  * The arrows of the round: the action in focus, those done, and every planned one too unless the map shows only what
  * is done ("now") and no action is being edited. A cancelled action draws none. `leaving` holds the keys of the arrows
- * whose sources are on their way out: they fade.
+ * whose sources are on their way out: they fade. The arrows of `shown`, the player the screen shows, are drawn plain;
+ * every other player's wear that player's colour.
  */
 export function planArrows(
   table: Table, board: Board, pack: DataPack, tacticals: TacticalAt[], numbers: Record<string, number>, focusId: string | undefined, showPlanned: boolean,
-  leaving: string[] = [],
+  leaving: string[] = [], shown: PlayerId = table.viewer,
 ): Arrow[] {
   const at = { map: mapSource(table, board), pack };
   const drawn = tacticals.filter(item => item.status !== 'cancelled' && (item.id === focusId || item.status === 'done' || showPlanned))
     .flatMap(item => { const { turn } = item; return arrowsOf(at, tacticalOf(turn)).map(a => ({
-      ...a, key: `${item.id}:${a.from}`, number: numbers[item.id], player: turn.player === table.viewer ? undefined : table.players.find(p => p.id === turn.player)?.color,
+      ...a, key: `${item.id}:${a.from}`, number: numbers[item.id], player: turn.player === shown ? undefined : table.players.find(p => p.id === turn.player)?.color,
       tone: item.id === focusId ? 'active' as const : item.status === 'done' ? 'done' as const : 'planned' as const,
     })); });
   const shapes = routeShapes(drawn.map(a => [a.from, ...a.via, a.to]), systemsAdjacent(at.map));

@@ -111,7 +111,7 @@ export interface GameStore {
   openGame(id: string): Promise<void>;
   /** Adds a turn to a round of the open plan (its `id` is replaced): into the actions of the card turn `parentId` when given (Warfare's free action). Returns its id. */
   addTurn(roundNo: number, turn: Turn, parentId?: string): string;
-  /** The round's one status turn: created on first use as `player`'s, its id afterwards. */
+  /** The status turn of `player` in the round: created on first use, its id afterwards. Each player has their own. */
   addStatusTurn(roundNo: number, player: PlayerId): string;
   /** Replaces a turn, or an action nested in one, by its changed self. */
   updateTurn(id: string, next: Turn): void;
@@ -327,7 +327,7 @@ export const useGame = create<GameStore>((set, get) => {
     },
     addStatusTurn: (roundNo, player) => {
       const round = activePlan(get().saved!)?.rounds.find(r => r.number === roundNo);
-      return round?.turns.find(t => t.action.kind === 'status')?.id
+      return round?.turns.find(t => t.action.kind === 'status' && t.player === player)?.id
         ?? get().addTurn(roundNo, { id: '', player, status: 'planned', phase: 'status', action: { kind: 'status', tactic: 0, fleet: 0, strategy: 0 }, acts: [], used: [] });
     },
     updateTurn: (id, next) => commit(s => editTurnRound(s, id, r => withTurnReplaced(r, id, next))),

@@ -32,7 +32,7 @@ export function expeditionText(part: { sliceId: string | null; payment: { planet
 export const turnActLine = (act: Transaction | Expedition, table: Table, pack: DataPack, t: T): string => (act.kind === 'expedition'
   ? t('plan.acts.expedition', { brief: expeditionText({ sliceId: act.slice, payment: act.payment }, pack, t) })
   : t('plan.acts.transaction', {
-    name: act.with === table.viewer ? t('plan.acts.me') : playerShortName(table, pack, act.with, t),
+    name: playerShortName(table, pack, act.with, t),
     give: goodsText(act.give, pack, t), get: goodsText(act.get, pack, t),
   }));
 

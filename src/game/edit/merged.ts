@@ -13,12 +13,13 @@ import { withTurnAdded, withTurnMoved } from './plan';
 
 const LATER_PHASES: Phase[] = ['action', 'status', 'agenda'];
 
-const isMerged = (turn: Turn, kind: AdjustmentKind, systemId: string): boolean =>
-  turn.action.kind === 'correction' && turn.action.purpose === kind && turn.status !== 'cancelled' && turn.action.delta.units?.systemId === systemId;
+const isMerged = (turn: Turn, kind: AdjustmentKind, systemId: string, player?: PlayerId): boolean =>
+  turn.action.kind === 'correction' && turn.action.purpose === kind && turn.status !== 'cancelled' && turn.action.delta.units?.systemId === systemId
+  && (player === undefined || turn.player === player);
 
-/** The turn that holds the corrections of this kind in this system, if the round has one. */
-export const mergedTurn = (round: Round, kind: AdjustmentKind, systemId: string): Turn | undefined =>
-  round.turns.find(turn => isMerged(turn, kind, systemId));
+/** The turn that holds the corrections of this kind in this system, if the round has one: `player`'s when a player is named, each player has their own. */
+export const mergedTurn = (round: Round, kind: AdjustmentKind, systemId: string, player?: PlayerId): Turn | undefined =>
+  round.turns.find(turn => isMerged(turn, kind, systemId, player));
 
 const newTurn = (id: string, player: PlayerId, status: Turn['status'], kind: AdjustmentKind, delta: Extract<Turn['action'], { kind: 'correction' }>['delta']): Turn =>
   ({ id, player, status, phase: 'action', action: { kind: 'correction', label: '', delta, purpose: kind }, acts: [], used: [] });
@@ -27,7 +28,7 @@ const newTurn = (id: string, player: PlayerId, status: Turn['status'], kind: Adj
 export function changeMerged(round: Round, change: MergedChange, newId: () => string, viewer: PlayerId): Round {
   if (change.amount === 0) return round;
   const { kind, systemId } = change;
-  const found = mergedTurn(round, kind, systemId);
+  const found = mergedTurn(round, kind, systemId, viewer);
   const was = found?.action.kind === 'correction' ? found.action.delta : { units: { systemId, units: {} } };
   const delta = changedDelta(was, change);
   if (found && found.action.kind === 'correction') {
@@ -70,7 +71,7 @@ export function changeOnBoard(
   const before = rounds.filter(r => r.number < round.number);
   const shown = (candidate: Round): Map<string, number> =>
     boardCounts(timeline(table, pack, [...before, candidate], 'forecast', { start }).end, viewer);
-  const turn = mergedTurn(edited, kind, systemId);
+  const turn = mergedTurn(edited, kind, systemId, viewer);
   const moved: Round[] = turn
     ? LATER_PHASES.slice(Math.max(0, LATER_PHASES.indexOf(turn.phase ?? 'action'))).map(phase => withTurnMoved({ ...edited }, turn.id, phase, Number.MAX_SAFE_INTEGER))
     : [];

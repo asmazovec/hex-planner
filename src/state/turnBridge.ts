@@ -39,9 +39,8 @@ export function useTurn(...[, turnId]: [table: Table, turnId: string, pack: Data
   return useMemo(() => (saved ? writeSaved(saved, turnId) : undefined), [saved, turnId]);
 }
 
-/** A new tactical action on a system: `owner` is whose it is (mine when none), `byCard` the card that gives it (Warfare, nested in it). Returns its id. */
-export function addTactical(table: Table, roundNumber: number, system: string, owner: PlayerId | undefined, byCard: string | undefined): string {
-  const player = owner ?? table.viewer;
+/** A new tactical action on a system: `player` is whose it is, `byCard` the card that gives it (Warfare, nested in it). Returns its id. */
+export function addTactical(roundNumber: number, system: string, player: PlayerId, byCard: string | undefined): string {
   const turn = newTurn('tactical', { id: '', player, round: emptyRound(roundNumber) }, { system, ...(byCard ? { byCard } : {}) });
   return useGame.getState().addTurn(roundNumber, turn, byCard);
 }
@@ -59,18 +58,17 @@ export function pruneEmptySources(entryId: string | undefined): void {
 
 /**
  * A new turn of a kind other than a tactical action, in a round of the open plan: its body is the kernel's `newTurn`
- * (a strategy card starts on the card its player holds and has not played). `owner` is whose it is (mine when none).
+ * (a strategy card starts on the card its player holds and has not played). `player` is whose it is.
  * Returns its id.
  */
-export function addTurn(table: Table, roundNumber: number, kind: Exclude<NewAction, 'tactical'>, owner: PlayerId | undefined, phase?: Phase): string {
+export function addTurn(roundNumber: number, kind: Exclude<NewAction, 'tactical'>, player: PlayerId, phase?: Phase): string {
   const store = useGame.getState();
   const round = roundsOf(store.saved!).find(r => r.number === roundNumber);
-  const player = owner ?? table.viewer;
   const turn = newTurn(kind, { id: '', player, round: round ?? emptyRound(roundNumber), ...(phase ? { phase } : {}) });
   return store.addTurn(roundNumber, turn);
 }
 
-/** The status turn of a round: the one it already has, or a new one of `player` with no tokens taken. */
+/** The status turn of `player` in a round: the one they already have, or a new one with no tokens taken. */
 export const addStatusTurn = (roundNumber: number, player: PlayerId): string => useGame.getState().addStatusTurn(roundNumber, player);
 
 /** Marks a turn done, planned again or cancelled. */

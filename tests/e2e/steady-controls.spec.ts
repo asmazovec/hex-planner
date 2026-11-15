@@ -563,6 +563,27 @@ test('a transaction counts its goods under the finger', async ({ page }) => {
   }
 });
 
+test('the switch of the shown player is pressed again and again where it stands, whatever the player it shows brings into the panel', async ({ page }) => {
+  const whose = page.getByRole('group', { name: 'Shown player' });
+  // Something of each to show: an action of mine, one of Sol, and Sol's status entry.
+  await addAction(page, 'Pass');
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
+  await whose.getByRole('button', { name: 'Sol', exact: true }).click();
+  await addAction(page, 'Pass');
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
+  await panel(page).locator('section.phase > button', { hasText: 'Tokens and points' }).click();
+  // Every cell of the switch, pressed at one point: the list, the totals and the cards change under it, the cell does not move.
+  for (const name of ['Argent', 'Sol', 'Hacan', 'Muaat']) await pressRepeatedly(page, whose.getByRole('button', { name, exact: true }), 3);
+  // Back and forth between two players: neither cell moves from the other's press.
+  const sol = whose.getByRole('button', { name: 'Sol', exact: true });
+  const { box } = await centreOf(page, sol);
+  for (let press = 0; press < 4; press += 1) {
+    await whose.getByRole('button', { name: press % 2 === 0 ? 'Argent' : 'Sol', exact: true }).click();
+    await settle(page);
+    expect(await sol.boundingBox()).toEqual(box);
+  }
+});
+
 test('rounds are added, removed and undone one after another under the finger', async ({ page }) => {
   await pressRepeatedly(page, page.getByRole('button', { name: 'Add round' }), 8);
   await pressRepeatedly(page, page.locator('.plan-round-remove'), 4);

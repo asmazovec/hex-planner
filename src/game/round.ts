@@ -26,8 +26,9 @@ export interface Picks { strategyCard: number | null; backupCard: number | null;
 export const NO_PICKS: Picks = { strategyCard: null, backupCard: null, held: [] };
 
 /**
- * A round of a plan: the strategy cards of the players whose cards the plan keeps, by player, and its turns in the
- * order of the plan's list. A player with no cards kept here plays any primary as their own (their cards are not planned).
+ * A round of a plan: the strategy cards each player has chosen in it, by player, and its turns in the order of the
+ * plan's list. A player with no key here and one with a key and nothing chosen are the same: neither holds a card of
+ * the round, so a card they tap starts as its secondary and its primary is one played for a token.
  */
 export interface Round { number: number; picks: Record<PlayerId, Picks>; turns: Turn[] }
 

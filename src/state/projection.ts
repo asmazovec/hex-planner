@@ -15,7 +15,7 @@ import { startBoard } from '../game/setup';
 import { STARTS } from '../game/source';
 import { timeline as kernelTimeline, violationsOf, type Filter, type Timeline } from '../game/timeline';
 import { waiveBoard } from '../game/resolve/waive';
-import type { Board, Table } from '../game/types';
+import type { Board, PlayerId, Table } from '../game/types';
 import type { DataPack, Warning } from '../domain/types';
 import { checkSystemOf } from '../domain/replay/transport';
 
@@ -92,10 +92,12 @@ export const choicesBefore = (line: Timeline, turn: Turn, id: string, pack: Data
 /**
  * What the board itself breaks in a system at the end of a round, apart from any turn: each player's capacity and fleet
  * pool there (16.3, 37.1), as units placed by hand leave them; the passive permits in force for the player lift what they cover.
+ * Those of `first`, the player the screen shows, come first; the others follow by seat.
  */
-export function systemWarningsAt(line: Timeline, roundNo: number, slot: string): Warning[] {
+export function systemWarningsAt(line: Timeline, roundNo: number, slot: string, first: PlayerId): Warning[] {
   const { table, pack } = line;
   const board = boardAt(line, roundNo);
-  const ordered = [...table.players].sort((x, y) => (x.id === table.viewer ? -1 : y.id === table.viewer ? 1 : 0));
+  const bySeat = [...table.players].sort((x, y) => x.seat - y.seat);
+  const ordered = [...bySeat.filter(p => p.id === first), ...bySeat.filter(p => p.id !== first)];
   return ordered.flatMap(({ id }) => waiveBoard(table, board, pack, id, checkSystemOf(stacksOn(table, board, pack, id), slot)));
 }
