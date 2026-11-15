@@ -346,6 +346,7 @@
       "freePickHint": "Tap the system for the Warfare tactical action: no tactic token is spent.",
       "noSources": "Drag the first arrow or add a source.",
       "wrongSystem": "Wrong system? Tap this field to choose another, or tap the system again.",
+      "otherSystem": "Another system starts the action anew: tap this field to choose it.",
       "changeSystemHint": "Tap the new active system.",
       "addSource": "Add source",
       "addSourceHint": "Tap the system the ships come from.",

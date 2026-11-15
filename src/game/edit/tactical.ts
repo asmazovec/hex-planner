@@ -288,5 +288,9 @@ export function withCustodiansPayment(turn: Turn, landing: boolean, free: boolea
   });
 }
 
-/** The active system of the action, chosen on the map. */
-export const withSystem = (turn: Turn, system: Slot): Turn => onTactical(turn, a => ({ ...a, system }));
+/**
+ * The active system of the action, chosen on the map. Another system starts the action anew: its routes, landings,
+ * battles, production and payments were counted for the old one and go; what the turn holds beside its action stays.
+ */
+export const withSystem = (turn: Turn, system: Slot): Turn => (tacticalOf(turn).system === system ? turn
+  : onTactical(turn, a => ({ kind: 'tactical', system, ...(a.free ? { free: true } : {}), movement: [], invasion: [] })));

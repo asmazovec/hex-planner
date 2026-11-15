@@ -178,3 +178,20 @@ describe('new turns', () => {
     expect(oldOwner(cards, undefined, 'x')).toBe('x');
   });
 });
+
+describe('the active system chosen anew', () => {
+  const turn = turnFor(base({ losses: { fighter: 1 }, groundLosses: { [pb]: { infantry: 1 } }, fleetRemovals: { cruiser: 1 } }));
+  test('another system starts the action anew: nothing counted for the old one stays', () => {
+    const next = now.withSystem({ ...turn, used: [{ component: 'x' }], gains: ['y'] }, 'C');
+    expect(next.action).toEqual({ kind: 'tactical', system: 'C', movement: [], invasion: [] });
+    expect(next).toMatchObject({ id: turn.id, player: turn.player, status: turn.status, used: [{ component: 'x' }], gains: ['y'] });
+    expect(now.isUntouched(next)).toBe(true);
+  });
+  test('a free action stays free', () => {
+    const free = now.onTactical(turn, a => ({ ...a, free: true }));
+    expect(now.withSystem(free, 'C').action).toEqual({ kind: 'tactical', system: 'C', free: true, movement: [], invasion: [] });
+  });
+  test('the same system changes nothing', () => {
+    expect(now.withSystem(turn, now.tacticalOf(turn).system!)).toBe(turn);
+  });
+});

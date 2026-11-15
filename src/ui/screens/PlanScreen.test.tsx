@@ -143,22 +143,46 @@ describe('the system and the sources, chosen from the panel', () => {
     expect(tactical().systemId).toBe(TARGET);
   });
 
-  test('with anything filled in the field is no longer a button', async () => {
+  test('an action with a route chooses another system too: the route goes, and a new one is drawn', async () => {
     await chooseSystem();
     await addRouteByTaps(HOME, TARGET);
     await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
-    expect(screen.getByText('Active system: Quann')).toBeVisible();
+    const id = tactical().id;
+    expect(screen.queryByText(/^Wrong system\?/)).toBeNull();
+    expect(screen.getByText(/starts the action anew/)).toBeVisible();
+    await userEvent.click(field());
+    expect(screen.getByRole('status')).toHaveTextContent('Tap the new active system');
+    await userEvent.click(tile(WAY));
+    expect(entries()).toHaveLength(1);
+    expect(tactical()).toMatchObject({ id, systemId: WAY, moves: [] });
+    expect(document.querySelector('.route-line')).toBeNull();
+    expect(tile(WAY)).toHaveClass('tile-active');
+    await addRouteByTaps(HOME, WAY);
+    expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
+    expect(screen.getByText(/^Flight Nestphar → /)).toBeVisible();
   });
 
-  test('a production or a landing keeps the system too, and a tap on it does not take the action back', async () => {
+  test('the same system chosen again keeps the route', async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    await userEvent.click(field());
+    await userEvent.click(tile(TARGET));
+    expect(choiceHint()).toBeNull();
+    expect(tactical().moves).toEqual([{ from: HOME, units: { carrier: 1 } }]);
+  });
+
+  test('a production or a landing goes with the old system, and a tap on the system itself does not take the action back', async () => {
     await chooseSystem();
     act(() => edits.updateEntry(tactical().id, { production: { fighter: 1 } }));
-    expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
     await userEvent.click(tile(TARGET));
     expect(entries()).toHaveLength(1);
     expect(tactical().production).toEqual({ fighter: 1 });
+    await userEvent.click(field());
+    await userEvent.click(tile(WAY));
+    expect(tactical()).toMatchObject({ systemId: WAY, production: {} });
   });
 
   test('an empty action still goes back to choosing on a tap on its system', async () => {
@@ -810,12 +834,19 @@ describe('the battle of a tactical action', () => {
     expect(entries().some(e => e.type === 'adjustment' && e.kind === 'losses')).toBe(true);
   });
 
-  test('a loss fills the action in: the active system can no longer change', async () => {
+  test('a loss fills the action in: a tap on the active system no longer takes it back, and another system starts it anew', async () => {
     await chooseSystem();
     act(() => edits.updateEntry(action().id, { losses: { cruiser: 1 } }));
-    expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
+    expect(screen.queryByText(/^Wrong system\?/)).toBeNull();
+    await userEvent.click(tile(TARGET));
+    expect(entries()).toHaveLength(1);
     act(() => edits.updateEntry(action().id, { losses: undefined, groundLosses: { quann: { infantry: 1 } } }));
-    expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
+    expect(screen.queryByText(/^Wrong system\?/)).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: /^Active system/ }));
+    await userEvent.click(tile(HOME));
+    expect(action().systemId).toBe(HOME);
+    expect(action().groundLosses).toBeUndefined();
+    expect(screen.getByText(/^Wrong system\?/)).toBeVisible();
   });
 
   test('what fell in battle cannot land: only what is left is counted for the landing', async () => {

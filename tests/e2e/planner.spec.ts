@@ -333,6 +333,16 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByRole('button', { name: `Remove source ${HORIZON}` })).toHaveCount(0);
   await expect(page.getByRole('button', { name: `Remove source ${HOME}` })).toBeVisible();
+
+  // An action with a route chooses another system too: the route goes with the old system, and a new one is drawn.
+  await page.getByRole('button', { name: new RegExp(`^Active system: ${HOPE}`) }).click();
+  await tile(page, 61).click();
+  await expect(page.getByRole('button', { name: new RegExp(`^Active system: ${ANG}`) })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Remove source/ })).toHaveCount(0);
+  await expect(page.locator('.route-line')).toHaveCount(0);
+  await tile(page, 58).click();
+  await tile(page, 61).click();
+  await expect(page.getByText(`Flight ${HOME} → ${ANG}`)).toBeVisible();
 });
 
 test('a route is drawn from a system without ships, and left with nothing taken its row and its arrow fade away', async ({ page }) => {

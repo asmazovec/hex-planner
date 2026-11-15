@@ -149,15 +149,12 @@ export function TacticalEditor({
   const blocks = target !== null && (
         <>
           <Section>
-            {untouched
-              ? (
-                <MapPickButton className="source-button" active={choosing === 'system'} onToggle={() => onChoose(choosing === 'system' ? null : 'system')}>
-                  <strong>{t('plan.tactical.system', { name: slotName(target) })}</strong>
-                </MapPickButton>
-              )
-              : <strong>{t('plan.tactical.system', { name: slotName(target) })}</strong>}
+            {/* The system can always be chosen anew: with anything filled in, another one starts the action from its beginning. */}
+            <MapPickButton className="source-button" active={choosing === 'system'} onToggle={() => onChoose(choosing === 'system' ? null : 'system')}>
+              <strong>{t('plan.tactical.system', { name: slotName(target) })}</strong>
+            </MapPickButton>
             <span className="muted">{action.free ? t('plan.tactical.freeToken') : t('plan.tactical.token', { from: tokens, to: tokens - 1 })}</span>
-            {untouched && <span className="muted">{t('plan.tactical.wrongSystem')}</span>}
+            <span className="muted">{t(untouched ? 'plan.tactical.wrongSystem' : 'plan.tactical.otherSystem')}</span>
             {/* The activation: a token already there, or none left to spend. */}
             {list(placer.at('system'))}
           </Section>
