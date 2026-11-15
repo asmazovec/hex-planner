@@ -26,7 +26,7 @@ export const ability: Ability = {
       const used = ctx.entry?.type === 'component' ? ctx.entry.componentId : undefined;
       const named = used?.startsWith(id) ? noteAddress(used) : undefined;
       const owner = named ?? ctx.table.players.find(player => player.faction === 'deepwrought' && player.id !== ctx.holder)?.id;
-      const theirs = owner === undefined ? [] : technologiesOf(ctx, named ?? ctx.key(owner));
+      const theirs = owner === undefined ? [] : technologiesOf(ctx, named ?? owner);
       return theirs.filter(tech => {
         const def = componentById(ctx.pack, tech);
         return def !== undefined && !def.faction && def.detail?.type !== 'unitUpgrade' && !ctx.my.holds(tech);

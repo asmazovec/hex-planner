@@ -13,7 +13,7 @@ export type PlayerId = string;
 /** `q,r` of a map slot, or the tile id of an off-map home (Creuss). */
 export type Slot = string;
 export type PlanetId = string;
-/** `<kind>:<source id>` as the component catalogue has it; a promissory note carries its owner, `promissory:<id>@<player>`. */
+/** `<kind>:<source id>` as the component catalogue has it; a promissory note carries its owner's player id, `promissory:<id>@<player>`. */
 export type ComponentId = string;
 /** `<tile id>` or `<tile id>@<rotation 0-5>`, as in the saved game's map. */
 export type TileRef = string;
@@ -33,8 +33,6 @@ export interface Player {
   seat: number;
   color: number;
   setup: SetupChoices;
-  /** Migration only: the id this player has in the old model (`me` or an opponent id). Goes with the old code. */
-  legacyId?: string;
 }
 
 /** What does not change during a game. */

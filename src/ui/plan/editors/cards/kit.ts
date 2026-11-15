@@ -4,7 +4,6 @@ import type { CardEntry } from '../../../../domain/strategy';
 import type { CardEffects, DataPack, Warning } from '../../../../domain/types';
 import type { CardPatch } from '../../../../game/edit/strategic';
 import type { CardTurn } from '../../../../game/edit/strategicRead';
-import { legacyKey } from '../../../../game/keys';
 import type { Round } from '../../../../game/round';
 import type { Board, PlayerId, Table } from '../../../../game/types';
 import type { WarningPlacer } from '../../../feedback/warningPlaces';
@@ -52,8 +51,8 @@ export interface CardKit {
 
 export type CardBlocks = (kit: CardKit) => ReactNode;
 
-/** The other players of the table as a player choice: the short name, the colour, the tag for a crowded line; the value is the key the effects keep (`me` for the viewer). */
+/** The other players of the table as a player choice: the short name, the colour, the tag for a crowded line; the value is the player id the effects keep. */
 export const playersBeside = (table: Table, pack: DataPack, who: PlayerId, t: TFunction): PlayerOption[] => table.players.filter(p => p.id !== who).map(p => {
   const label = shortName(pack, p.faction, nameOfPlayer(table, pack, p.id, t));
-  return { value: legacyKey(table, p.id), label, color: p.color, tag: playerTag(label, Boolean(pack.factions[p.faction]), p.seat) };
+  return { value: p.id, label, color: p.color, tag: playerTag(label, Boolean(pack.factions[p.faction]), p.seat) };
 });

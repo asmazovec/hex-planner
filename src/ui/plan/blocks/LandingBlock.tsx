@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import type { DataPack, PlanetDef, StructureCounts, StructureKind, UnitCounts, UnitId } from '../../../domain/types';
 import { groundOn } from '../../../game/queries';
-import { othersOf, ownerKey, planetShown } from '../../../game/tile';
+import { othersOf } from '../../../game/tile';
+import { planetSeen } from '../../map/held';
 import type { PlayerId } from '../../../game/types';
 import { PlanetBadge } from '../../map/PlanetBadge';
 import { tableColours } from '../../units/sprites';
@@ -49,8 +50,8 @@ const isStructure = (kind: string): kind is StructureKind => kind === 'pds' || k
 export function LandingBlock({ view, pack, player, planets, units, arrived, lost = {}, landedOn, onLand, structures, from }: LandingBlockProps) {
   const { t } = useTranslation();
   const { table, board } = view;
-  const colours = tableColours(table, player);
-  const colour = colours.me;
+  const colours = tableColours(table);
+  const colour = colours[player];
   const unitName = (unit: UnitId) => t(`unit.${unit}`);
   const landedInAll = (unit: UnitId) => planets.reduce((sum, p) => sum + landedOn(p.id, unit), 0);
   /** The kinds of structures to place: those in the space area, and those already assigned to a planet. */
@@ -70,10 +71,10 @@ export function LandingBlock({ view, pack, player, planets, units, arrived, lost
   })));
 
   const rows: UnitDraftRow[] = planets.map(planet => {
-    const { control, exhausted, values } = planetShown(table, board, pack, player, planet.id);
+    const { held, exhausted, values } = planetSeen(table, board, pack, player, planet.id);
     const facts = [
       t(exhausted ? 'map.sheet.exhausted' : 'map.sheet.ready'),
-      ...(control ? [t(`map.control.${control}`)] : []),
+      ...(held ? [t(`map.control.${held}`)] : []),
     ].join(' · ');
     const here = groundOn(board, planet.id, player);
     const after: UnitCounts = {};
@@ -84,11 +85,11 @@ export function LandingBlock({ view, pack, player, planets, units, arrived, lost
     const left = (unit: UnitId) => after[unit] ?? 0;
     const standing = Object.keys(after) as UnitId[];
     const enemies = othersOf(table, player).flatMap(other => (Object.entries(groundOn(board, planet.id, other.id)) as [UnitId, number][])
-      .filter(([, count]) => count > 0).map(([unit, count]) => ({ owner: ownerKey(table, player, other.id), unit, count })));
+      .filter(([, count]) => count > 0).map(([unit, count]) => ({ owner: other.id, unit, count })));
     return {
       id: planet.id,
       label: t('plan.tactical.landingOn', { planet: planet.name }),
-      place: <PlanetBadge planet={planet} control={control} exhausted={exhausted} values={values} facts={facts} compact />,
+      place: <PlanetBadge planet={planet} held={held} exhausted={exhausted} values={values} facts={facts} compact />,
       items: [
         ...units.map(unit => ({
           kind: unit, picked: landedOn(planet.id, unit),

@@ -85,8 +85,8 @@ export function withUsesRepriced(table: Table, board: Board, pack: DataPack, tur
   if (manual) return next;
   const pay = (cost: { amount: number; kind: 'resources' | 'influence' }) => autoPayOn(table, board, pack, turn.player, cost.amount, cost.kind);
   if (turn.action.kind === 'component' && next.action.kind === 'component') {
-    const was = playedCostOf(table, pack, turn);
-    const cost = playedCostOf(table, pack, next);
+    const was = playedCostOf(pack, turn);
+    const cost = playedCostOf(pack, next);
     return (was?.amount === cost?.amount && was?.kind === cost?.kind) || !cost ? next : withPlayPayment(next, pay(cost));
   }
   if (turn.action.kind === 'tactical' && next.action.kind === 'tactical') {
@@ -156,11 +156,11 @@ export const withStatusTokens = (turn: Turn, values: { tactic?: number; fleet?: 
 
 /** The points a player gains in the status turn: the turn's own player, or another one's. */
 export const roundPointsOf = (turn: Turn, player: PlayerId): number =>
-  (turn.action.kind !== 'status' ? 0 : player === turn.player ? turn.action.vp ?? 0 : turn.action.opponentVp?.[player] ?? 0);
+  (turn.action.kind !== 'status' ? 0 : turn.action.points?.[player] ?? 0);
 
-/** The points the viewer's player gains this round, or another player's. */
+/** The points a player gains this round. */
 export const withRoundPoints = (turn: Turn, player: PlayerId, value: number): Turn =>
-  onStatus(turn, action => (player === turn.player ? { ...action, vp: value } : { ...action, opponentVp: { ...action.opponentVp, [player]: value } }));
+  onStatus(turn, action => ({ ...action, points: { ...action.points, [player]: value } }));
 
 /** The objectives scored; an empty list drops the field. */
 export const withScored = (turn: Turn, ids: ComponentId[]): Turn =>

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { holdingsOf, upgradesOf } from '../../domain/holdings';
 import { countChangeEffect, listPlayers, maxPlayers, MIN_PLAYERS, opponentHoldings } from '../../game/edit/table';
-import { legacyKey } from '../../game/keys';
 import type { UnitId, UpgradeId } from '../../domain/types';
+import type { PlayerId } from '../../game/types';
 import { useGame } from '../../state/gameStore';
 import { usePack } from '../common/usePack';
 import { FactionCard } from './FactionCard';
@@ -18,8 +18,8 @@ type Asked = { kind: 'add' } | { kind: 'remove'; opponent: number };
 export interface PlayerListProps {
   /** Highlights from the seat map beside the list; the list works without one. */
   drag?: Pick<SeatDrag, 'picked' | 'lifted' | 'bumped' | 'clearBump'>;
-  /** On the plan screen, where the list is a reference only: my ships in the state the map shows; opponents come from the game. Points are totals by player id. */
-  live?: { upgraded: UpgradeId[]; /** Each opponent's upgraded types in the state shown, by id. */ rivalUpgraded?: Record<string, UpgradeId[]>; /** Space docks and PDS each player has on the board in the state shown, by id (me is `me`). */ structures?: Record<string, { docks: number; pds: number }>; locked: Partial<Record<UnitId, number>>; points: Record<string, number> };
+  /** On the plan screen, where the list is a reference only, everything by player id in the state the map shows: the upgraded types, the space docks and PDS on the board, the rounds in which entries of the plan upgrade a type (not to toggle by hand), the points in total. */
+  live?: { upgraded: Record<PlayerId, UpgradeId[]>; structures?: Record<PlayerId, { docks: number; pds: number }>; locked: Record<PlayerId, Partial<Record<UnitId, number>>>; points: Record<PlayerId, number> };
 }
 
 /** The players of the open game, or of the draft before a game starts: one card each, everything visible, my faction first. */
@@ -42,8 +42,8 @@ export function PlayerList({ drag, live }: PlayerListProps) {
   const [fresh, setFresh] = useState<number | null>(null);
   const listRef = useRef<HTMLElement>(null);
 
-  /** The players, mine first; `key` is the id the screens and the store call them by (`me` for mine). */
-  const players = listPlayers(table).map(p => ({ ...p, key: legacyKey(table, p.id), vp: saved.start.points[p.id] ?? 0 }));
+  /** The players, the viewer first. */
+  const players = listPlayers(table).map(p => ({ ...p, vp: saved.start.points[p.id] ?? 0 }));
   const count = players.length;
   const max = maxPlayers(pack);
 
@@ -94,7 +94,7 @@ export function PlayerList({ drag, live }: PlayerListProps) {
         const faction = pack.factions[player.faction];
         const taken = new Set(players.filter((_, i) => i !== index).map(p => p.faction));
         const classes = ['player-card'];
-        if (index === 0) classes.push('me');
+        if (index === 0) classes.push('own');
         if (player.color === fresh) classes.push('fresh');
         if (drag?.lifted === index) classes.push('lifted');
         const badge = ['player-badge'];
@@ -117,7 +117,7 @@ export function PlayerList({ drag, live }: PlayerListProps) {
                   />
                 )}
               </div>
-              {live && <div className="player-vp">{t('players.points')} <b>{live.points[player.key] ?? player.vp}</b></div>}
+              {live && <div className="player-vp">{t('players.points')} <b>{live.points[player.id] ?? player.vp}</b></div>}
               {/* The question stands in for the cross that asked it. */}
               {index === 0 || live || (asked?.kind === 'remove' && asked.opponent === opponent) ? <span /> : (
                 <HexRemove label={t('players.remove')} disabled={count <= MIN_PLAYERS} onClick={() => ask({ kind: 'remove', opponent })} />
@@ -128,11 +128,11 @@ export function PlayerList({ drag, live }: PlayerListProps) {
               <FactionCard
                 faction={faction} pack={pack} expansions={table.expansions}
                 chosen={saved.start.holdings[player.id]?.technologies?.map(id => id.slice('technology:'.length))}
-                onChoose={(id, take) => setStartHolding(player.key, `technology:${id}`, take)}
+                onChoose={(id, take) => setStartHolding(player.id, `technology:${id}`, take)}
                 live={live && {
-                  upgraded: index === 0 ? live.upgraded : live.rivalUpgraded?.[player.key] ?? upgradesOf(holdingsOf(saved.start.holdings[player.id]), pack),
-                  locked: index === 0 ? live.locked : undefined,
-                  structures: live.structures?.[player.key],
+                  upgraded: live.upgraded[player.id] ?? upgradesOf(holdingsOf(saved.start.holdings[player.id]), pack),
+                  locked: live.locked[player.id],
+                  structures: live.structures?.[player.id],
                 }}
               />
             )}

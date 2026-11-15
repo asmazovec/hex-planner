@@ -5,9 +5,9 @@ import { breakthroughOf } from '../../domain/effects/breakthrough';
 import { HOLDING_FIELD, staysInPlay, upgradesOf, upgradeTech, type ComponentGroup, type NotePlace } from '../../domain/holdings';
 import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats, upgradableStructures } from '../../domain/unitStats';
 import type { ComponentDef, DataPack, TechType } from '../../domain/types';
-import { legacyNotes, shelfOf } from '../../game/shelf';
-import type { Board, Table } from '../../game/types';
-import { legacyKey, playerOfKey } from '../../game/keys';
+import { notesOf } from '../../game/planQueries';
+import { shelfOf } from '../../game/shelf';
+import type { Board, PlayerId, Table } from '../../game/types';
 import type { StartEdits } from '../../game/save';
 import { tableView } from '../../game/views';
 import { useGame } from '../../state/gameStore';
@@ -31,12 +31,12 @@ export interface ComponentsPanelProps {
   table: Table;
   board: Board;
   /** What the entries of the plan brought, by player and component id, with the round: not to take off here. */
-  rounds: Record<string, Record<string, number>>;
+  rounds: Record<PlayerId, Record<string, number>>;
   /** The group of the fan whose sections the sheet shows; a query shows its results whatever the group. */
   group: ComponentGroup;
-  /** Whose components are shown: an opponent's id, null for mine. The tabs count the same player. */
-  chosen: string | null;
-  onChoose: (player: string | null) => void;
+  /** Whose components are shown: a player's id, null for the viewer's own. The tabs count the same player. */
+  chosen: PlayerId | null;
+  onChoose: (player: PlayerId | null) => void;
 }
 
 /** The sections of each group, in the order the sheet shows them. */
@@ -76,14 +76,14 @@ export function ComponentsPanel({ start: startEdits, pack, table, board, rounds,
   const find = useComponentSearch(pack, undefined, undefined, table);
   const found = useMemo(() => find(asked), [find, asked]);
 
-  const seated = table.players.filter(p => p.seat < 100).map(p => ({ id: legacyKey(table, p.id), faction: p.faction, color: p.color, seat: p.seat }));
-  const me = seated.find(p => p.id === 'me') ?? { id: 'me', faction: '', color: 1, seat: 1 };
-  const opponents = seated.filter(p => p.id !== 'me').sort((a, b) => a.seat - b.seat);
-  const rival = opponents.find(o => o.id === chosen);
-  const player = rival ? rival.id : 'me';
-  const faction = rival ? rival.faction : me.faction;
-  const holdings = shelfOf(table, board, playerOfKey(table, player) ?? table.viewer);
-  const start = startEdits.holdings[playerOfKey(table, player) ?? table.viewer] ?? {};
+  const seated = table.players.filter(p => p.seat < 100).map(p => ({ id: p.id, faction: p.faction, color: p.color, seat: p.seat }));
+  const viewer = seated.find(p => p.id === table.viewer) ?? { id: table.viewer, faction: '', color: 1, seat: 1 };
+  const others = seated.filter(p => p.id !== viewer.id).sort((a, b) => a.seat - b.seat);
+  const rival = others.find(o => o.id === chosen);
+  const player = (rival ?? viewer).id;
+  const faction = (rival ?? viewer).faction;
+  const holdings = shelfOf(board, player);
+  const start = startEdits.holdings[player] ?? {};
   const fromPlan = rounds[player] ?? {};
   const laws = tableView(table, board, pack).laws.map(law => law.id);
 
@@ -161,7 +161,7 @@ export function ComponentsPanel({ start: startEdits, pack, table, board, rounds,
     );
   };
 
-  const playerOf = (who: string) => (who === 'me' ? me : opponents.find(o => o.id === who));
+  const playerOf = (who: PlayerId) => seated.find(p => p.id === who);
   const nameOf = (who: string): string => {
     const found = playerOf(who);
     return found ? shortName(pack, found.faction, t('players.player', { n: found.seat })) : who;
@@ -267,7 +267,7 @@ export function ComponentsPanel({ start: startEdits, pack, table, board, rounds,
   const sections: [string, ReactNode[]][] = [
     ['technologies', listed.map(card)],
     ['unitUpgrades', [...unitCards.map(unit => unit.card), ...structureCards.map(unit => unit.card), ...researched.filter(c => !listed.includes(c)).map(card)]],
-    ['ownNotes', legacyNotes(table, board, pack, player).map(ownNote)],
+    ['ownNotes', notesOf(table, board, pack, player).map(ownNote)],
     ['promissory', known(holdings.promissory).filter(c => noteAddress(c.id) !== player).map(card)],
     ['actionCards', known(holdings.hand).map(card)],
     ['relics', known([...holdings.relics, ...holdings.found]).map(card)],
@@ -288,13 +288,13 @@ export function ComponentsPanel({ start: startEdits, pack, table, board, rounds,
   const rest = found.filter(def => !first.includes(def.id));
 
   return (
-    <DrawerSheet className="components-panel" title={t('components.title')} style={playerStyle('--player', rival ? rival.color : me.color)}>
+    <DrawerSheet className="components-panel" title={t('components.title')} style={playerStyle('--player', (rival ?? viewer).color)}>
       <PlayerChoice
         label={t('components.whose')}
         chosen={value => (value === null ? !rival : rival?.id === value)} onPick={onChoose}
         options={[
-          { value: null, label: t('plan.mine'), color: me.color },
-          ...opponents.map(o => {
+          { value: null, label: t('plan.mine'), color: viewer.color },
+          ...others.map(o => {
             const name = shortName(pack, o.faction, t('players.player', { n: o.seat }));
             return { value: o.id, label: name, color: o.color, tag: playerTag(name, Boolean(pack.factions[o.faction]), o.seat) };
           }),

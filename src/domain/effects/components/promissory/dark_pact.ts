@@ -24,7 +24,7 @@ export const ability: Ability = {
     dealt: (ctx, deal) => {
       // `side` is the side of the entry, not of the card: the holder gives in an entry of its own and in one of mine.
       if (deal.self === deal.partner) return;
-      if (!ctx.my.holds(`${id}@${ctx.key(deal.partner)}`)) return;
+      if (!ctx.my.holds(`${id}@${deal.partner}`)) return;
       const gave = deal.gave.commodities ?? 0;
       if (gave <= 0 || gave < ctx.commodityValue(deal.self)) return;
       return [gain.tradeGoods(deal.self, 1), gain.tradeGoods(deal.partner, 1)];

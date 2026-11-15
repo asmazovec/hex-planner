@@ -43,7 +43,7 @@ export function ScoredBlock({ turn, pack, view, onChange }: ScoredBlockProps) {
   const player = view && turn.player;
   const owned = useMemo(() => {
     if (!view || player === undefined) return new Set<string>();
-    const held = shelfOf(view.table, view.board, player);
+    const held = shelfOf(view.board, player);
     return new Set([...held.secrets, ...view.board.common.revealed.filter(id => !held.scored.includes(id))]);
   }, [view, player]);
   const spend = status?.spend ?? {};

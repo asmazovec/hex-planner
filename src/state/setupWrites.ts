@@ -1,24 +1,25 @@
 /**
  * What the big hex writes by hand into the saved game: enemy units and ground forces, the docks and PDS of the setup,
  * the control of a planet, a manual adjustment, the units of a setup entry. The hex reads the board through the kernel.
- * Players go by owner key (`me`, a rival's id), as the hex draws them.
+ * Players go by their id at the table.
  */
 import { enemyChangeOf, startingPdsOf, structureAtStart } from '../game/edit/start';
 import { withDelta } from '../game/edit/turn';
-import { playerOfKey } from '../game/keys';
 import { useGame } from './gameStore';
 import { writeSaved } from './turnBridge';
 import { withAdjustedUnit } from '../domain/tactical';
 import type { AdjustmentDelta, DataPack, StructureKind, UnitId } from '../domain/types';
+import type { PlayerId } from '../game/types';
 
 export interface SetupWrites {
-  /** One more or less of an enemy's unit on the hex; ground forces go by planet. */
-  changeEnemy: (slot: string, owner: string, unit: UnitId, planetId: string | null, amount: number) => void;
+  /** One more or less of a unit of a player written by hand on the hex; ground forces go by planet. */
+  changePlaced: (slot: string, player: PlayerId, unit: UnitId, planetId: string | null, amount: number) => void;
   /** One more or less of a structure by hand: a dock is set, a PDS counted over the starting ones. */
   changeStructure: (pack: DataPack, kind: StructureKind, planetId: string, amount: 1 | -1) => void;
   /** Whether the game itself holds this structure, apart from what entries plan. */
   inBaseline: (pack: DataPack, kind: StructureKind, planetId: string) => boolean;
-  setPlanetControl: (planetId: string, side: string) => void;
+  /** Who controls a planet at the start; null leaves it free. */
+  setPlanetControl: (planetId: string, player: PlayerId | null) => void;
   /** A manual correction of the round's units in a system. */
   changeAdjustment: (roundNo: number, change: { kind: 'setup' | 'losses' | 'build'; systemId: string; unit: UnitId; planetId: string | null; amount: number }) => void;
   /** The units of a setup entry of the plan, changed by one. */
@@ -36,10 +37,10 @@ export function useSetupWrites(): SetupWrites | undefined {
   const changeAdjustment = useGame(s => s.changeAdjustment);
   if (!saved) return undefined;
   return {
-    changeEnemy: (slot, owner, unit, planetId, amount) => {
-      const next = enemyChangeOf(saved, slot, playerOfKey(saved.table, owner) ?? owner, unit, planetId, amount);
-      if ('planetId' in next) setEnemyGround(next.planetId, owner, next.units);
-      else setEnemyUnits(next.slot, owner, next.units);
+    changePlaced: (slot, player, unit, planetId, amount) => {
+      const next = enemyChangeOf(saved, slot, player, unit, planetId, amount);
+      if ('planetId' in next) setEnemyGround(next.planetId, player, next.units);
+      else setEnemyUnits(next.slot, player, next.units);
     },
     changeStructure: (_pack, kind, planetId, amount) => {
       if (kind === 'spacedock') setDock(planetId, amount > 0);

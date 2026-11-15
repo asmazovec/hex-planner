@@ -4,7 +4,7 @@ import type { GameState } from '../types';
 import { violation } from '../../../../domain/rules/registry';
 import { PER_PLANET, kindsOf } from '../../../../domain/replay/structures';
 import { planetsOf, sourceSlot } from '../../../../domain/replay/board';
-import type { TacticalEntry } from '../../../../domain/replay/state';
+import type { TacticalEntry } from '../types';
 import structureAboard from '../../../../domain/rules/codes/structureAboard';
 export const countAll = (state: GameState, kind: StructureKind): number =>
   (kind === 'pds' ? Object.values(state.pds).reduce((sum, n) => sum + n, 0) : state.docks.length);
@@ -110,37 +110,67 @@ export function placeCarried(game: Game, state: GameState, target: string, landi
   }
 }
 
-/** Whose structure of a kind stands on a planet in the state shown: 'me', an opponent id, or undefined for none. */
-export function structureOwner(state: GameState, kind: StructureKind, planetId: string): string | undefined {
-  if (countOn(state, kind, planetId) > 0) return 'me';
-  return Object.entries(state.rivals ?? {}).find(([, rival]) => countOn(rival, kind, planetId) > 0)?.[0];
-}
+/** Whose structure of a kind stands on a planet in the state shown: 'me', an opponent id, or undefined for none. */
 
-/** The structures standing on a planet, each with its owner: mine, then each opponent's. */
-export function structuresOn(state: GameState, planetId: string): { kind: StructureKind; owner: string; count: number }[] {
-  const holders: [string, GameState][] = [['me', state], ...Object.entries(state.rivals ?? {})];
-  return holders.flatMap(([owner, held]) => (['pds', 'spacedock'] as const)
-    .map(kind => ({ kind, owner, count: countOn(held, kind, planetId) }))
-    .filter(s => s.count > 0));
-}
+export function structureOwner(state: GameState, kind: StructureKind, planetId: string): string | undefined {
 
-/**
- * What the board itself breaks on these planets, apart from any entry: more PDS on a planet than it holds (63.3, 85.5),
- * counting each player's. A placement by hand in the big hex is checked by this.
- */
-export function planetStructureWarnings(state: GameState, planetIds: string[]): Warning[] {
-  const holders = [state, ...Object.values(state.rivals ?? {})];
-  return planetIds.flatMap(planetId => holders.some(held => countOn(held, 'pds', planetId) > PER_PLANET.pds)
-    ? [violation('structureLimit', { kind: 'pds', planetId, count: PER_PLANET.pds, context: 'planet' }, 'production')]
-    : []);
-}
+  if (countOn(state, kind, planetId) > 0) return 'me';
 
-export const countOn = (state: GameState, kind: StructureKind, planetId: string): number =>
-  (kind === 'pds' ? state.pds[planetId] ?? 0 : state.docks.includes(planetId) ? 1 : 0);
+  return Object.entries(state.rivals ?? {}).find(([, rival]) => countOn(rival, kind, planetId) > 0)?.[0];
 
-/** Effect: another player gains a planet; the player of `state` loses it if it was theirs, and their structures on it are destroyed. */
-export function losePlanet(state: GameState, planetId: string): void {
-  state.control[planetId] = 'enemy';
-  state.docks = state.docks.filter(id => id !== planetId);
-  delete state.pds[planetId];
-}
+}
+
+
+/** The structures standing on a planet, each with its owner: mine, then each opponent's. */
+
+export function structuresOn(state: GameState, planetId: string): { kind: StructureKind; owner: string; count: number }[] {
+
+  const holders: [string, GameState][] = [['me', state], ...Object.entries(state.rivals ?? {})];
+
+  return holders.flatMap(([owner, held]) => (['pds', 'spacedock'] as const)
+
+    .map(kind => ({ kind, owner, count: countOn(held, kind, planetId) }))
+
+    .filter(s => s.count > 0));
+
+}
+
+
+/**
+
+ * What the board itself breaks on these planets, apart from any entry: more PDS on a planet than it holds (63.3, 85.5),
+
+ * counting each player's. A placement by hand in the big hex is checked by this.
+
+ */
+
+export function planetStructureWarnings(state: GameState, planetIds: string[]): Warning[] {
+
+  const holders = [state, ...Object.values(state.rivals ?? {})];
+
+  return planetIds.flatMap(planetId => holders.some(held => countOn(held, 'pds', planetId) > PER_PLANET.pds)
+
+    ? [violation('structureLimit', { kind: 'pds', planetId, count: PER_PLANET.pds, context: 'planet' }, 'production')]
+
+    : []);
+
+}
+
+
+export const countOn = (state: GameState, kind: StructureKind, planetId: string): number =>
+
+  (kind === 'pds' ? state.pds[planetId] ?? 0 : state.docks.includes(planetId) ? 1 : 0);
+
+
+/** Effect: another player gains a planet; the player of `state` loses it if it was theirs, and their structures on it are destroyed. */
+
+export function losePlanet(state: GameState, planetId: string): void {
+
+  state.control[planetId] = 'enemy';
+
+  state.docks = state.docks.filter(id => id !== planetId);
+
+  delete state.pds[planetId];
+
+}
+

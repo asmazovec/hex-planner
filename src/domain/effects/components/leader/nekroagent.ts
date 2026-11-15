@@ -2,9 +2,9 @@
  * Nekro Malleon (Nekro Virus, agent): "During the action phase: You may exhaust this card to choose a player: that
  * player may discard 1 action card or spend 1 command token from their command sheet to gain 2 trade goods."
  *
- * A `play` effect with the choices `player` (`me` or an opponent id), `pay` (`token` or `actionCard`) and, for a token,
+ * A `play` effect with the choices `player` (a player id; the holder when none is chosen), `pay` (`token` or `actionCard`) and, for a token,
  * `pool` (`tactic`, `fleet`, `strategy`). The chosen player spends the token (a discarded card is entered in `spends`,
- * which the replay takes from my hand) and gains 2 trade goods. The agent is exhausted as every agent is.
+ * which the replay takes from the hand of the entry's player) and gains 2 trade goods. The agent is exhausted as every agent is.
  */
 import { tokens, tradeGoods } from '../../../../game/abilities/emit';
 import type { Ability } from '../../../../game/abilities/types';
@@ -30,7 +30,7 @@ export const ability: Ability = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held) return [];
-    const who = ctx.playerOf(String(ctx.choices.player ?? 'me'));
+    const who = ctx.playerOf(String(ctx.choices.player ?? ctx.holder));
     if (who === undefined) return [];
     const events = [];
     if (ctx.choices.pay === 'token') {

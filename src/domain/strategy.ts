@@ -8,7 +8,7 @@ import { LEADERSHIP_FREE } from './replay/cards/leadership';
 import { productionCost } from './unitStats';
 import type { TokensOn } from './readers';
 import type { CardEffects, DataPack, ExpansionId, StructureKind, UnitCounts, UnitId } from './types';
-import type { TurnFacts, RoundFacts } from '../game/turnFacts';
+import type { TurnDeeds, TurnFacts, RoundFacts } from '../game/turnFacts';
 import type { TableFacts } from './facts';
 import type { Shelf } from './shelf';
 
@@ -17,6 +17,8 @@ export { researchCount, researchLimit } from './replay/cards/technology';
 export { CARD };
 
 export type CardEntry = Extract<TurnFacts, { type: 'strategic' | 'secondary' }>;
+/** A strategy card played, for what does not ask whose turn it is. */
+export type CardDeeds = Extract<TurnDeeds, { type: 'strategic' | 'secondary' }>;
 
 /** The tokens a player takes in the status phase; abilities may give more, which only warns. */
 export const STATUS_TOKENS = 2;
@@ -25,21 +27,21 @@ export const STATUS_TOKENS = 2;
 export const cardsHeld = (playerCount: number): number => (playerCount <= 4 ? 2 : 1);
 
 /** The cards that are mine this round: the main one, and with 3 or 4 players the second one too. */
-export const heldCards = (round: RoundFacts, playerCount: number): number[] =>
+export const heldCards = (round: Pick<RoundFacts, 'strategyCard' | 'backupCard'>, playerCount: number): number[] =>
   (cardsHeld(playerCount) > 1 ? [round.strategyCard, round.backupCard] : [round.strategyCard]).filter((card): card is number => card !== null);
 
 /**
  * Whether a primary is played for a token: the cards held this round decide (83.3); the entry's own flag, set when it was
  * planned, counts only while no card of the round is chosen.
  */
-export const primaryForToken = (entry: CardEntry, held: number[]): boolean =>
+export const primaryForToken = (entry: CardDeeds, held: number[]): boolean =>
   (held.length > 0 ? entry.card !== undefined && !held.includes(entry.card) : entry.forToken === true);
 
 /**
  * A secondary or a primary for a token, except Leadership's secondary, which the card makes free of tokens, and a
  * secondary Trade's primary made free. `held`: the cards of the round, which decide what a primary costs once chosen.
  */
-export function costsStrategyToken(entry: CardEntry, play: { held?: number[]; free?: boolean } = {}): boolean {
+export function costsStrategyToken(entry: CardDeeds, play: { held?: number[]; free?: boolean } = {}): boolean {
   if (entry.type === 'secondary') return !handlerOf(entry.card).freeSecondary && !play.free;
   return primaryForToken(entry, play.held ?? []);
 }

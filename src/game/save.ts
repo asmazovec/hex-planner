@@ -1,13 +1,14 @@
 /**
  * The saved game, as the kernel holds a game: the table, what the user placed by hand before the plan (`StartEdits`),
- * and the plans as rounds of turns. The format of the file and of the saves in the browser (`ti4-planner/3`).
+ * and the plans as rounds of turns. The format of the file and of the saves in the browser (`ti4-planner/4`): every
+ * player it names, in a turn, a choice or the address of a promissory note, is a player id of its table.
  * The types are plain JSON.
  */
 import type { StartHoldings } from '../domain/types';
 import type { Round } from './round';
 import type { PlanetId, PlayerId, Slot, Table, UnitCounts } from './types';
 
-export const SAVED_FORMAT = 'ti4-planner/3';
+export const SAVED_FORMAT = 'ti4-planner/4';
 
 /**
  * What stands on the board before the first round beyond the faction sheets, written by hand: the points, what the

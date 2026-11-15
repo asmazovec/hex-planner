@@ -73,7 +73,7 @@ export function fractureSlots(
 }
 
 /** Check: ground forces cannot land on a space station (space stations 4). The landing itself is left as written. */
-export const checkStationLandings = (entry: Extract<TurnFacts, { type: 'tactical' }>, pack: DataPack): Warning[] =>
+export const checkStationLandings = (entry: Pick<Extract<TurnFacts, { type: 'tactical' }>, 'landings'>, pack: DataPack): Warning[] =>
   entry.landings.filter(l => isStation(pack, l.planetId) && Object.values(l.units).some(n => (n ?? 0) > 0))
     .map(l => violation('stationGround', { planetId: l.planetId }));
 
@@ -82,8 +82,8 @@ export const checkStationStructures = (structures: { planetId: string }[], pack:
   structures.filter(s => isStation(pack, s.planetId)).map(s => violation('stationStructure', { planetId: s.planetId }));
 
 // ui-logic-to-domain
-/** Who holds each expedition part. */
-export type SliceOwners = Record<string, 'me' | 'other'>;
+/** Who holds each expedition part that is taken, by player id. */
+export type SliceOwners = Record<string, string>;
 
 /** Whether Thunder's Edge can go into the system of a map slot (see `validThundersEdgeSystem`). */
 export function validThundersEdgeSlot(game: MapSource, slot: string, pack: DataPack): boolean {

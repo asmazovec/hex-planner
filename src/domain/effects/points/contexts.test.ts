@@ -4,6 +4,7 @@
  * `researchCost`, and the one `appliedFor` that skips a note of the player's own and asks for a ready component.
  * A throwaway effect is put in the registry of the test's own pack, as in `production.test.ts`.
  */
+import { factsOfEntry } from '../../../testing/old/domain/types';
 import { describe, expect, test } from 'vitest';
 import { adjust, bench, HOME, NEAR, tactical, TARGET, using, FAR, FARTHER, type Bench } from '../components/kit';
 import { appliedFor } from '../entryApply';
@@ -47,7 +48,7 @@ describe('the one appliedFor', () => {
   const point = (table: Bench, entry: ReturnType<typeof using>, state?: Parameters<typeof appliedFor>[6]) => {
     give(table, NOTE, { tier: 'play', modify: { tokensGained: v => v + 1 } });
     const end = forecast(table.game, table.pack).state;
-    return appliedFor(table.pack, holderOf(table.game, end), entry, 'tokensGained', 2, { step: 'status' }, state).value;
+    return appliedFor(table.pack, holderOf(table.game, end), factsOfEntry(entry), 'tokensGained', 2, { step: 'status' }, state).value;
   };
 
   test('a note of another player counts, a note of the entry owner\'s own does not (69.2)', () => {

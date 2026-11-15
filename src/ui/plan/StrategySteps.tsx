@@ -6,7 +6,6 @@ import { upgradesOf } from '../../domain/holdings';
 import type { DataPack, Payment, UnitCounts } from '../../domain/types';
 import type { Turn } from '../../game/actions';
 import { cardCostOn, effectsOf, isCardTurn, isPrimary, strategyTokensOwedOn } from '../../game/edit/strategicRead';
-import { playerOfKey } from '../../game/keys';
 import { mapSource } from '../../game/space';
 import type { KernelView } from './kernelView';
 import { nameOfPlayer } from '../players/names';
@@ -31,7 +30,7 @@ export function StrategySteps({ view, pack, turn }: StrategyStepsProps) {
   const colour = playerColour(table.players.find(p => p.id === turn.player)?.color ?? 1);
   const pictures = (units: UnitCounts) => <UnitPictures units={units} colour={colour} />;
   const planetName = (id: string) => pack.planets[id]?.name ?? id;
-  const playerName = (key: string) => nameOfPlayer(table, pack, playerOfKey(table, key) ?? key, t);
+  const playerName = (id: string) => nameOfPlayer(table, pack, id, t);
   const steps: ReactNode[] = [];
   const paid = (payment: Payment | undefined) => {
     if (!payment || (payment.planets.length === 0 && payment.tradeGoods === 0)) return null;

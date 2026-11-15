@@ -18,12 +18,12 @@ export interface ThundersEdgePanelProps {
   onMark: () => void;
 }
 
-/** The expedition and the Fracture, which are not plan entries, except for a contribution of mine. */
+/** The expedition and the Fracture, which are not plan entries, except for a part taken with a turn. */
 export function ThundersEdgePanel({ table, start, map, pack, owners, onPlace, onMark }: ThundersEdgePanelProps) {
   const { t } = useTranslation();
   return (
     <DrawerSheet className="te-panel" title={t('thundersEdge.title')}>
-      <ExpeditionWidget placed={start.expedition.thundersEdgeSystem} map={map} pack={pack} owners={owners} onPlace={onPlace} />
+      <ExpeditionWidget placed={start.expedition.thundersEdgeSystem} map={map} pack={pack} table={table} owners={owners} byHand={start.expedition.slices} onPlace={onPlace} />
       <FractureControl table={table} fracture={start.fracture} pack={pack} onMark={onMark} />
     </DrawerSheet>
   );

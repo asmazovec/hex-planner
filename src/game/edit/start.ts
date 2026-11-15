@@ -12,7 +12,6 @@ import { startingDocks, startingPds } from '../../domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
 import type { ComponentKind, LeaderState, StartHoldings } from '../../domain/types';
 import type { TableFacts } from '../../domain/facts';
-import { legacyPlayer, playerOfLegacy } from '../entry';
 import type { SavedGame, StartEdits } from '../save';
 import type { PlanetId, PlayerId, Slot, UnitCounts } from '../types';
 
@@ -130,8 +129,8 @@ export function withStartHolding(saved: SavedGame, player: PlayerId, id: string,
   const next = withHeld(saved, player, { ...start, [field]: present ? [...list, id] : list.filter((_, i) => i !== at) });
   const owner = field === 'promissory' ? noteAddress(id) : undefined;
   if (owner === undefined) return next;
-  const ownerId = playerOfLegacy(saved.table, owner);
-  if (!present) return owner === legacyPlayer(saved.table, player) || ownerId === undefined ? next : withStartHolding(next, ownerId, id, true);
+  const seated = saved.table.players.some(p => p.id === owner);
+  if (!present) return owner === player || !seated ? next : withStartHolding(next, owner, id, true);
   const without = (other: StartHoldings): StartHoldings => (other.promissory?.includes(id) ? { ...other, promissory: other.promissory.filter(held => held !== id) } : other);
   return withStart(next, {
     holdings: Object.fromEntries(Object.entries(next.start.holdings).map(([other, theirs]) => [other, other === player ? theirs : without(theirs)])),

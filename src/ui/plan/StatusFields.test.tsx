@@ -29,7 +29,7 @@ beforeEach(() => {
 function openStatus(faction: string, secrets: string[] = []): void {
   const store = useGame.getState();
   store.newGame({ expansions: ['pok'], playerCount: 6, faction }, pack);
-  for (const id of secrets) store.setStartHolding('me', id, true);
+  for (const id of secrets) store.setStartHolding('p1', id, true);
   const id = edits.addStatusEntry(1);
   function Live() {
     const live = useOldGame()!;

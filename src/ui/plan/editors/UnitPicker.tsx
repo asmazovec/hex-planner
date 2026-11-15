@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import type { KernelView } from '../kernelView';
 import { flightOf as flightAt, metersOf } from '../../../game/flight';
 import type { Turn } from '../../../game/actions';
-import { planetShown } from '../../../game/tile';
+import { planetSeen } from '../../map/held';
 import { planetsIn, stepsOf, type MapSource } from '../../../game/space';
 import type { TokenKind } from '../../../domain/hexLayout';
 import type { DataPack, PlanetDef, StructureKind, UnitId, Warning } from '../../../domain/types';
@@ -132,8 +132,8 @@ export function UnitPicker({ pack, view, turn, source, warnings = [], onChange, 
   );
   const badge = (planet: PlanetDef | null) => {
     if (!planet) return <SpaceBadge label={t('draft.space')} />;
-    const { control, exhausted, values } = planetShown(table, board, pack, player, planet.id);
-    return <PlanetBadge planet={planet} control={control} exhausted={exhausted} values={values} compact />;
+    const { held, exhausted, values } = planetSeen(table, board, pack, player, planet.id);
+    return <PlanetBadge planet={planet} held={held} exhausted={exhausted} values={values} compact />;
   };
 
   const line = (slot: string, role: 'start' | 'transit') => {

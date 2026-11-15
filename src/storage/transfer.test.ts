@@ -47,11 +47,11 @@ test('a promissory note addressed to its player (`@`) goes to a file and back: h
 
 test('a new game is written with the format mark and schema version 1', () => {
   const fresh = createGame({ expansions: [], playerCount: 3, faction: 'sol' }, loadPack([]));
-  expect(fresh.format).toBe('ti4-planner/3');
+  expect(fresh.format).toBe('ti4-planner/4');
   expect(fresh.format).toBe(SAVE_FORMAT);
   expect(fresh.schemaVersion).toBe(1);
   expect(CURRENT_SCHEMA).toBe(1);
-  expect(JSON.parse(exportGame(fresh))).toMatchObject({ format: 'ti4-planner/3', schemaVersion: 1 });
+  expect(JSON.parse(exportGame(fresh))).toMatchObject({ format: 'ti4-planner/4', schemaVersion: 1 });
 });
 
 describe('a file of an earlier version of the app', () => {
@@ -66,11 +66,14 @@ describe('a file of an earlier version of the app', () => {
     for (const schemaVersion of [1, 6, 99]) {
       expect(importGame(JSON.stringify({ ...game, format: 'ti4-planner/1', schemaVersion }))).toEqual({ ok: false, reason: 'oldFormat' });
     }
+    // The format before this one named players by other ids (`me`, an opponent's own): it is not read either.
+    expect(importGame(JSON.stringify({ ...game, format: 'ti4-planner/3' }))).toEqual({ ok: false, reason: 'oldFormat' });
+    expect(parseSaved({ ...game, format: 'ti4-planner/3' })).toMatchObject({ ok: false, kind: 'oldFormat' });
   });
 });
 
 test('a file whose format mark is of a later version of the app is refused as newer, not as earlier', () => {
-  for (const format of ['ti4-planner/4', 'ti4-planner/10']) {
+  for (const format of ['ti4-planner/5', 'ti4-planner/10']) {
     expect(importGame(JSON.stringify({ ...game, format }))).toEqual({ ok: false, reason: 'newerVersion' });
     expect(parseSaved({ ...game, format })).toMatchObject({ ok: false, kind: 'newerVersion' });
   }

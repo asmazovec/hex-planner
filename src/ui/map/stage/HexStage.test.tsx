@@ -231,7 +231,7 @@ describe('setup', () => {
     expect(game().docks).toContain(quann());
     await tap('PDS ×2');
     expect(game().pds).toEqual({ [quann()]: 1 });
-    await userEvent.click(document.querySelector('[data-stack="me|spacedock|0"] .token-hit')!);
+    await userEvent.click(document.querySelector('[data-stack="p1|spacedock|0"] .token-hit')!);
     expect(game().docks).not.toContain(quann());
   });
 
@@ -504,7 +504,7 @@ describe('battle', () => {
   test('the whole circle of a token takes the tap, not only its picture', () => {
     addMine({ carrier: 1 });
     const { container } = open({ initialMode: 'battle' });
-    fireEvent.click(container.querySelector('[data-stack="me|carrier|-"] .token-hit')!);
+    fireEvent.click(container.querySelector('[data-stack="p1|carrier|-"] .token-hit')!);
     expect(merged('losses')?.delta.units?.units).toEqual({ carrier: -1 });
   });
 });
@@ -531,7 +531,7 @@ describe('build', () => {
   });
 
   test('a dock on the tile takes the warning away', async () => {
-    store().setPlanetControl(quann(), 'me');
+    store().setPlanetControl(quann(), 'p1');
     addTactical();
     open({ initialMode: 'build' });
     await tap('Cruiser');
@@ -544,7 +544,7 @@ describe('build', () => {
 
   test('with a tactical entry on the system they go to its production, with the automatic payment', async () => {
     store().setTile(SLOT, pack.factions.sol.homeTile);
-    store().setPlanetControl('jord', 'me');
+    store().setPlanetControl('jord', 'p1');
     addTactical();
     open({ initialMode: 'build' });
     await tap('Cruiser');
@@ -577,17 +577,17 @@ describe('build', () => {
   test('a tap on a bought token takes a bought one first and lowers the total; the ring goes with the last', async () => {
     addMine({ cruiser: 1 });
     const { container } = open({ initialMode: 'build' });
-    expect(ring(container, 'me|cruiser|-')).toBeNull();
+    expect(ring(container, 'p1|cruiser|-')).toBeNull();
     await tap('Cruiser');
     await tap('Cruiser');
-    expect(ring(container, 'me|cruiser|-')).not.toBeNull();
+    expect(ring(container, 'p1|cruiser|-')).not.toBeNull();
     expect(total()).toBe('4');
     await tap('Cruiser ×3');
     expect(total()).toBe('2');
-    expect(ring(container, 'me|cruiser|-')).not.toBeNull();
+    expect(ring(container, 'p1|cruiser|-')).not.toBeNull();
     await tap('Cruiser ×2');
     expect(total()).toBe('0');
-    expect(ring(container, 'me|cruiser|-')).toBeNull();
+    expect(ring(container, 'p1|cruiser|-')).toBeNull();
     expect(merged('build')).toBeUndefined();
     expect(forecast().systems[SLOT]).toEqual({ cruiser: 1 });
     await tap('Cruiser ×1');
@@ -597,10 +597,10 @@ describe('build', () => {
   test('purchases stay marked when the stage opens again', async () => {
     const { container } = open({ initialMode: 'build' });
     await tap('Carrier');
-    expect(ring(container, 'me|carrier|-')).not.toBeNull();
+    expect(ring(container, 'p1|carrier|-')).not.toBeNull();
     cleanup();
     const next = open({ initialMode: 'build' }).container;
-    expect(ring(next, 'me|carrier|-')).not.toBeNull();
+    expect(ring(next, 'p1|carrier|-')).not.toBeNull();
     expect(total()).toBe('3');
   });
 
@@ -622,7 +622,7 @@ describe('build', () => {
     const warsun = () => within(screen.getByRole('button', { name: 'War Sun' }));
     expect(warsun().getByText('12')).toBeVisible();
     cleanup();
-    store().setStartHolding('me', 'technology:pws2', true);
+    store().setStartHolding('p1', 'technology:pws2', true);
     open({ initialMode: 'build' });
     expect(warsun().getByText('10')).toBeVisible();
     await side('Sol');
@@ -650,7 +650,7 @@ describe('build', () => {
 
   test('a bought structure goes with a tap on its token; an old one does nothing', async () => {
     // LRR 8.4, 77.1: a structure belongs to the player who controls its planet, so the planet is mine first (a structure on an unowned planet is not kept).
-    store().setPlanetControl(quann(), 'me');
+    store().setPlanetControl(quann(), 'p1');
     store().setPds(quann(), 1);
     open({ initialMode: 'build' });
     await tap('PDS ×1');
@@ -661,17 +661,17 @@ describe('build', () => {
     expect(game().pds).toEqual({ [quann()]: 1 });
     await tap('Space dock');
     expect(game().docks).toContain(quann());
-    await userEvent.click(document.querySelector('[data-stack="me|spacedock|0"] .token-hit')!);
+    await userEvent.click(document.querySelector('[data-stack="p1|spacedock|0"] .token-hit')!);
     expect(game().docks).not.toContain(quann());
   });
 
   const planPds = () => edits.addEntry(1, { type: 'strategic', card: 4, effects: { structures: [{ kind: 'pds', planetId: quann() }] } }, 'action');
   const plannedStructures = () => (entries().find(e => e.type === 'strategic') as Extract<Entry, { type: 'strategic' }>).effects?.structures;
-  const pdsStack = () => document.querySelector('[data-stack="me|pds|0"] .token-hit');
+  const pdsStack = () => document.querySelector('[data-stack="p1|pds|0"] .token-hit');
 
   test('in battle a stack with a planned PDS loses the baseline one first; the planned one then takes no tap', async () => {
     // LRR 8.4, 77.1: a structure belongs to the player who controls its planet, so the planet is mine first (a structure on an unowned planet is not kept).
-    store().setPlanetControl(quann(), 'me');
+    store().setPlanetControl(quann(), 'p1');
     useGame.getState().setPds(quann(), 1);
     planPds();
     open({ initialMode: 'battle' });
@@ -687,7 +687,7 @@ describe('build', () => {
 
   test('in setup a stack follows what is visible: the baseline PDS comes off, then a planned one alone takes no tap', async () => {
     // LRR 8.4, 77.1: a structure belongs to the player who controls its planet, so the planet is mine first (a structure on an unowned planet is not kept).
-    store().setPlanetControl(quann(), 'me');
+    store().setPlanetControl(quann(), 'p1');
     useGame.getState().setPds(quann(), 1);
     planPds();
     open({});
@@ -700,7 +700,7 @@ describe('build', () => {
 
   test('a tap on a structure only planned says where it lives, and the next tap clears that', async () => {
     // LRR 8.4, 77.1: a structure belongs to the player who controls its planet, so the planet is mine first (a structure on an unowned planet is not kept).
-    store().setPlanetControl(quann(), 'me');
+    store().setPlanetControl(quann(), 'p1');
     planPds();
     open({});
     expect(screen.queryByRole('status')).toBeNull();
@@ -721,7 +721,7 @@ describe('build', () => {
     edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [{ from: FROM, units: { carrier: 1 } }], landings: [], production: {}, payment: noPay }, 'action');
     const before = game();
     open({ initialMode: 'battle' });
-    await userEvent.click(document.querySelector('[data-stack="me|carrier|-"] .token-hit')!);
+    await userEvent.click(document.querySelector('[data-stack="p1|carrier|-"] .token-hit')!);
     const entries = game().plans[0].rounds[0].entries;
     expect(entries).toHaveLength(before.plans[0].rounds[0].entries.length);
     expect(entries.at(-1)).toMatchObject({ kind: 'losses', phase: 'action', delta: { units: { systemId: SLOT, units: { fighter: -1, carrier: -1 } } } });
@@ -732,7 +732,7 @@ describe('build', () => {
     edits.addEntry(1, { type: 'strategic', card: 4, effects: { structures: [{ kind: 'spacedock', planetId: quann() }] } }, 'action');
     const before = [...game().docks];
     open({});
-    await userEvent.click(document.querySelector('[data-stack="me|spacedock|0"] .token-hit')!);
+    await userEvent.click(document.querySelector('[data-stack="p1|spacedock|0"] .token-hit')!);
     expect(game().docks).toEqual(before);
   });
 
@@ -742,7 +742,7 @@ describe('build', () => {
     addMine({ carrier: 1 });
     await tap('Infantry');
     expect(change).toHaveBeenCalledWith('infantry', quann(), 1);
-    expect(ring(container, 'me|carrier|-')).not.toBeNull();
+    expect(ring(container, 'p1|carrier|-')).not.toBeNull();
     expect(total()).toBe('3');
     await tap('Carrier ×1');
     expect(change).toHaveBeenCalledWith('carrier', null, -1);
@@ -772,15 +772,15 @@ describe('fix round 1', () => {
 
   test('a ground purchase on a tactical entry goes to the target planet, and the ring and take-back follow it', async () => {
     store().setTile(SLOT, TWO);
-    store().setPlanetControl(first, 'me');
-    store().setPlanetControl(second, 'me');
+    store().setPlanetControl(first, 'p1');
+    store().setPlanetControl(second, 'p1');
     addTactical();
     open({ initialMode: 'build' });
     await tap(`Infantry, ${nameOf(second)}`);
     expect(tactical().production).toEqual({ infantry: 1 });
     expect(tactical().productionGround).toEqual({ [second]: { infantry: 1 } });
     expect(forecast().ground[second]).toEqual({ infantry: 1 });
-    expect(hasRing('me|infantry|1')).toBe(true);
+    expect(hasRing('p1|infantry|1')).toBe(true);
     await tap('Infantry ×1');
     expect(tactical().production).toEqual({});
     expect(tactical().productionGround).toBeUndefined();
@@ -788,14 +788,14 @@ describe('fix round 1', () => {
 
   test('the ring reads the place at the entry, not the control at the end of the round', () => {
     store().setTile(SLOT, TWO);
-    store().setPlanetControl(second, 'me');
+    store().setPlanetControl(second, 'p1');
     edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: SLOT, units: { infantry: 1 } } } }, 'strategy');
     const noPay = { planets: [], tradeGoods: 0 };
     const id = edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: { infantry: 1 }, payment: noPay }, 'action');
     edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [{ planetId: first, units: { infantry: 1 } }], production: {}, payment: noPay }, 'action');
     open({ initialMode: 'build', tacticalId: id });
-    expect(hasRing('me|infantry|1')).toBe(true);
-    expect(hasRing('me|infantry|0')).toBe(false);
+    expect(hasRing('p1|infantry|1')).toBe(true);
+    expect(hasRing('p1|infantry|0')).toBe(false);
   });
 
   test('enemy ground units go to the target planet; both ways of removing them find them there', async () => {
@@ -844,7 +844,7 @@ describe('fix round 1', () => {
     await tap('War Sun');
     expect(total()).toBe('12');
     cleanup();
-    store().setStartHolding('me', 'technology:pws2', true);
+    store().setStartHolding('p1', 'technology:pws2', true);
     open({ initialMode: 'build', tacticalId: id });
     expect(within(screen.getByRole('button', { name: 'War Sun' })).getByText('10')).toBeVisible();
     expect(total()).toBe('10');
@@ -882,13 +882,13 @@ describe('fix round 1', () => {
     addMine({ carrier: 1 });
     const { container } = open();
     await tap('Carrier ×1');
-    expect(container.querySelector('[data-stack="me|carrier|-"] .token-hit')).toBeNull();
+    expect(container.querySelector('[data-stack="p1|carrier|-"] .token-hit')).toBeNull();
   });
 
   test('the ring has a dark outer stroke', async () => {
     const { container } = open({ initialMode: 'build' });
     await tap('Carrier');
-    expect(container.querySelector('[data-stack="me|carrier|-"] .token-ring-shade')).not.toBeNull();
+    expect(container.querySelector('[data-stack="p1|carrier|-"] .token-ring-shade')).not.toBeNull();
   });
 
   test('the loss strip names the planet when two planets lost one type', async () => {
@@ -896,11 +896,11 @@ describe('fix round 1', () => {
     addMine({}, { [first]: { infantry: 1, mech: 1 }, [second]: { infantry: 1 } });
     open({ initialMode: 'battle' });
     const strip = within(screen.getByRole('group', { name: 'Losses, mine' }));
-    await userEvent.click(document.querySelector('[data-stack="me|infantry|0"] .token-hit')!);
+    await userEvent.click(document.querySelector('[data-stack="p1|infantry|0"] .token-hit')!);
     expect(strip.getByRole('button', { name: 'Give back Infantry' })).toBeVisible();
-    await userEvent.click(document.querySelector('[data-stack="me|mech|0"] .token-hit')!);
+    await userEvent.click(document.querySelector('[data-stack="p1|mech|0"] .token-hit')!);
     expect(strip.getByRole('button', { name: 'Give back Mech' })).toBeVisible();
-    await userEvent.click(document.querySelector('[data-stack="me|infantry|1"] .token-hit')!);
+    await userEvent.click(document.querySelector('[data-stack="p1|infantry|1"] .token-hit')!);
     const named = strip.getByRole('button', { name: `Give back Infantry, ${nameOf(second)}` });
     expect(named).toHaveTextContent(nameOf(second));
     expect(strip.getByRole('button', { name: `Give back Infantry, ${nameOf(first)}` })).toBeVisible();

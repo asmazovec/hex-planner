@@ -12,7 +12,7 @@ import { specialtiesOf } from '../../domain/specialties';
 import { holds } from '../../domain/replay/holdings';
 import { violation } from '../../domain/rules/registry';
 import type { Act, Goods } from '../../domain/types';
-import { holdingsOfCards, legacyKey } from '../keys';
+import { holdingsOfCards } from '../keys';
 import { areNeighbours, payingPlanets } from '../queries';
 import type { PlayerId } from '../types';
 import { begin, emit, warn, type Ctx } from './context';
@@ -68,7 +68,7 @@ function transactions(ctx: Ctx, acts: Act[]): void {
     // One transaction with each neighbour in a turn (94.1).
     if (dealtWith.has(act.with)) warn(ctx, violation('transactionRepeated', { player: act.with }));
     dealtWith.add(act.with);
-    const other = ctx.table.players.find(p => legacyKey(ctx.table, p.id) === act.with)?.id;
+    const other = ctx.table.players.find(p => p.id === act.with)?.id;
     if (other === undefined || other === ctx.player) continue;
     // Only with a neighbour, as the board stands at this point of the turn (94.1, 60).
     if (!areNeighbours(ctx.table, ctx.board, ctx.pack, ctx.player, other)) warn(ctx, violation('notNeighbor', { player: act.with }));

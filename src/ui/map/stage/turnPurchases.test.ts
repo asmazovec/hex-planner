@@ -25,7 +25,7 @@ const [planet] = pack.tiles['20'].planetIds;
 beforeEach(() => {
   act().newGame({ expansions: ['pok'], playerCount: 4, faction: 'sol' }, pack);
   act().setTile('B', '20');
-  act().setPlanetControl(planet, 'me');
+  act().setPlanetControl(planet, 'p1');
   edits.addEntry(1, { type: 'secondary', card: CARD.construction, effects: { systemId: 'B' } }, 'action');
 });
 

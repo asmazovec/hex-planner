@@ -12,7 +12,6 @@ import { violation } from '../../domain/rules/registry';
 import type { StructureKind, UnitCounts } from '../../domain/types';
 import type { GameEvent } from '../events';
 import type { Board, PlayerId } from '../types';
-import { legacyKey } from '../keys';
 import { groundOn, ownerOf, shipsIn } from '../queries';
 import { mapSource, planetsIn } from '../space';
 import { emit, warn, type Ctx } from './context';
@@ -30,10 +29,10 @@ const groundOf = (units: UnitCounts, ctx: Ctx): UnitCounts =>
   Object.fromEntries(Object.entries(units).filter(([id, n]) => (n ?? 0) > 0 && ctx.pack.units[id as keyof UnitCounts]?.ground)) as UnitCounts;
 const some = (units: UnitCounts | undefined): boolean => Object.values(units ?? {}).some(n => (n ?? 0) > 0);
 
-/** The planets of mine the viewer lost to a rival's landing, and the hooks of the viewer's components asked before the loss (the `onControlLost` hook). */
-export interface Lost { planets: { planetId: string; to: string }[]; hooked: string[] }
+/** The planets a landing took from other players, and for each of those players the components asked of the loss, read before their first one (the `onControlLost` hook). */
+export interface Lost { planets: { planetId: string; from: PlayerId; to: PlayerId }[]; hooked: Record<PlayerId, string[]> }
 
-/** What the action did to the planets: which ones got ground forces (they may change hands), which of the viewer's were lost. */
+/** What the action did to the planets: which ones got ground forces (they may change hands), which were taken from another player. */
 export interface Landed { on: string[]; lost: Lost }
 
 export function landUnits(ctx: Ctx, target: string): Landed {
@@ -60,7 +59,7 @@ export function landUnits(ctx: Ctx, target: string): Landed {
     emit(ctx, [{ type: 'UnitsPlaced', player: ctx.player, at: { planet: landing.planet }, units: landed }], { quiet: true });
     if (!on.includes(landing.planet)) on.push(landing.planet);
   }
-  return { on, lost: { planets: [], hooked: [] } };
+  return { on, lost: { planets: [], hooked: {} } };
 }
 
 /**
@@ -71,7 +70,7 @@ export function landUnits(ctx: Ctx, target: string): Landed {
 export function gainedPlanet(ctx: Ctx, planetId: string, before: Board, player: PlayerId): void {
   const was = ownerOf(before, planetId);
   const fromPlayer = was !== undefined;
-  const lost = was === undefined ? [] : KINDS.map(kind => ({ kind, owner: legacyKey(ctx.table, was), count: before.planets[planetId]?.structures[kind] ?? 0 })).filter(s => s.count > 0);
+  const lost = was === undefined ? [] : KINDS.map(kind => ({ kind, owner: was, count: before.planets[planetId]?.structures[kind] ?? 0 })).filter(s => s.count > 0);
   controlHooks(ctx, { planetId, fromPlayer, explores: !fromPlayer, lost }, player);
   const goods = tradeGoodsOnControl(ctx.table, ctx.board, ctx.pack, player, planetId);
   if (goods !== 0) emit(ctx, [{ type: 'TradeGoodsChanged', player, delta: goods }], { quiet: true });
@@ -79,19 +78,19 @@ export function gainedPlanet(ctx: Ctx, planetId: string, before: Board, player: 
 
 /**
  * Each planet landed on that still holds the active player's ground forces is theirs (49.5): the structures of the old
- * owner go with it, it is exhausted, and the components hooked on the gain run. A planet of the viewer's lost to a
- * rival is told to the `onControlLost` hook, once the action is over.
+ * owner go with it, it is exhausted, and the components hooked on the gain run. A planet taken from another player
+ * is told to that player's `onControlLost` hook, once the action is over.
  */
 export function gainControl(ctx: Ctx, landed: Landed): void {
   for (const planetId of landed.on) {
     if (!some(groundOf(groundOn(ctx.board, planetId, ctx.player), ctx))) continue;
     if (ctx.board.planets[planetId]?.owner === ctx.player) continue;
-    const viewerLoses = ctx.board.planets[planetId]?.owner === ctx.table.viewer && ctx.player !== ctx.table.viewer;
-    if (viewerLoses && landed.lost.hooked.length === 0) landed.lost.hooked = inForce(ctx.table, ctx.board, ctx.pack, ctx.table.viewer).filter(id => effectOf(ctx.pack, id)?.on?.onControlLost !== undefined);
+    const loser = ctx.board.planets[planetId]?.owner;
+    if (loser !== undefined) landed.lost.hooked[loser] ??= inForce(ctx.table, ctx.board, ctx.pack, loser).filter(id => effectOf(ctx.pack, id)?.on?.onControlLost !== undefined);
     const before = ctx.board;
     emit(ctx, [{ type: 'PlanetGained', player: ctx.player, planet: planetId }, { type: 'PlanetExhausted', player: ctx.player, planet: planetId }], { quiet: true });
     gainedPlanet(ctx, planetId, before, ctx.player);
-    if (viewerLoses) landed.lost.planets.push({ planetId, to: ctx.table.players.find(p => p.id === ctx.player)?.legacyId ?? ctx.player });
+    if (loser !== undefined) landed.lost.planets.push({ planetId, from: loser, to: ctx.player });
   }
 }
 

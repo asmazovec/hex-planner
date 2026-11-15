@@ -12,7 +12,7 @@ import { violation } from '../../domain/rules/registry';
 import type { ComponentDef } from '../../domain/types';
 import type { TurnFacts } from '../turnFacts';
 import type { GameEvent } from '../events';
-import { holdingsOfCards, legacyKey, playerOfKey } from '../keys';
+import { holdingsOfCards } from '../keys';
 import type { PlayerId } from '../types';
 import { emit, warn, type Ctx } from './context';
 
@@ -44,12 +44,12 @@ export function playComponent(ctx: Ctx, id: string, player: PlayerId): void {
     case 'promissory': {
       const owner = noteAddress(def.id);
       // A note marked by hand has no address: only its faction tells whose it is.
-      if (owner === undefined ? def.faction !== undefined && def.faction === faction : owner === legacyKey(ctx.table, player)) {
+      if (owner === undefined ? def.faction !== undefined && def.faction === faction : owner === player) {
         warn(ctx, violation('ownPromissory', params));
         break;
       }
       if (!held) break;
-      const back = owner === undefined ? undefined : playerOfKey(ctx.table, owner);
+      const back = ctx.table.players.find(p => p.id === owner)?.id;
       const returns = back !== undefined && RETURNS.test(printed);
       if (PURGES.test(printed) || returns) events.push(lost(player, def.id));
       if (returns && !holdOf(ctx, back, def.id)) events.push(gained(back, def.id));
@@ -97,14 +97,11 @@ const known = (ctx: Ctx, ids: string[] | undefined): ComponentDef[] => (ids ?? [
 function howOf(ctx: Ctx, entry: TurnFacts): { outcome?: string; elected?: PlayerId; planet?: string } {
   const choices = entry.type === 'adjustment' ? entry.choices ?? {} : {};
   const elect = choices.elect === undefined ? undefined : String(choices.elect);
-  const byFaction = (key: string): PlayerId | undefined => {
-    const player = playerOfKey(ctx.table, key);
-    return player === undefined || !ctx.table.players.find(p => p.id === player)?.faction ? undefined : player;
-  };
-  const electedKey = elect === undefined || elect in ctx.pack.planets ? entry.owner ?? 'me' : elect;
+  // Only a player with a faction can be elected; with no player named, it is the turn's own player.
+  const seated = (id: string): PlayerId | undefined => ctx.table.players.find(p => p.id === id && p.faction)?.id;
   return {
     outcome: choices.outcome === undefined ? undefined : String(choices.outcome),
-    elected: byFaction(electedKey),
+    elected: seated(elect === undefined || elect in ctx.pack.planets ? entry.player : elect),
     planet: elect !== undefined && elect in ctx.pack.planets ? elect : undefined,
   };
 }

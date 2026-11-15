@@ -2,8 +2,7 @@ import type { TFunction } from 'i18next';
 import { loadPack } from '../../data/loadPack';
 import type { DataPack } from '../../domain/types';
 import { listPlayers } from '../../game/edit/table';
-import { legacyKey } from '../../game/keys';
-import type { Table } from '../../game/types';
+import type { PlayerId, Table } from '../../game/types';
 
 /** Where the rule below would pick the wrong word. */
 const SHORT_NAMES: Record<string, string> = {
@@ -34,12 +33,12 @@ export const playerName = (pack: DataPack, factionId: string, n: number, t: TFun
   pack.factions[factionId]?.name ?? t('players.player', { n });
 
 /**
- * The opponents of a table by seat, as the screens list them: the id they are called by (the old key), the colour, the
- * faction, the seat and the name, the faction or the player number when none is set (the number counts the list, mine first).
+ * The players of a table other than the viewer by seat, as the screens list them: the player id, the colour, the
+ * faction, the seat and the name, the faction or the player number when none is set (the number counts the list, the viewer first).
  */
-export function opponentsBySeat(table: Table, pack: DataPack, t: TFunction): { id: string; color: number; faction: string; seat: number; name: string }[] {
+export function opponentsBySeat(table: Table, pack: DataPack, t: TFunction): { id: PlayerId; color: number; faction: string; seat: number; name: string }[] {
   return listPlayers(table).slice(1)
-    .map((p, index) => ({ id: legacyKey(table, p.id), color: p.color, faction: p.faction, seat: p.seat, name: playerName(pack, p.faction, index + 2, t) }))
+    .map((p, index) => ({ id: p.id, color: p.color, faction: p.faction, seat: p.seat, name: playerName(pack, p.faction, index + 2, t) }))
     .sort((a, b) => a.seat - b.seat);
 }
 
@@ -48,6 +47,10 @@ export const nameOfPlayer = (table: Table, pack: DataPack, id: string, t: TFunct
   const player = table.players.find(p => p.id === id);
   return player ? playerName(pack, player.faction, player.seat, t) : t('players.opponent');
 };
+
+/** How a narrow place names a player of the table: the short name of the faction, or the player number. */
+export const playerShortName = (table: Table, pack: DataPack, id: PlayerId, t: TFunction): string =>
+  shortName(pack, table.players.find(p => p.id === id)?.faction ?? '', nameOfPlayer(table, pack, id, t));
 
 /** Every faction of every expansion: a saved game names its faction whatever expansions are on now. */
 const allFactions = loadPack(['pok', 'te']).factions;

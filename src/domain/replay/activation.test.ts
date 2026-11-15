@@ -3,6 +3,7 @@
  * force, `playAt` runs the play of a component a tactical action names in the middle of the action. Tried with
  * throwaway effects in the registry of a bench's own pack.
  */
+import { legacyKey } from '../../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { bench, componentAction, endOf, HOME, NEAR, TARGET, tactical, using, warningsOf, type Bench } from '../effects/components/kit';
 import { gain, tokens } from '../../game/abilities/emit';
@@ -25,7 +26,7 @@ describe('onActivate', () => {
     const seen: unknown[] = [];
     const move = tactical(TARGET, { moves: [{ from: HOME, units: { cruiser: 1 }, via: [NEAR] }] });
     const table = bench({ faction: 'sol', units: { [HOME]: { cruiser: 1 } }, start: { technologies: [TECH] }, entries: [move], game: { map: MAP } });
-    give(table, TECH, { on: { onActivate: (ctx, a) => { seen.push({ id: ctx.id, owner: ctx.key(ctx.holder), activator: ctx.key(a.activator), system: a.systemId, token: ctx.board.systems[a.systemId]?.tokens.includes(a.activator) }); } } });
+    give(table, TECH, { on: { onActivate: (ctx, a) => { seen.push({ id: ctx.id, owner: legacyKey(ctx.table, ctx.holder), activator: legacyKey(ctx.table, a.activator), system: a.systemId, token: ctx.board.systems[a.systemId]?.tokens.includes(a.activator) }); } } });
     warningsOf(table, move);
     expect(seen).toEqual([{ id: TECH, owner: 'me', activator: 'me', system: TARGET, token: true }]);
   });
@@ -34,7 +35,7 @@ describe('onActivate', () => {
     const seen: unknown[] = [];
     const move = tactical(TARGET, { moves: [] });
     const table = bench({ faction: 'sol', entries: [move], game: { map: MAP, opponents: [O1], start: { me: {}, opponents: { o1: { technologies: [TECH] } } } } });
-    give(table, TECH, { on: { onActivate: (ctx, a) => { seen.push({ owner: ctx.key(ctx.holder), activator: ctx.key(a.activator), faction: ctx.my.faction, mine: ctx.holder === a.activator }); } } });
+    give(table, TECH, { on: { onActivate: (ctx, a) => { seen.push({ owner: legacyKey(ctx.table, ctx.holder), activator: legacyKey(ctx.table, a.activator), faction: ctx.my.faction, mine: ctx.holder === a.activator }); } } });
     warningsOf(table, move);
     expect(seen).toEqual([{ owner: 'o1', activator: 'me', faction: 'naalu', mine: false }]);
   });
@@ -43,7 +44,7 @@ describe('onActivate', () => {
     const seen: unknown[] = [];
     const theirs: Entry = tactical(TARGET, { moves: [] }, { owner: 'o1' });
     const table = bench({ faction: 'sol', entries: [theirs], start: { technologies: [TECH] }, game: { map: MAP, opponents: [O1] } });
-    give(table, TECH, { on: { onActivate: (ctx, a) => { seen.push({ owner: ctx.key(ctx.holder), activator: ctx.key(a.activator), faction: ctx.my.faction }); } } });
+    give(table, TECH, { on: { onActivate: (ctx, a) => { seen.push({ owner: legacyKey(ctx.table, ctx.holder), activator: legacyKey(ctx.table, a.activator), faction: ctx.my.faction }); } } });
     warningsOf(table, theirs);
     expect(seen).toEqual([{ owner: 'me', activator: 'o1', faction: 'sol' }]);
   });

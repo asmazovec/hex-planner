@@ -7,12 +7,11 @@ import type { StartHoldings } from '../domain/types';
 import type { Game, Plan } from './old/domain/types';
 import type { Player } from '../domain/players';
 import { SAVE_FORMAT } from '../domain/types';
-import { legacyPlayer, playerOfLegacy } from '../game/entry';
-import { factsOf } from '../game/turnFacts';
-import { nestedEntries } from './old/game/entry';
+import { entryOf, nestedEntries } from './old/game/entry';
+import { legacyKey, legacyPlayer, playerOfLegacy, toOld, toTable } from './old/game/keys';
 import { GHOST_SEAT } from './old/game/fromLegacy';
 import { planOf, tableOf } from './old/game/fromLegacy';
-import type { SavedGame, StartEdits } from '../game/save';
+import { SAVED_FORMAT, type SavedGame, type StartEdits } from '../game/save';
 import type { Round as KernelRound } from '../game/round';
 import type { Table, UnitCounts } from '../game/types';
 import type { Round } from './old/domain/types';
@@ -40,7 +39,7 @@ export const originOf = (game: Game): SavedGame | undefined => origins.get(game)
 /** The players of the table in the order of the game's list (me first, then the opponents as listed, then the strays): the list keeps its order when seats are swapped. */
 const inListOrder = (game: Game, table: Table): Table['players'] => {
   const order = ['me', ...game.opponents.map(o => o.id)];
-  const rank = (p: Table['players'][number]): number => { const at = order.indexOf(p.legacyId ?? p.id); return at < 0 ? order.length + p.seat : at; };
+  const rank = (p: Table['players'][number]): number => { const at = order.indexOf(legacyKey(table, p.id)); return at < 0 ? order.length + p.seat : at; };
   return [...table.players].sort((a, b) => rank(a) - rank(b));
 };
 
@@ -51,8 +50,9 @@ export function savedOf(game: Game): SavedGame {
   const key = (legacy: string): string => playerOfLegacy(table, legacy) ?? legacy;
   const byPlayer = (record: Record<string, Record<string, UnitCounts>>): Record<string, Record<string, UnitCounts>> =>
     Object.fromEntries(Object.entries(record).map(([place, byOwner]) => [place, Object.fromEntries(Object.entries(byOwner).map(([owner, units]) => [key(owner), units]))]));
-  const holdings: Record<string, StartHoldings> = { [table.viewer]: game.start.me };
-  for (const [id, held] of Object.entries(game.start.opponents)) holdings[key(id)] = held;
+  // What the players hold at the start, the notes among it under the ids of their players.
+  const holdings: Record<string, StartHoldings> = { [table.viewer]: toTable(table, game.start.me) };
+  for (const [id, held] of Object.entries(game.start.opponents)) holdings[key(id)] = toTable(table, held);
   const points: Record<string, number> = { [table.viewer]: game.vp };
   for (const o of game.opponents) points[key(o.id)] = o.vp;
   const control: Record<string, string> = {};
@@ -63,13 +63,14 @@ export function savedOf(game: Game): SavedGame {
     points, holdings, units: byPlayer(game.enemyUnits), ground: byPlayer(game.enemyGround), control,
     docks: [...game.docks], pds: { ...game.pds },
     expedition: {
+      // The old game knows only that another player took a part, not who: it is written for the first of the others.
       slices: Object.fromEntries(Object.entries(game.expedition.slices).map(([slice, by]) => [slice, by === null ? null : by === 'me' ? table.viewer : table.players.find(p => p.id !== table.viewer)?.id ?? 'other'])),
       thundersEdgeSystem: game.expedition.thundersEdgeSystem,
     },
     fracture: { active: game.fracture.active, ingress: [...game.fracture.ingress], seat: game.fracture.seat, ...(game.fracture.tiles ? { tiles: { ...game.fracture.tiles } } : {}) },
   };
   return {
-    id: game.id, ...(game.name !== undefined ? { name: game.name } : {}), format: 'ti4-planner/3', schemaVersion: game.schemaVersion, dataVersion: game.dataVersion,
+    id: game.id, ...(game.name !== undefined ? { name: game.name } : {}), format: SAVED_FORMAT, schemaVersion: game.schemaVersion, dataVersion: game.dataVersion,
     table: { ...table, players: inListOrder(game, table).map(p => ({ ...p })) }, start,
     plans: game.plans.map(plan => ({ id: plan.id, name: plan.name, rounds: planOf(table, plan, pack) })),
     activePlanId: game.activePlanId,
@@ -77,7 +78,7 @@ export function savedOf(game: Game): SavedGame {
 }
 
 const entriesOf = (table: Table, round: KernelRound): Round['entries'] =>
-  round.turns.flatMap(turn => [factsOf(table, turn), ...nestedEntries(table, turn)])
+  round.turns.flatMap(turn => [entryOf(table, turn), ...nestedEntries(table, turn)])
     // An entry with no acts has none: the kernel's `acts` is always a list.
     .map(entry => (!('acts' in entry) || (entry.acts && entry.acts.length > 0) ? entry : omitActs(entry)));
 
@@ -134,7 +135,7 @@ function viewOf(saved: SavedGame): Game {
     id: saved.id, ...(saved.name !== undefined ? { name: saved.name } : {}), format: SAVE_FORMAT, schemaVersion: saved.schemaVersion, dataVersion: saved.dataVersion,
     expansions: [...table.expansions], playerCount: real.length, layout: table.layout, faction: me?.faction ?? '', seat: me?.seat ?? 1, color: me?.color ?? 1,
     vp: start.points[table.viewer] ?? 0, map: { ...table.map }, opponents,
-    start: { me: start.holdings[table.viewer] ?? {}, opponents: Object.fromEntries(opponents.flatMap(o => { const held = start.holdings[playerOfLegacy(table, o.id) ?? o.id]; return held ? [[o.id, held]] : []; })) },
+    start: { me: toOld(table, start.holdings[table.viewer] ?? {}), opponents: Object.fromEntries(opponents.flatMap(o => { const held = start.holdings[playerOfLegacy(table, o.id) ?? o.id]; return held ? [[o.id, toOld(table, held)]] : []; })) },
     enemyUnits: byLegacy(nonEmpty(start.units)), enemyGround: byLegacy(nonEmpty(start.ground)), planetControl, planetOwner,
     docks: [...start.docks], pds: { ...start.pds },
     expedition: {

@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { HEX_INNER, hexLayout, type GroundStack, type HexLayout, type HexLayoutInput, type SpaceStack, type StackOwner, type TokenKind } from './hexLayout';
+import { HEX_INNER, hexLayout as layoutFor, type GroundStack, type HexLayout, type HexLayoutInput as LayoutInput, type SpaceStack, type StackOwner, type TokenKind } from './hexLayout';
+
+/** The tiles of these tests are seen by the player called `me`; `opponents` are the other players in seat order. */
+type HexLayoutInput = Omit<LayoutInput, 'viewer' | 'seats'> & { opponents?: StackOwner[] };
+const hexLayout = ({ opponents, ...input }: HexLayoutInput): HexLayout => layoutFor({ ...input, viewer: 'me', ...(opponents ? { seats: opponents } : {}) });
 
 const SHIPS: TokenKind[] = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter'];
 const GROUND: TokenKind[] = ['infantry', 'mech', 'pds', 'spacedock'];

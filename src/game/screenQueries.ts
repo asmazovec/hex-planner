@@ -11,7 +11,6 @@ import type { MergedCount } from '../domain/losses';
 import type { AdjustmentKind, DataPack, UnitCounts, UnitId, Warning } from '../domain/types';
 import type { Tactical, Turn } from './actions';
 import { mergedTurn } from './edit/merged';
-import { legacyKey } from './keys';
 import { payingPlanets, planetValue } from './queries';
 import type { Round } from './round';
 import type { SavedGame } from './save';
@@ -46,26 +45,26 @@ export function spendableOn(table: Table, board: Board, pack: DataPack, player: 
     + (board.players[player]?.tradeGoods ?? 0);
 }
 
-/** Who holds each expedition part: those set at the start, and mine from the expeditions of the plan's turns that stand. */
-export function sliceOwnersOf(saved: SavedGame): Record<string, 'me' | 'other'> {
-  const owners: Record<string, 'me' | 'other'> = {};
-  for (const [id, player] of Object.entries(saved.start.expedition.slices)) if (player) owners[id] = player === saved.table.viewer ? 'me' : 'other';
+/** Who holds each expedition part: those set at the start, and those taken by the expeditions of the plan's turns that stand. */
+export function sliceOwnersOf(saved: SavedGame): Record<string, PlayerId> {
+  const owners: Record<string, PlayerId> = {};
+  for (const [id, player] of Object.entries(saved.start.expedition.slices)) if (player) owners[id] = player;
   const plan = saved.plans.find(p => p.id === saved.activePlanId);
   for (const round of plan?.rounds ?? []) {
     for (const turn of allTurns(round)) {
       if (turn.status === 'cancelled') continue;
-      for (const act of turn.acts) if (act.kind === 'expedition' && act.slice) owners[act.slice] = 'me';
+      for (const act of turn.acts) if (act.kind === 'expedition' && act.slice) owners[act.slice] = turn.player;
     }
   }
   return owners;
 }
 
 /**
- * The first round whose turns bring each component, by the owner key of the player (`me` or a rival's id): gains,
+ * The first round whose turns bring each component, by player: gains,
  * research and scored objectives; done turns for `now`, planned ones too for `forecast`. What is held from the start is not listed.
  */
-export function holdingRoundsOf(table: Table, rounds: Round[], filter: 'now' | 'forecast'): Record<string, Record<string, number>> {
-  const found: Record<string, Record<string, number>> = {};
+export function holdingRoundsOf(rounds: Round[], filter: 'now' | 'forecast'): Record<PlayerId, Record<string, number>> {
+  const found: Record<PlayerId, Record<string, number>> = {};
   for (const round of [...rounds].sort((a, b) => a.number - b.number)) {
     for (const turn of allTurns(round)) {
       if (turn.status === 'cancelled' || (filter === 'now' && turn.status !== 'done')) continue;
@@ -76,17 +75,17 @@ export function holdingRoundsOf(table: Table, rounds: Round[], filter: 'now' | '
         ...(action.kind === 'status' ? action.scored ?? [] : []),
       ];
       if (ids.length === 0) continue;
-      const mine = (found[legacyKey(table, turn.player)] ??= {});
-      for (const id of ids) mine[id] ??= round.number;
+      const theirs = (found[turn.player] ??= {});
+      for (const id of ids) theirs[id] ??= round.number;
     }
   }
   return found;
 }
 
-/** The first round whose turns of mine research each unit upgrade: done ones for `now`, planned ones too for `forecast`. */
-export function upgradeRoundsOf(table: Table, rounds: Round[], filter: 'now' | 'forecast', pack: DataPack): Record<string, number> {
+/** The first round whose turns of a player research each unit upgrade: done ones for `now`, planned ones too for `forecast`. */
+export function upgradeRoundsOf(player: PlayerId, rounds: Round[], filter: 'now' | 'forecast', pack: DataPack): Record<string, number> {
   const found: Record<string, number> = {};
-  for (const [id, round] of Object.entries(holdingRoundsOf(table, rounds, filter).me ?? {})) {
+  for (const [id, round] of Object.entries(holdingRoundsOf(rounds, filter)[player] ?? {})) {
     const [unit] = upgradesOf({ technologies: [id] }, pack);
     if (unit) found[unit] = Math.min(found[unit] ?? round, round);
   }

@@ -3,6 +3,7 @@ import { textOf } from '../../../domain/components';
 import type { PlanetValues } from '../../../domain/payment';
 import type { DataPack, PlanetDef } from '../../../domain/types';
 import { LEGENDARY_SHAPE, TECH_SHAPES } from '../marks';
+import type { Held } from '../held';
 import { PlanetBadge } from '../PlanetBadge';
 
 export interface PlanetDetailsProps {
@@ -13,7 +14,7 @@ export interface PlanetDetailsProps {
   relic: boolean;
   exhausted: boolean;
   /** Whose it is, for the edge of its picture. */
-  control?: 'me' | 'enemy';
+  held?: Held;
   holderColor?: number;
   /** What the components make of its resources and influence. */
   values?: PlanetValues;
@@ -33,13 +34,13 @@ function Mark({ d, className, label }: { d: string; className: string; label: st
  * All printed parameters of one planet: one line with its picture as the map draws it and its name, resources/influence and the marks
  * (traits, technology specialties, legendary), then what its card says in words. Control is chosen beside it.
  */
-export function PlanetDetails({ planet, pack, relic, exhausted, control, holderColor, values }: PlanetDetailsProps) {
+export function PlanetDetails({ planet, pack, relic, exhausted, held, holderColor, values }: PlanetDetailsProps) {
   const { t } = useTranslation();
   const summary = planet.legendary ? textOf(pack, `legendary:${planet.id}`) : '';
   return (
     <div className="planet-details">
       <div className="planet-head">
-        <PlanetBadge planet={planet} control={control} holderColor={holderColor} exhausted={exhausted} values={values} />
+        <PlanetBadge planet={planet} held={held} holderColor={holderColor} exhausted={exhausted} values={values} />
         <span className="planet-values">
           <span className={`value-resources${values?.changed ? ' value-changed' : ''}`}>{values?.resources ?? planet.resources}</span>/<span className={`value-influence${values?.changed ? ' value-changed' : ''}`}>{values?.influence ?? planet.influence}</span>
         </span>

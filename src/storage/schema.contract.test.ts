@@ -46,7 +46,7 @@ const actions: Action[] = [
   { kind: 'secondary', card: 7, effects },
   { kind: 'component', component: 'technology:c', note: 'n', effects, payment: pay },
   { kind: 'pass' },
-  { kind: 'status', tactic: 1, fleet: 1, strategy: 1, vp: 1, opponentVp: { p2: 1 }, scored: ['publicObjective:z'], spend },
+  { kind: 'status', tactic: 1, fleet: 1, strategy: 1, points: { p1: 1, p2: 1 }, scored: ['publicObjective:z'], spend },
   { kind: 'agenda', label: 'l', delta, choices: { outcome: 'for', elect: 3 } },
   { kind: 'correction', label: 'l', delta, purpose: 'losses' },
 ];
@@ -66,7 +66,7 @@ function full(): Required<SavedGame> {
   const saved = sampleGame();
   return {
     ...saved, name: 'name', start,
-    table: { ...saved.table, players: saved.table.players.map(p => ({ ...p, setup: { technologies: ['technology:a'], structurePlanet: 'a' }, legacyId: p.legacyId ?? p.id })) },
+    table: { ...saved.table, players: saved.table.players.map(p => ({ ...p, setup: { technologies: ['technology:a'], structurePlanet: 'a' } })) },
     plans: [{ id: 'p', name: 'plan', rounds: [{ number: 1, strategyCard: 3, backupCard: 4, held: [1, 2], turns }] }],
     activePlanId: 'p',
   };

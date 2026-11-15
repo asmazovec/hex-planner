@@ -1,8 +1,10 @@
+import { factsOfEntry } from '../types';
 import type { DataPack, UnitId, UnitCounts, RuleStep, Warning } from '../../../../domain/types';
 import type { Game, Entry } from '../types';
 import type { GameState } from '../types';
 import { planetsOf } from '../../../../domain/replay/board';
-import { unitIds, add, type TacticalEntry } from '../../../../domain/replay/state';
+import { unitIds, add } from '../../../../domain/replay/state';
+import type { TacticalEntry } from '../types';
 import { hasShips, type Ground, type ProductionPlace, placesOn, productionDueOn, type ProductionSource, type Producer, producersOn, producerPlanets, checkProductionOn, costOn } from '../../../../domain/replay/production';
 import { homeSlot } from '../../../../domain/strategy';
 import { holderOf } from '../../../../domain/effects/registry';
@@ -41,7 +43,7 @@ export function checkProduction(
   game: Game, state: GameState, target: string, units: UnitCounts, pack: DataPack,
   onPlanets: Record<string, UnitCounts> = {}, source: ProductionSource = 'system', step?: RuleStep, entry?: Entry,
 ): Warning[] {
-  return checkProductionOn(groundOf(game, state, pack), target, units, pack, onPlanets, source, step, entry);
+  return checkProductionOn(groundOf(game, state, pack), target, units, pack, onPlanets, source, step, factsOfEntry(entry));
 }
 /**
  * The combined cost of a production as it is paid: each unit's cost (`unitCost`, with the laws and what the entry
@@ -49,7 +51,7 @@ export function checkProduction(
  * ruling 1: units placed without one get no reduction).
  */
 export function costOf(game: Game, state: GameState, units: UnitCounts, pack: DataPack, producing: boolean, entry?: Entry): number {
-  return costOn(groundOf(game, state, pack), units, pack, producing, entry);
+  return costOn(groundOf(game, state, pack), units, pack, producing, factsOfEntry(entry));
 }
 /** The tactical action's production is paid in resources: the payment is made, and a shortfall reported. `producing`: a unit used PRODUCTION. */
 export function payProduction(game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[], producing = true): void {
@@ -65,7 +67,7 @@ export function payProduction(game: Game, state: GameState, entry: TacticalEntry
  * entry's system in that state.
  */
 export function productionDue(game: Game, state: GameState, units: UnitCounts, pack: DataPack, entry?: Entry): number {
-  return productionDueOn(groundOf(game, state, pack), units, pack, entry);
+  return productionDueOn(groundOf(game, state, pack), units, pack, factsOfEntry(entry));
 }
 
 /**

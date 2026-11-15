@@ -17,7 +17,7 @@ export const ability: Ability = {
   rule: id,
   holder: 'self',
   play: ctx => {
-    const elected = ctx.playerOf(String(ctx.choices.elect ?? ctx.entry?.owner ?? 'me'));
+    const elected = ctx.playerOf(String(ctx.choices.elect ?? ctx.actor));
     if (elected === undefined) return [];
     const have = ctx.of(elected).pools;
     return [tokens(elected, { tactic: 3 - have.tactic, fleet: 3 - have.fleet, strategy: 2 - have.strategy })];

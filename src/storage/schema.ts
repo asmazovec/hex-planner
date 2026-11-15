@@ -65,8 +65,8 @@ const action: z.ZodType<Action> = z.lazy(() => z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('component'), component: z.string().optional(), note: z.string(), effects: cardEffects.optional(), payment: payment.optional() }),
   z.object({ kind: z.literal('pass') }),
   z.object({
-    kind: z.literal('status'), tactic: z.number(), fleet: z.number(), strategy: z.number(), vp: z.number().optional(),
-    opponentVp: byPlayer(z.number()).optional(), scored: ids.optional(), spend: statusSpend.optional(),
+    kind: z.literal('status'), tactic: z.number(), fleet: z.number(), strategy: z.number(),
+    points: byPlayer(z.number()).optional(), scored: ids.optional(), spend: statusSpend.optional(),
   }),
   z.object({ kind: z.literal('agenda'), label: z.string(), delta: adjustmentDelta, choices: choices.optional() }),
   z.object({ kind: z.literal('correction'), label: z.string(), delta: adjustmentDelta, purpose: z.enum(['losses', 'build', 'setup']).optional() }),
@@ -91,7 +91,7 @@ const setup = z.object({ technologies: ids.optional(), structurePlanet: z.string
 const table = z.object({
   id: z.string(), name: z.string(), expansions: z.array(z.enum(['pok', 'te'])),
   layout: z.enum(['standard', 'hyperlanes', 'alternate', 'large']), map: z.record(z.string(), z.string()),
-  players: z.array(z.object({ id: z.string(), faction: z.string(), seat: z.number().int(), color: z.number().int(), setup, legacyId: z.string().optional() })),
+  players: z.array(z.object({ id: z.string(), faction: z.string(), seat: z.number().int(), color: z.number().int(), setup })),
   viewer: z.string(),
 });
 const start = z.object({
@@ -129,7 +129,7 @@ export const savedSchema = z.object({
   if (!saved.table.players.some(p => p.id === saved.table.viewer)) ctx.addIssue({ code: 'custom', path: ['table', 'viewer'], message: 'the viewer is not a player' });
 }) satisfies z.ZodType<SavedGame>;
 
-/** The number of the format in a mark like `ti4-planner/3`; null for anything else. */
+/** The number of the format in a mark like `ti4-planner/4`; null for anything else. */
 function formatNumber(mark: unknown): number | null {
   const [name] = SAVE_FORMAT.split('/');
   const found = typeof mark === 'string' && mark.startsWith(`${name}/`) ? /^\d+$/.exec(mark.slice(name.length + 1)) : null;

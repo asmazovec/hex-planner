@@ -1,4 +1,5 @@
 /** The strategy cards on the kernel: each card's rule emits its events straight onto the board. */
+import { toTable } from '../../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../domain/replay/cards/ids';
 import { primary, rulesGame, rulesPack, secondary } from '../../domain/rules/kit';
@@ -46,7 +47,7 @@ describe('a strategy card rule', () => {
   // resolve the secondary ability of that strategy card." The token is not spent: with none left the pool stays at zero.
   test('a secondary that uses a note of Acquiescence spends no token, and the lack of one is still told', () => {
     const note = 'promissory:acq@o1';
-    const board = applyAll(start(), [{ type: 'CardGained', player: me, card: note }]);
+    const board = applyAll(start(), [{ type: 'CardGained', player: me, card: toTable(table, note) }]);
     const entry = { ...secondary(CARD.trade), uses: [note] };
     const spent = resolveTurn(table, board, turnOf(table, entry, pack), pack, { track: newTrack({ [me]: [] }) });
     expect(poolsOf(spent.board, me).strategy).toBe(2);

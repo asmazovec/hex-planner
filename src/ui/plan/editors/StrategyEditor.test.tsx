@@ -309,7 +309,7 @@ describe('Diplomacy', () => {
     const data = loadPack(['pok', 'te']);
     const home = data.tiles[data.factions.hacan.homeTile].planetIds;
     const far = data.tiles['25'].planetIds[0];
-    store().setPlanetControl(far, 'me');
+    store().setPlanetControl(far, 'p1');
     edits.addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: null, payment: { planets: [...home, far], tradeGoods: 0 } }] }, 'action');
     return { home, far, name: (id: string) => new RegExp(data.planets[id].name) };
   };
@@ -366,7 +366,7 @@ describe('Diplomacy', () => {
   test('the primary does not offer Mecatol Rex as valid, but it can still be tapped', async () => {
     const CENTRE = '0,0';
     store().setTile(CENTRE, '112');
-    store().setPlanetControl('mrte', 'me');
+    store().setPlanetControl('mrte', 'p1');
     await primary('Diplomacy');
     await click('Choose a system with your planet');
     expect(tile(CENTRE).getAttribute('class')).not.toContain('valid');
@@ -428,7 +428,7 @@ describe('Construction', () => {
     expect(cardEntry().effects?.structures).toMatchObject([{ kind: 'pds' }]);
     expect(game().pds).toEqual(pds);
     expect(game().docks).toEqual(docks);
-    const ringed = document.querySelector('.stage-hex [data-stack="me|pds|0"] .token-hit');
+    const ringed = document.querySelector('.stage-hex [data-stack="p1|pds|0"] .token-hit');
     expect(ringed).not.toBeNull();
     await userEvent.click(ringed!);
     expect(cardEntry().effects?.structures).toBeUndefined();
@@ -713,7 +713,7 @@ describe('Imperial', () => {
     await primary('Imperial');
     expect(screen.getByText('Mecatol Rex is not under your control: no point.')).toBeVisible();
     expect(cell('VP')).toHaveTextContent(/^VP0$/);
-    act(() => store().setPlanetControl('mrte', 'me'));
+    act(() => store().setPlanetControl('mrte', 'p1'));
     expect(screen.getByText('I control Mecatol Rex: +1 point')).toBeVisible();
     expect(cell('VP')).toHaveTextContent('0 → 1');
     expect(screen.queryByRole('button', { name: /^I control Mecatol Rex/ })).toBeNull();

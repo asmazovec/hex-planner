@@ -5,7 +5,6 @@ import { componentById } from '../../../domain/components';
 import type { ComponentKind, DataPack, Warning } from '../../../domain/types';
 import type { Payment, Turn } from '../../../game/actions';
 import { withChoicesOf, withNote, withPlayEffects, withPlayed, withPlayPayment, withProducedPayment } from '../../../game/edit/turn';
-import { legacyKey } from '../../../game/keys';
 import { autoPayOn, effectOfComponent as effectOf, playedCostOf, productionDueOnBoard, readyToPlayOn } from '../../../game/planQueries';
 import { mapSource } from '../../../game/space';
 import { ComponentPicker } from '../../components/ComponentPicker';
@@ -69,12 +68,11 @@ export function TurnEditor({ turn, pack, view, warnings, common, pickFirst, onCh
   const [picking, setPicking] = useState(() => Boolean(pickFirst) && turn.action.kind === 'component' && turn.action.component === undefined);
   // What the owner holds ready just before the entry stands first in the choice; the rest can be played too, and the plan warns.
   const player = turn.player;
-  const key = legacyKey(view.table, player);
   const action = turn.action;
   const ready = useMemo(() => readyToPlayOn(view.table, view.board, pack, player), [view, pack, player]);
   const map = mapSource(view.table, view.board);
   const played = action.kind === 'component' && action.component ? componentById(pack, action.component) : undefined;
-  const cost = playedCostOf(view.table, pack, turn);
+  const cost = playedCostOf(pack, turn);
   const payment: Payment = action.kind === 'component' && action.payment ? action.payment : { planets: [], tradeGoods: 0 };
   const makes = action.kind === 'component' && played ? effectOf(pack, played.id)?.produces === true : false;
   const made = action.kind === 'component' ? action.effects?.production : undefined;
@@ -131,7 +129,7 @@ export function TurnEditor({ turn, pack, view, warnings, common, pickFirst, onCh
               )}
             </Section>
           )}
-          <StepHints pack={pack} table={view.table} board={view.board} step="component" players={[key]} />
+          <StepHints pack={pack} table={view.table} board={view.board} step="component" players={[player]} />
           <NoteField label={t('plan.entries.note')} value={action.note} onCommit={note => onChange(withNote(turn, note))} />
         </EditorPart>
       )}

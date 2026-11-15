@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { nameOfPlayer, shortName } from '../players/names';
+import { playerShortName } from '../players/names';
 import { systemTitle } from '../map/systemName';
 import { componentById } from '../../domain/components';
 import type { DataPack } from '../../domain/types';
@@ -27,10 +27,6 @@ export function expeditionText(part: { sliceId: string | null; payment: { planet
   const paid = [...planets.map(id => pack.planets[id]?.name ?? id), ...(tradeGoods > 0 ? [t('plan.steps.tradeGoods', { n: tradeGoods })] : [])];
   return [t(`plan.slice.${part.sliceId}`), ...(paid.length > 0 ? [paid.join(', ')] : [])].join(' · ');
 }
-
-/** How a narrow place names a player of the table: the short name of the faction, or the player number. */
-const playerShortName = (table: Table, pack: DataPack, id: string, t: T): string =>
-  shortName(pack, table.players.find(p => p.id === id)?.faction ?? '', nameOfPlayer(table, pack, id, t));
 
 /** One act of a turn read as a line, as the plan row and the turn block show it. */
 export const turnActLine = (act: Transaction | Expedition, table: Table, pack: DataPack, t: T): string => (act.kind === 'expedition'

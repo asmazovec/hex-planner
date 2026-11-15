@@ -21,7 +21,7 @@ export const ability: Ability = {
     // "The elected player gains this card and 1 victory point": once, when the law is resolved. The passing of the card
     // to the winner of a combat is not modelled (who wins is not in the plan).
     gained: ctx => {
-      const who = ctx.playerOf(String(ctx.choices.elect ?? ctx.key(ctx.holder)));
+      const who = ctx.playerOf(String(ctx.choices.elect ?? ctx.holder));
       return who === undefined ? undefined : [gain.points(who, 1)];
     },
     // "... the previous owner of this card loses 1 victory point": a law taken out of play by an entry of its owner.

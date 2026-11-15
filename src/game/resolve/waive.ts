@@ -23,7 +23,6 @@ import { unitStats } from '../../domain/unitStats';
 import { readerOf } from '../abilities/facade';
 import { appliedOn, holderIn, inForce } from '../abilities/registry';
 import type { PermitContext, RouteBlockKind } from '../abilities/types';
-import { playerOfKey } from '../keys';
 import { groundIn } from '../queries';
 import { adjacentSlots, blockersOf, mapSource, pathOf, planetsIn, shipBlockers } from '../space';
 import type { Board, PlayerId, Table } from '../types';
@@ -61,7 +60,7 @@ function askedFor(ctx: Ctx, before: Board, earlier: readonly string[]): Asked[] 
   // What the other side of a deal holds lifts the checks of that deal, where its text says so (Guild Ships: either may start negotiating).
   for (const act of 'acts' in ctx.entry ? ctx.entry.acts ?? [] : []) {
     if (act.kind !== 'transaction') continue;
-    const other = playerOfKey(table, act.with);
+    const other = table.players.find(p => p.id === act.with)?.id;
     if (other === undefined) continue;
     for (const id of inForce(table, before, pack, other)) {
       const effect = known.has(noteBase(id)) ? effectOf(pack, id) : undefined;
@@ -133,7 +132,7 @@ function permitContext(ctx: Ctx, before: Board, earlier: readonly string[], aske
     },
     shipsOnly: (warning: Warning): boolean => unitIds(moveOf(warning)?.units ?? {}).every(unit => isShip(unit)),
     playerNear: (player: string, slot: string): boolean => {
-      const who = playerOfKey(table, player);
+      const who = table.players.find(p => p.id === player)?.id;
       if (who === undefined) return false;
       const reader = readerOf(table, before, pack, who);
       return [slot, ...adjacentSlots(table, before, slot, pack)].some(here => reader.standsIn(here, planetsIn(table, before, pack, here)));

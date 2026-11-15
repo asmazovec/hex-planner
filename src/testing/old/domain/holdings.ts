@@ -1,8 +1,8 @@
-import type { DataPack, ComponentDef, StartHoldings, ComponentKind, LeaderState } from '../../../domain/types';
-import type { Game } from './types';
+import type { DataPack, ComponentDef, StartHoldings, ComponentKind, LeaderState, UpgradeId } from '../../../domain/types';
+import type { Game, Round } from './types';
 import type { Holdings } from './types';
 import { noteAddress, textOf, componentById, noteId } from '../../../domain/components';
-import { type NotePlace, genericNotes, factionNotes, kindOf, HOLDING_FIELD, COPIED } from '../../../domain/holdings';
+import { type NotePlace, genericNotes, factionNotes, kindOf, HOLDING_FIELD, COPIED, upgradesOf } from '../../../domain/holdings';
 
 /**
  * The player a note belongs to, whoever holds it: its address, when that player is in the game. `viewer` is the player
@@ -86,4 +86,34 @@ export function setLeader(game: Game, player: string, id: string, state: LeaderS
   const { [id]: old, ...leaders } = start.leaders ?? {};
   void old;
   return withStart(game, player, { ...start, leaders: state ? { ...leaders, [id]: state } : leaders });
+}
+/**
+ * The first round whose entries bring each component, by player (`me` or an opponent id): gains, research and scored
+ * objectives; done entries for `now`, planned ones too for `forecast`. What is held from the start is not listed.
+ */
+export function holdingRounds(plan: { rounds: Round[] }, filter: 'now' | 'forecast'): Record<string, Record<string, number>> {
+  const rounds: Record<string, Record<string, number>> = {};
+  for (const round of [...plan.rounds].sort((a, b) => a.number - b.number)) {
+    for (const entry of round.entries) {
+      if (entry.status === 'cancelled' || (filter === 'now' && entry.status !== 'done')) continue;
+      const ids = [
+        ...(entry.gains ?? []),
+        ...(entry.type === 'strategic' || entry.type === 'secondary' ? entry.effects?.researched ?? [] : []),
+        ...(entry.type === 'statusTokens' ? entry.scored ?? [] : []),
+      ];
+      if (ids.length === 0) continue;
+      const mine = (rounds[entry.owner ?? 'me'] ??= {});
+      for (const id of ids) mine[id] ??= round.number;
+    }
+  }
+  return rounds;
+}
+/** The first round whose entries of mine research each unit upgrade: done ones for `now`, planned ones too for `forecast`. */
+export function entryUpgradeRounds(plan: { rounds: Round[] }, filter: 'now' | 'forecast', pack: DataPack): Partial<Record<UpgradeId, number>> {
+  const rounds: Partial<Record<UpgradeId, number>> = {};
+  for (const [id, round] of Object.entries(holdingRounds(plan, filter).me ?? {})) {
+    const [unit] = upgradesOf({ technologies: [id] }, pack);
+    if (unit) rounds[unit] = Math.min(rounds[unit] ?? round, round);
+  }
+  return rounds;
 }

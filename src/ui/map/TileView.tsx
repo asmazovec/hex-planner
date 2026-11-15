@@ -8,7 +8,8 @@ import { isOnMap, tileIdOf } from '../../domain/replay';
 import type { PlanetValues } from '../../domain/payment';
 import type { DataPack, PlanetDef } from '../../domain/types';
 import { mapSource, planetsIn } from '../../game/space';
-import { othersOf, ownerKey, planetShown, playerOfOwner, tileStacks } from '../../game/tile';
+import { othersOf, tileStacks } from '../../game/tile';
+import { planetSeen, type Held } from './held';
 import type { Board, PlayerId, Table } from '../../game/types';
 import { tableColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
@@ -25,7 +26,7 @@ export interface TileViewProps {
   pack: DataPack;
   table: Table;
   board: Board;
-  /** Whose eyes the tile looks through: their units are `me`, the others stand after them by seat. The viewer of the table by default. */
+  /** Whose eyes the tile looks through: their units stand first, the others after them by seat. The viewer of the table by default. */
   viewer?: PlayerId;
   highlight?: Highlight;
   selected?: boolean;
@@ -143,11 +144,11 @@ function useHexLayout(input: HexLayoutInput) {
 }
 
 /** A planet as the map draws it: its disc, the numbers, the marks of its traits and technology, and the strike when exhausted. */
-export function PlanetMark({ planet, control, holderColor, exhausted, values }: { planet: PlanetDef; control?: 'me' | 'enemy'; holderColor?: number; exhausted: boolean; values?: PlanetValues }) {
+export function PlanetMark({ planet, held, holderColor, exhausted, values }: { planet: PlanetDef; held?: Held; holderColor?: number; exhausted: boolean; values?: PlanetValues }) {
   return (
     <>
       <circle
-        r={PLANET_BASE} className={`planet-disc planet-${control ?? 'free'}`}
+        r={PLANET_BASE} className={`planet-disc planet-${held ?? 'free'}`}
         style={holderColor ? playerStyle('stroke', holderColor) : undefined}
       />
       {(planet.traits ?? []).slice(0, 2).map((trait, n, shown) => (
@@ -210,11 +211,11 @@ export function TileView({
         : tile.wormholes.length > 0 ? t('map.wormhole') : tile.kind === 'system' ? t('map.emptySystem') : null;
 
   const stackLabel = ({ kind, count, owner }: PlacedStack): string => {
-    const whose = owner === 'me' ? '' : ` (${nameOfPlayer(table, pack, playerOfOwner(table, viewer, owner) ?? owner, t)})`;
+    const whose = owner === viewer ? '' : ` (${nameOfPlayer(table, pack, owner, t)})`;
     if (kind === 'spacedock') return `${t('map.spaceDock')}${whose}`;
     return `${kind === 'pds' ? t('map.pds') : t(`unit.${kind}`)} ×${count}${whose}`;
   };
-  const colours = tableColours(table, viewer);
+  const colours = tableColours(table);
   const seated = othersOf(table, viewer);
   const { space, ground } = tileStacks(table, board, viewer, slotKey, planets);
   const tokens = board.systems[slotKey]?.tokens ?? [];
@@ -233,7 +234,7 @@ export function TileView({
   if (hasCommandToken) obstacles.push(COMMAND_SPOT);
   if (ingress) obstacles.push({ x: INGRESS_SPOT.x, y: INGRESS_SPOT.y, r: INGRESS_RADIUS });
   if (tile && seat) obstacles.push({ x: seatX, y: SEAT_Y, r: SEAT_RADIUS });
-  const layout = useHexLayout({ planets: planets.length, space, ground, obstacles, opponents: seated.map(o => ownerKey(table, viewer, o.id)) });
+  const layout = useHexLayout({ planets: planets.length, space, ground, obstacles, viewer, seats: seated.map(o => o.id) });
 
   const label = fracture ? t('map.fractureTile', { n: fracture.index + 1 }) : unknown
     ? t('map.unknownTile', { id: tileId })
@@ -248,17 +249,17 @@ export function TileView({
     <>
       {planets.map((planet, i) => {
         const spot = layout.planets[i];
-        const { control, holder, exhausted, values } = planetShown(table, board, pack, viewer, planet.id);
+        const { held, holder, exhausted, values } = planetSeen(table, board, pack, viewer, planet.id);
         const holderColor = seated.find(o => o.id === holder)?.color;
         const parts = [`${planet.name}: ${values.resources}/${values.influence}`];
         for (const tech of planet.tech ?? []) parts.push(t(`map.tech.${tech}`));
         if (planet.legendary) parts.push(t('map.legendary'));
-        if (control) parts.push(`${t(`map.control.${control}`)}${holder ? ` (${nameOfPlayer(table, pack, holder, t)})` : ''}`);
+        if (held) parts.push(`${t(`map.control.${held}`)}${held === 'other' && holder ? ` (${nameOfPlayer(table, pack, holder, t)})` : ''}`);
         if (exhausted) parts.push(t('map.exhausted'));
         return (
           <g
             key={planet.id} aria-label={parts.join(', ')} style={placeOn(spot, spot.r / PLANET_BASE)}
-            data-control={control ?? 'none'} data-exhausted={exhausted ? 'true' : 'false'}
+            data-control={held ?? 'none'} data-exhausted={exhausted ? 'true' : 'false'}
             className={`tk planet${exhausted ? ' planet-exhausted' : ''}`}
             {...(stage ? {
               role: 'button', tabIndex: 0, 'aria-pressed': stage.target === i, onClick: () => stage.onPlanet(i),
@@ -266,7 +267,7 @@ export function TileView({
             } : { role: 'group' })}
           >
             {stage && planets.length > 1 && stage.target === i && <circle r={PLANET_BASE + 1.4} className="planet-target" />}
-            <PlanetMark planet={planet} control={control} holderColor={holderColor} exhausted={exhausted} values={values} />
+            <PlanetMark planet={planet} held={held} holderColor={holderColor} exhausted={exhausted} values={values} />
           </g>
         );
       })}

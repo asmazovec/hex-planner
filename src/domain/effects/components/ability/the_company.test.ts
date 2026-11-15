@@ -11,7 +11,7 @@ describe('ability:the_company The Company', () => {
   test('ability:the_company the Nomad begin with three agents unlocked', () => {
     const { pack } = bench({ faction: 'nomad', expansions: ['pok'] });
     quote(pack, id, 'you have 3 agents');
-    expect(startForFaction({}, '', 'nomad', pack).leaders).toEqual({
+    expect(startForFaction({}, '', 'nomad', pack, 'me').leaders).toEqual({
       'leader:nomadagentmercer': 'unlocked', 'leader:nomadagentthundarian': 'unlocked', 'leader:nomadagentartuno': 'unlocked',
     });
   });
@@ -19,7 +19,7 @@ describe('ability:the_company The Company', () => {
   // Checks: another faction begins with its one agent only.
   test('ability:the_company another faction begins with one agent', () => {
     const { pack } = bench({ faction: 'nomad', expansions: ['pok'] });
-    expect(Object.keys(startForFaction({}, '', 'naaz', pack).leaders ?? {})).toEqual(['leader:naazagent']);
+    expect(Object.keys(startForFaction({}, '', 'naaz', pack, 'me').leaders ?? {})).toEqual(['leader:naazagent']);
   });
 
   test('ability:the_company is a hint with no step', () => {

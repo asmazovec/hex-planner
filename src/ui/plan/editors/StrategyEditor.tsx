@@ -77,7 +77,7 @@ export function StrategyEditor({
   const card = cards.find(c => c.initiative === turn.action.card);
   const primary = isPrimary(turn);
   const effects = effectsOf(turn);
-  const entry = cardEntryOf(table, turn);
+  const entry = cardEntryOf(turn);
   const player = turn.player;
   const mine = turn.player === table.viewer;
   const faction = table.players.find(p => p.id === player)?.faction ?? '';
@@ -185,7 +185,7 @@ export function StrategyEditor({
         {!card && <p className="muted">{t('plan.strategy.chooseCard')}</p>}
         {cardBlocks}
         {/* The reminders of a card played concern everyone at the table: the researcher, the one who may react. */}
-        <StepHints pack={pack} table={table} board={board} step="card" players={['me', ...others.flatMap(o => (o.value !== null && o.value !== 'me' ? [o.value] : []))]} />
+        <StepHints pack={pack} table={table} board={board} step="card" players={[turn.player, ...others.flatMap(o => (o.value !== null ? [o.value] : []))]} />
       </EditorPart>
       {common}
     </EditorFrame>

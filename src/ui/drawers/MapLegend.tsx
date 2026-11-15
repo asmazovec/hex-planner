@@ -4,6 +4,7 @@ import { RowIcon } from '../primitives/Icon';
 import { UnitToken } from '../units/UnitToken';
 import type { TokenKind } from '../../domain/hexLayout';
 import type { DataPack, PlanetDef } from '../../domain/types';
+import type { Held } from '../map/held';
 import { PlanetMark } from '../map/TileView';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { BADGE_CUT, CommandTokenMark, IngressMark, PickupTag, RouteBadge } from '../map/marks';
@@ -30,12 +31,12 @@ function Route({ tone = 'planned', gap }: { tone?: string; gap?: boolean }) {
 }
 
 /** A real planet as the map draws it; the numbers take their size from the tile they stand on. */
-function Planet({ planet, exhausted = false, control = 'me' }: { planet: PlanetDef; exhausted?: boolean; control?: 'me' | 'enemy' }) {
+function Planet({ planet, exhausted = false, held = 'own' }: { planet: PlanetDef; exhausted?: boolean; held?: Held }) {
   return (
     <svg viewBox="-14 -14 28 28" className="legend-svg" aria-hidden="true">
       <g className="tile">
         <g className={`planet${exhausted ? ' planet-exhausted' : ''}`}>
-          <PlanetMark planet={planet} control={control} exhausted={exhausted} />
+          <PlanetMark planet={planet} held={held} exhausted={exhausted} />
         </g>
       </g>
     </svg>
@@ -78,7 +79,7 @@ export function MapLegend({ colour, pack }: { colour: string; pack: DataPack }) 
 
       {title('planets')}
       {wellon && <Row mark={<Planet planet={wellon} />} text={k('values')} />}
-      {lodor && <Row mark={<Planet planet={lodor} control="enemy" />} text={k('control')} />}
+      {lodor && <Row mark={<Planet planet={lodor} held="other" />} text={k('control')} />}
       {wellon && <Row mark={<Planet planet={wellon} exhausted />} text={k('exhausted')} />}
       <Row mark={<Dots colours={['tech-propulsion', 'tech-biotic', 'tech-cybernetic', 'tech-warfare']} />} text={k('tech')} />
       <Row mark={<Dots colours={['trait-cultural', 'trait-hazardous', 'trait-industrial']} />} text={k('trait')} />

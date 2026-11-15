@@ -10,7 +10,7 @@ import { speaksIn } from '../../domain/effects/holder';
 import { effectOf, holderRuleOf, inForceOf, orderOf, passivesOf, readyComponents, type Holder } from '../../domain/effects/registry';
 import type { Ability, ModifierContext, Modifiers } from '../../domain/effects/types';
 import type { ComponentDef, RuleStep } from '../../domain/types';
-import { holdingsOfCards, legacyKey, type Shelf } from '../keys';
+import { holdingsOfCards, type Shelf } from '../keys';
 import type { Board, DataPack, PlayerId, Table } from '../types';
 
 
@@ -26,12 +26,12 @@ export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
   for (const [id, planet] of Object.entries(board.planets)) if (planet.owner === player) { control[id] = 'me'; owned += id + ','; }
   const laws = board.common.laws.filter(law => law.elected === undefined || law.elected === player).map(law => law.id);
   const lawKey = laws.join(',');
-  // An Alliance note lends its owner's commander: every player's holdings, under their id and under the key notes are addressed by.
+  // An Alliance note lends its owner's commander: every player's holdings, by the player id a note is addressed with.
   const lent = table.players.map(p => holdingsOf(board, p.id));
   const kept = cards && HOLDERS.get(cards)?.find(k => k.table === table && k.player === player && k.owned === owned && k.lawKey === lawKey && k.lent.every((h, i) => h === lent[i]));
   if (kept) { kept.planets = board.planets; kept.laws = board.common.laws; return kept.holder; }
   const others: Record<string, Shelf> = {};
-  table.players.forEach((p, i) => { others[legacyKey(table, p.id)] = others[p.id] = lent[i]; });
+  table.players.forEach((p, i) => { others[p.id] = lent[i]; });
   const holder: Holder = { holdings: holdingsOf(board, player), ...(faction === undefined ? {} : { faction }), control, laws, others };
   if (cards) {
     const list = HOLDERS.get(cards) ?? [];
@@ -93,17 +93,17 @@ function remindersOf(table: Table, board: Board, pack: DataPack, player: PlayerI
   const holder = holderIn(table, board, player);
   const kept = REMINDERS.get(holder);
   if (kept && kept.pack === pack && kept.revealed === board.common.revealed && kept.table === table) return kept.ids;
-  const ids = remindersBuilt(table, board, pack, player, holder);
+  const ids = remindersBuilt(board, pack, player, holder);
   REMINDERS.set(holder, { pack, table, revealed: board.common.revealed, ids });
   return ids;
 }
 const REMINDERS = new WeakMap<Holder, { pack: DataPack; table: Table; revealed: unknown; ids: string[] }>();
-function remindersBuilt(table: Table, board: Board, pack: DataPack, player: PlayerId, holder: Holder): string[] {
+function remindersBuilt(board: Board, pack: DataPack, player: PlayerId, holder: Holder): string[] {
   const { holdings } = holder;
   const objectives = [...holdings.secrets, ...board.common.revealed.filter(id => !holdings.scored.includes(id))];
   const sheet = sheetOf(pack, holder);
   // A note of one's own is not played from one's own hand (LRR 69.2).
-  const own = (id: string): boolean => id.startsWith('promissory:') && [player, legacyKey(table, player)].includes(noteAddress(id) ?? '');
+  const own = (id: string): boolean => id.startsWith('promissory:') && noteAddress(id) === player;
   return [...readyComponents(pack, holdings), ...objectives, ...sheet].filter(id => !own(id) && effectOf(pack, id)?.tier === 'hint');
 }
 

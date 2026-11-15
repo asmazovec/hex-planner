@@ -2,7 +2,7 @@
 import { turnOf } from './old/game/fromLegacy';
 import { viewOf } from '../ui/testing/legacyMap';
 import { flightOf, metersOf, type Meters } from '../game/flight';
-import { playerOfKey } from '../game/keys';
+import { playerOfKey } from './old/game/keys';
 import type { DataPack } from '../domain/types';
 import type { Entry, Game } from './old/domain/types';
 import type { GameState } from './old/domain/types';

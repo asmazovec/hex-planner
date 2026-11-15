@@ -228,7 +228,7 @@ test('«+ Took» offers the whole catalogue; what is held once already stands la
 
 test('on the plan screen an opponent\'s entry discards from what that opponent holds, not from mine', async () => {
   const rival = game().opponents[0];
-  useGame.getState().setStartHolding('me', 'relic:shard', true);
+  useGame.getState().setStartHolding('p1', 'relic:shard', true);
   useGame.getState().setStartHolding(rival.id, 'relic:stellarconverter', true);
   edits.addEntry(1, { type: 'component', note: '' }, 'action', rival.id);
   render(<PlanScreen />);

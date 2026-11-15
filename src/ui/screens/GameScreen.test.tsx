@@ -298,13 +298,17 @@ test('removing an opponent who has units or planets says so, and only then asks'
   expect(within(card(2)).queryByRole('button', { name: 'Remove opponent' })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(gameNow()!.enemyUnits['1,0']).toEqual({ [first]: { cruiser: 2 } });
+  const factions = gameNow()!.opponents.map(o => o.faction);
   await userEvent.click(within(card(3)).getByRole('button', { name: 'Remove opponent' }));
-  expect(gameNow()!.opponents.map(o => o.id)).not.toContain(second);
+  // The second opponent is gone: the others close up, and a player's id is that of the seat.
+  expect(gameNow()!.opponents.map(o => o.faction)).toEqual(factions.filter((_, i) => i !== 1));
+  void second;
   expect(screen.queryByText(/Units on the map/)).toBeNull();
   await userEvent.click(within(card(2)).getByRole('button', { name: 'Remove opponent' }));
   await userEvent.click(screen.getByRole('button', { name: 'Change' }));
   const game = gameNow()!;
-  expect(game.opponents.map(o => o.id)).not.toContain(first);
+  expect(game.opponents).toHaveLength(3);
+  void first;
   expect(game.enemyUnits).toEqual({});
   expect(game.planetControl.arc).toBeUndefined();
 });

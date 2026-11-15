@@ -38,7 +38,7 @@ beforeEach(() => {
   store().setTile('0,-3', null);
   store().setTile('1,0', pack.factions.arborec.homeTile);
   store().setTile('0,1', '22');
-  store().setPlanetControl('tarmann', 'me');
+  store().setPlanetControl('tarmann', 'p1');
 });
 afterEach(cleanup);
 

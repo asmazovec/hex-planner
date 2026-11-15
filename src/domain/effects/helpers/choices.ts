@@ -12,7 +12,7 @@ export function systemsWithUnits(ctx: ChoiceContext, of: (unit: string) => boole
   return Object.keys(ctx.board.systems).filter(slot => Object.entries(ctx.my.unitsIn(slot)).some(([unit, count]) => (count ?? 0) > 0 && of(unit)));
 }
 
-/** The technologies a player holds, `player` being `me` or an opponent id as an entry keeps it. */
+/** The technologies a player holds, `player` being the id an entry keeps of them. */
 export function technologiesOf(ctx: ChoiceContext, player: string): string[] {
   const id = ctx.playerOf(player);
   return id === undefined ? [] : ctx.of(id).cards('technology').map(card => card.id);
@@ -25,5 +25,5 @@ export function handOf(ctx: ChoiceContext, player: string): string[] {
 }
 
 /** The other players, as an entry keeps them. */
-export const othersOf = (ctx: ChoiceContext): string[] => ctx.table.players.filter(player => player.id !== ctx.holder).map(player => ctx.key(player.id));
+export const othersOf = (ctx: ChoiceContext): string[] => ctx.table.players.filter(player => player.id !== ctx.holder).map(player => player.id);
 

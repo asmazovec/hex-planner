@@ -2,6 +2,7 @@
  * The shared infrastructure of the invasion subsystem (docs/phase4/infra/invasion.md), tested with throwaway effects:
  * the registry of the test's own pack is given a hook, so no component file is touched.
  */
+import { legacyKey } from '../../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { effectsOf } from '../effects/registry';
 import { place } from '../../game/abilities/emit';
@@ -68,7 +69,7 @@ describe('onGainControl', () => {
       faction: 'sol', start: { hand: [id] }, units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [using(invade(['t1']), id)],
       game: { opponents: [RIVAL], docks: ['t1'], pds: { t1: 1 }, planetControl: { t1: 'enemy' }, planetOwner: { t1: 'o1' } },
     });
-    give(table, id, { tier: 'play', rule: 'x', holder: 'anyone', on: { onGainControl: (_ctx, got) => { lost.push(got.lost); expect(got.fromPlayer).toBe(true); expect(got.explores).toBe(false); } } });
+    give(table, id, { tier: 'play', rule: 'x', holder: 'anyone', on: { onGainControl: (ctx, got) => { lost.push(got.lost.map(each => ({ ...each, owner: legacyKey(ctx.table, each.owner) }))); expect(got.fromPlayer).toBe(true); expect(got.explores).toBe(false); } } });
     endOf(table);
     expect(lost).toEqual([[{ kind: 'pds', owner: 'o1', count: 1 }, { kind: 'spacedock', owner: 'o1', count: 1 }]]);
   });

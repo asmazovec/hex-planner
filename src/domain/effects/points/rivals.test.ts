@@ -43,8 +43,8 @@ describe('Hubris at the start', () => {
     const { pack } = bench({ faction: 'mahact', expansions: ['pok'] });
     const generic = genericNotes(pack, 'me');
     expect(generic).toContain(ALLIANCE);
-    const mahact = startForFaction({ promissory: generic }, '', 'mahact', pack);
+    const mahact = startForFaction({ promissory: generic }, '', 'mahact', pack, 'me');
     expect(mahact.promissory).not.toContain(ALLIANCE);
-    expect(startForFaction(mahact, 'mahact', 'sol', pack).promissory).toContain(ALLIANCE);
+    expect(startForFaction(mahact, 'mahact', 'sol', pack, 'me').promissory).toContain(ALLIANCE);
   });
 });

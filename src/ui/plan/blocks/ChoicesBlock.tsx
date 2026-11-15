@@ -9,7 +9,6 @@ import type { Turn } from '../../../game/actions';
 import type { PlayerId, Table } from '../../../game/types';
 import { choicesOfTurn } from '../../../game/edit/turn';
 import { choicesOf } from '../../../game/abilities/choices';
-import { playerOfKey } from '../../../game/keys';
 import { mapSource } from '../../../game/space';
 import { nameOfPlayer, shortName } from '../../players/names';
 import type { KernelView } from '../kernelView';
@@ -62,9 +61,8 @@ export function ChoicesBlock({ id, turn, view, pack, onChange }: ChoicesBlockPro
       case 'planet': return pack.planets[value]?.name ?? value;
       case 'system': { const name = systemNameOf(map, pack, value); return name.planets.length > 0 ? name.planets.join(' / ') : name.number; }
       case 'player': {
-        const who = playerOfKey(table, value);
-        const faction = table.players.find(p => p.id === who)?.faction ?? '';
-        return shortName(pack, faction, who === table.viewer || who === undefined ? t('plan.mine') : nameOfPlayer(table, pack, who, t));
+        const who = table.players.find(p => p.id === value);
+        return shortName(pack, who?.faction ?? '', who === undefined || who.id === table.viewer ? t('plan.mine') : nameOfPlayer(table, pack, who.id, t));
       }
       case 'unit': return t(`unit.${value}`);
       case 'component': return componentById(pack, value)?.name ?? value;
@@ -72,7 +70,7 @@ export function ChoicesBlock({ id, turn, view, pack, onChange }: ChoicesBlockPro
     }
   };
   const colorOf = (spec: ChoiceSpec, value: string): number | undefined =>
-    (spec.kind === 'player' ? table.players.find(p => p.id === playerOfKey(table, value))?.color : undefined);
+    (spec.kind === 'player' ? table.players.find(p => p.id === value)?.color : undefined);
   return (
     <Section label={def.name} title={def.name} className="choices-block">
       {resolved.filter(each => each.shown).map(({ spec, options, slots }) => {

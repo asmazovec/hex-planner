@@ -1,3 +1,4 @@
+import { toTable } from '../../../testing/old/game/keys';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { viewOf } from '../../../ui/testing/legacyMap';
 import { kernelViewOf } from '../../testing/view';
@@ -216,10 +217,12 @@ test('«+ Component» offers first the notes of the side that gets them: mine am
   );
   render(<TransactionStep {...transactionProps(viewOf(game, board, pack), pack, act, "me", undefined, vi.fn())} view={viewOf(game, board, pack)} pack={pack} warnings={[]} onBack={vi.fn()} onRemove={vi.fn()}/>);
   await userEvent.click(within(screen.getByRole('group', { name: 'Get' })).getByRole('button', { name: '+ Component' }));
-  expect(offered()).toEqual([`component-promissory:<color>_cf@me`, `component-${NOTE}@${rival}`, `component-promissory:<color>_cf@${other}`]);
+  // The cards are named as the table names them: a note under the id of its player.
+  const named = (ids: string[]) => toTable(viewOf(game, board, pack).table, ids).map(id => `component-${id}`);
+  expect(offered()).toEqual(named(['promissory:<color>_cf@me', `${NOTE}@${rival}`, `promissory:<color>_cf@${other}`]));
   await userEvent.keyboard('{Escape}');
   await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: '+ Component' }));
-  expect(offered()).toEqual([`component-${NOTE}@${rival}`, `component-${NOTE}@me`, `component-${NOTE}@${other}`, `component-${CARD}`]);
+  expect(offered()).toEqual(named([`${NOTE}@${rival}`, `${NOTE}@me`, `${NOTE}@${other}`, CARD]));
 });
 
 test('a note got from a rival says whose it is, in the choice, in its text and once chosen; a search finds it among what they hold', async () => {
@@ -252,5 +255,5 @@ test('in a rival\'s turn the note the rival gives is still marked as theirs, and
   const act: Act = { kind: 'transaction', with: 'me', give: { components: [`promissory:<color>_ta@${rival}`] }, get: { components: ['promissory:<color>_ta@me'] } };
   render(<TransactionStep {...transactionProps(viewOf(game, boardOf(game), pack), pack, act, rival, undefined, vi.fn())} view={viewOf(game, boardOf(game), pack)} pack={pack} warnings={[]} onBack={vi.fn()} onRemove={vi.fn()}/>);
   expect(within(screen.getByRole('group', { name: 'Give' })).getByTestId(`component-promissory:<color>_ta@${rival}`)).toHaveTextContent('Hacan');
-  expect(within(screen.getByRole('group', { name: 'Get' })).getByTestId('component-promissory:<color>_ta@me')).toHaveTextContent('Sol');
+  expect(within(screen.getByRole('group', { name: 'Get' })).getByTestId('component-promissory:<color>_ta@p1')).toHaveTextContent('Sol');
 });

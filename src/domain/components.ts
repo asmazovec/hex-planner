@@ -32,12 +32,18 @@ const BASES = new Map<string, string>();
 
 /**
  * A promissory note a player holds is one card of one player: its id is the catalogue id with the address of the
- * player whose note it is, `promissory:<id>@<player>`, `me` or an opponent id. The catalogue itself lists each note
+ * player whose note it is, `promissory:<id>@<player>`, a player id of the table. The catalogue itself lists each note
  * once, without an address.
  */
 export const noteId = (base: string, player: string): string => `${noteBase(base)}@${player}`;
 
-/** The player a note is addressed to, `me` or an opponent id; none for a catalogue id. */
+/** A note under the address of another player (the same card, renamed with its player); an id with no address as it is. */
+export function noteFor(id: string, player: string): string {
+  const address = addressOf(id);
+  return address ? id.slice(0, address.at + 1) + player + id.slice(address.end) : id;
+}
+
+/** The id of the player a note is addressed to; none for a catalogue id. */
 export function noteAddress(id: string): string | undefined {
   const address = addressOf(id);
   return address && id.slice(address.at + 1, address.end);

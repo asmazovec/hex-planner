@@ -3,7 +3,7 @@
  * and the resolver ask. Each choice comes with the candidates its component computes (a planet you control, another
  * player) through the context of any ability, for the one whose turn it is, so a rival's entry is offered the rival's
  * planets and the other players as seen from the rival. The values are what an entry keeps under its `choices`:
- * planet ids, slots, `me` or an opponent id.
+ * planet ids, slots, player ids.
  */
 import { UNIT_ORDER } from '../../domain/hexLayout';
 import { effectOf } from '../../domain/effects/registry';
@@ -34,9 +34,9 @@ export function optionsOf(spec: ChoiceSpec, ctx: ChoiceContext): string[] {
     case 'planet': return [...new Set(slotsOf(ctx).flatMap(slot => ctx.planetsIn(slot)))];
     case 'system': return slotsOf(ctx);
     case 'player': {
-      const own = ctx.key(ctx.holder);
-      // `me` first, then the others in seat order, the order a player sees them in.
-      return ctx.table.players.map(player => ctx.key(player.id)).sort((a, b) => Number(b === 'me') - Number(a === 'me')).filter(key => spec.self || key !== own);
+      // The one who chooses first, then the others in seat order, the order a player sees them in.
+      const others = ctx.table.players.map(player => player.id).filter(id => id !== ctx.holder);
+      return spec.self ? [ctx.holder, ...others] : others;
     }
     case 'unit': return [...UNIT_ORDER];
     case 'number': {
@@ -59,7 +59,7 @@ export function choicesOf(table: Table, board: Board, turn: Turn, id: string, pa
   const specs = effectOf(pack, id)?.choose;
   if (!specs || specs.length === 0) return [];
   const chosen = chosenOf(turn, id);
-  const base = contextOf(table, board, pack, turn.player, id, { actor: turn.player, choices: chosen, entry: factsOf(table, turn) }, () => {});
+  const base = contextOf(table, board, pack, turn.player, id, { actor: turn.player, choices: chosen, entry: factsOf(turn) }, () => {});
   const ctx: ChoiceContext = Object.assign(Object.create(base) as object, { chosen }) as ChoiceContext;
   return specs.map(spec => {
     const shown = spec.when?.(chosen) ?? true;

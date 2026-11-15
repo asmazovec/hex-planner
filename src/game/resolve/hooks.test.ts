@@ -5,7 +5,6 @@ import { createGame } from '../../testing/old/domain/newGame';
 import { setPlayerFaction } from '../../testing/old/domain/players';
 import { holdings } from '../abilities/testBoard';
 import { tableOf } from '../../testing/old/game/fromLegacy';
-import { legacyKey } from '../keys';
 import { initialBoard } from '../setup';
 import { runHooks } from './hooks';
 
@@ -14,7 +13,6 @@ let game = createGame({ expansions: ['pok', 'te'], playerCount: 3, faction: 'sol
 game = setPlayerFaction(game, 1, 'winnu', pack);
 const table = tableOf(game);
 const start = initialBoard(table, pack);
-const key = (player: string): string => legacyKey(table, player);
 
 /** The hook kinds that run on the kernel's own runner: no component file keeps one on the old state. */
 const NATIVE_KINDS = ['dealt', 'onTokenSpent', 'onProduced', 'onDestroyed', 'onControlLost', 'onActivate', 'onLanding', 'onRoundStart', 'onStatusStart', 'onStatusEnd', 'onTurnStart', 'gained', 'lost', 'restrict', 'onGainControl'] as const;
@@ -43,7 +41,7 @@ describe('the native hook runner', () => {
   });
 
   test('Dark Pact: the holder gives commodities to the Empyrean player and each gains a trade good, as events caused by the note', () => {
-    const note = `promissory:dark_pact@${key('p2')}`;
+    const note = 'promissory:dark_pact@p2';
     const board = holdings(start, 'p1', { [note]: { state: 'ready', count: 1 } });
     const value = 4;
     const got = runHooks(table, board, pack, 'dealt', ['p1'], { side: 'give', self: 'p1', partner: 'p2', gave: { commodities: value }, got: {} }, { actor: 'p1', step: 'transaction' });

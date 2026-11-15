@@ -20,6 +20,7 @@ import { checkSystemOf } from '../domain/replay/transport';
 import type { Turn } from '../game/actions';
 import { choicesOf, type ResolvedChoice } from '../game/abilities/choices';
 import { turnOf } from './old/game/fromLegacy';
+import { toOld, warningsToOld } from './old/game/keys';
 import type { DataPack, Warning } from '../domain/types';
 import type { Entry, Game, Plan, Round } from './old/domain/types';
 import type { GameState } from './old/domain/types';
@@ -100,7 +101,7 @@ function stateOf(table: Table, pack: DataPack, board: Board): GameState {
 
 /** A frame whose states are read from their boards when first asked for. */
 function frameOf(table: Table, pack: DataPack, entryId: string, applied: boolean, before: Board, after: Board, warnings: Warning[]): Frame {
-  const frame = { entryId, applied, warnings } as Frame;
+  const frame = { entryId, applied, warnings: warningsToOld(table, warnings) } as Frame;
   Object.defineProperties(frame, {
     before: { enumerable: true, get: () => stateOf(table, pack, before) },
     after: { enumerable: true, get: () => stateOf(table, pack, after) },
@@ -253,7 +254,9 @@ export const boardBeforeEntry = (game: Game, plan: Plan, entryId: string, pack: 
 export function choicesBefore(game: Game, entry: Entry, id: string, pack: DataPack): ResolvedChoice[] {
   const plan = game.plans.find(p => p.rounds.some(r => r.entries.some(e => e.id === entry.id))) ?? game.plans.find(p => p.id === game.activePlanId) ?? game.plans[0];
   const { kernel } = timelineOf(game, plan, 'forecast', pack);
-  return choicesOf(kernel.table, kernel.byTurn.get(entry.id)?.before ?? kernel.end, turnOf(kernel.table, entry, pack), id, pack);
+  // The candidates name players by the old ids, as an old entry keeps a choice.
+  return choicesOf(kernel.table, kernel.byTurn.get(entry.id)?.before ?? kernel.end, turnOf(kernel.table, entry, pack), id, pack)
+    .map(choice => ({ ...choice, options: toOld(kernel.table, choice.options), slots: toOld(kernel.table, choice.slots) }));
 }
 
 /** The turns of a round as the kernel plays them: the numbers and statuses of its actions are asked of these (src/game/numbering.ts). */
@@ -284,5 +287,5 @@ export function systemWarningsAt(line: Timeline, roundNo: number, slot: string):
   const board = next < 0 ? line.kernel.end : line.kernel.marks[next].start;
   // Every player's capacity and fleet pool in the system, the viewer first.
   const ordered = [...table.players].sort((x, y) => (x.id === table.viewer ? -1 : y.id === table.viewer ? 1 : 0));
-  return ordered.flatMap(({ id }) => waiveBoard(table, board, pack, id, checkSystemOf(stacksOn(table, board, pack, id), slot)));
+  return warningsToOld(table, ordered.flatMap(({ id }) => waiveBoard(table, board, pack, id, checkSystemOf(stacksOn(table, board, pack, id), slot))));
 }

@@ -9,6 +9,9 @@ import type { Turn } from '../../game/actions';
 import { flightDuration, joinShare, slotToPixel, type CurveSegment, type Point, type RouteShape } from '../map/geometry';
 import type { UnitId } from '../../domain/types';
 
+/** The owner the stacks of a flying formation are laid out under: one player's, whoever it is. */
+const FLYING = 'flying';
+
 export { arrowsOf, entrySystems, flies, groupOf, lossesOf, sourcesOf, viaOf, withLoss, withRoute, withoutEmptySources, withoutSource, type Move, type RouteArrow, type TacticalEntry } from '../../domain/tactical';
 
 const placeId = (place: { planet: string } | { slot: string }): string => ('planet' in place ? place.planet : place.slot);
@@ -59,8 +62,9 @@ export function flightRoutes(at: At, turn: Turn, shapeOf: (from: string) => Rout
       }
     });
     if (joins.size === 0) continue;
-    const space = [...joins].map(([kind, list]) => ({ kind, owner: 'me', count: list.reduce((sum, j) => sum + j.count, 0) }));
-    const { items } = hexLayout({ planets: 0, ground: [], space });
+    // One formation of one player: laid out as the stacks of whoever looks at a tile are.
+    const space = [...joins].map(([kind, list]) => ({ kind, owner: FLYING, count: list.reduce((sum, j) => sum + j.count, 0) }));
+    const { items } = hexLayout({ planets: 0, ground: [], space, viewer: FLYING });
     routes.push({
       segments,
       durationMs: flightDuration(slots, systemsAdjacent(at.map)),

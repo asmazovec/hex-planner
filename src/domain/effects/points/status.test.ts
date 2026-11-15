@@ -4,6 +4,7 @@
  * (`gained`, `lost`, `restrict`, `suppresses`), the laws that bind one player, the agenda an entry resolves, the round's
  * flow for cards played in a window, and the reminders of the objectives. docs/phase4/infra/status.md names them all.
  */
+import { legacyKey } from '../../../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { componentsOf } from '../../components';
 import { CARD } from '../../strategy';
@@ -201,7 +202,7 @@ describe('gained and lost: hooks of a component an entry gains or spends', () =>
     let seen = '';
     withEffect(pack, 'agenda:crisis', {
       tier: 'play', rule: 'agenda:crisis',
-      play: ctx => { seen = `${ctx.choices.card} ${ctx.key(ctx.holder)}`; },
+      play: ctx => { seen = `${ctx.choices.card} ${legacyKey(ctx.table, ctx.holder)}`; },
     });
     const resolved: Entry = planned({ type: 'adjustment', label: '', delta: {}, choices: { card: 5 } } as EntryBody, 'agenda', { gains: ['agenda:crisis'] });
     forecast(rulesGame({ entries: [resolved], expansions: ['pok'] }), pack);

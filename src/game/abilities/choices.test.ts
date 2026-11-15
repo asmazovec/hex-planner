@@ -1,3 +1,4 @@
+import { toOld } from '../../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { adjust, bench, componentAction, HOME, NEAR } from '../../domain/effects/components/kit';
 import type { Entry } from '../../testing/old/domain/types';
@@ -17,7 +18,8 @@ function asked(entry: Entry, id: string, extra: Entry[] = []) {
   const line = timelineOf(table.game, table.game.plans[0], 'forecast', table.pack);
   const { table: kernelTable } = line.kernel;
   const before = line.kernel.byTurn.get(entry.id)!.before;
-  return choicesOf(kernelTable, before, turnOf(kernelTable, entry, table.pack), id, table.pack);
+  // The candidates that are players are read by the old ids the entries of these tests name them with.
+  return choicesOf(kernelTable, before, turnOf(kernelTable, entry, table.pack), id, table.pack).map(choice => ({ ...choice, options: toOld(kernelTable, choice.options) }));
 }
 const byKey = (found: ReturnType<typeof asked>, key: string) => found.find(c => c.spec.key === key)!;
 

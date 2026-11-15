@@ -40,7 +40,7 @@ export function createGame(
     opponents,
     // Every player begins with the generic notes of their colour (69); the faction brings its own.
     start: {
-      me: startForFaction({ promissory: genericNotes(pack, 'me') }, '', input.faction, pack),
+      me: startForFaction({ promissory: genericNotes(pack, 'me') }, '', input.faction, pack, 'me'),
       opponents: Object.fromEntries(opponents.map(o => [o.id, { promissory: genericNotes(pack, o.id) }])),
     },
     enemyUnits: {},

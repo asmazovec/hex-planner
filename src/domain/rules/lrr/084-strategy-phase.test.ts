@@ -7,7 +7,7 @@ const pack = rulesPack();
 
 describe('LRR 84 Strategy Phase', () => {
   test('84.1: in the first step each player takes one card: with five or more players a second marked card is no card of theirs', () => {
-    expect(heldCards({ number: 1, strategyCard: CARD.warfare, backupCard: CARD.trade, entries: [] }, 5)).toEqual([CARD.warfare]);
+    expect(heldCards({ strategyCard: CARD.warfare, backupCard: CARD.trade }, 5)).toEqual([CARD.warfare]);
   });
 
   test.todo('84.1.1: trade goods lying on a chosen card go to the player — not modelled: the bonus goods on cards are not kept; an adjustment records them');

@@ -35,7 +35,7 @@ export function appliedFor<K extends keyof Modifiers>(
   for (const id of playedBy(entry)) {
     const effect = effectOf(pack, id);
     const modify = effect?.tier === 'play' ? effect.modify?.[point] : undefined;
-    if (!modify || noteAddress(id) === (entry.owner ?? 'me') || !ready(pack, state, id)) continue;
+    if (!modify || noteAddress(id) === entry.player || !ready(pack, state, id)) continue;
     const next = modify(result.value, ctx);
     if (next !== result.value) result.by.push(id);
     result.value = next;

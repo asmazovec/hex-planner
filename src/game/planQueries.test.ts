@@ -12,7 +12,7 @@ import { cardTargets } from '../testing/old/domain/replay/cards/targets';
 import type { Entry } from '../testing/old/domain/types';
 import type { Turn } from './actions';
 import { legacyKey, legacyState, tableOf, turnOf } from '../testing/old/game/fromLegacy';
-import { playerOfKey } from './keys';
+import { playerOfKey, toOld, toTable } from '../testing/old/game/keys';
 import {
   autoPayOn, cardTargetsOn, landingOffersOn, losableOf, notesOf, notesOfFirst, playedCostOf, productionDueOnBoard, sliceAutoPaymentOn, tradableOf,
 } from './planQueries';
@@ -54,7 +54,7 @@ describe('what a turn costs and owes', () => {
     const component = (id: string, uses: string[] = []): Entry => ({ id: 'c', phase: 'action', status: 'planned', type: 'component', note: '', componentId: id, uses }) as Entry;
     for (const id of ['technology:sd', 'technology:amd', 'ability:nonexistent', undefined]) {
       const e = { ...component(id ?? ''), componentId: id } as Entry;
-      expect(playedCostOf(table, pack, turnOf(table, e, pack))).toEqual(playedCost(pack, e, effectOf));
+      expect(playedCostOf(pack, turnOf(table, e, pack))).toEqual(playedCost(pack, e, effectOf));
     }
   });
 
@@ -81,10 +81,11 @@ describe('what a player holds', () => {
 
   test('losableOf and tradableOf are losable and tradable', () => {
     const body = { gains: ['actionCard:sabotage1'], spends: ['technology:amd', 'actionCard:sabotage1'] };
-    expect([...losableOf(board, 'p1', body)].sort()).toEqual([...losable(old.holdings, body)].sort());
-    expect([...losableOf(board, 'p1', {})].sort()).toEqual([...losable(old.holdings, {})].sort());
+    // The board addresses a note by the id of its player, the old holdings by the old id.
+    expect(toOld(table, [...losableOf(board, 'p1', body)]).sort()).toEqual([...losable(old.holdings, body)].sort());
+    expect(toOld(table, [...losableOf(board, 'p1', {})]).sort()).toEqual([...losable(old.holdings, {})].sort());
     const chosen = old.holdings.promissory.slice(0, 1);
-    expect([...tradableOf(board, 'p1', chosen)].sort()).toEqual([...tradable(old.holdings, chosen)].sort());
+    expect(toOld(table, [...tradableOf(board, 'p1', toTable(table, chosen))]).sort()).toEqual([...tradable(old.holdings, chosen)].sort());
   });
 
   test('notesOfFirst is the same function', () => {

@@ -60,7 +60,7 @@ export const roundStarted = (table: Table, board: Board, pack: DataPack): Moment
 
 /** The status phase begins, once: the components are told, with the first entry of the phase when it names what takes the place of the start's effect. */
 export const statusStart = (table: Table, board: Board, pack: DataPack, turn?: Turn): Moment =>
-  ask(table, board, pack, 'onStatusStart', everyone(table), turn, turn ? factsOf(table, turn) : undefined);
+  ask(table, board, pack, 'onStatusStart', everyone(table), turn, turn ? factsOf(turn) : undefined);
 
 /** The status phase ends, once: the board is cleared, the cards readied, and every player's components are told. */
 export function statusEnd(table: Table, board: Board, pack: DataPack): Moment {
@@ -72,6 +72,6 @@ export function statusEnd(table: Table, board: Board, pack: DataPack): Moment {
 
 /** A turn of the action phase begins: its player's components are told. */
 export const turnStart = (table: Table, board: Board, pack: DataPack, turn: Turn): Moment =>
-  ask(table, board, pack, 'onTurnStart', [turn.player], turn, factsOf(table, turn));
+  ask(table, board, pack, 'onTurnStart', [turn.player], turn, factsOf(turn));
 
 export { noMoment };

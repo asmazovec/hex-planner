@@ -205,7 +205,7 @@ test('a game from the first screen to an exported file, and back offline', async
     const file = testInfo.outputPath('game.json');
     await (await download).saveAs(file);
     const exported = JSON.parse(readFileSync(file, 'utf8')) as { format: string; table: { viewer: string; players: { id: string; faction: string }[] }; plans: { rounds: { turns: unknown[] }[] }[] };
-    expect(exported.format).toBe('ti4-planner/3');
+    expect(exported.format).toBe('ti4-planner/4');
     expect(exported.table.players.find(p => p.id === exported.table.viewer)?.faction).toBe('argent');
     expect(exported.plans[0].rounds[0].turns).toHaveLength(entryCount + 1);
 

@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../../data/loadPack';
 import { componentById } from '../../../domain/components';
 import type { ComponentDef, DataPack } from '../../../domain/types';
-import { legacyKey } from '../../../game/keys';
 import type { Table } from '../../../game/types';
 import { Section } from '../../primitives/Section';
 
@@ -62,7 +61,7 @@ export function AgendaChoices({ table, pack, agenda, choices, laws = [], onChang
           </div>
         </Section>
       )}
-      {target.startsWith('Elect Player') && choose('elect', t('plan.agenda.electPlayer'), [...table.players].sort((a, b) => a.seat - b.seat).map(player => ({ value: legacyKey(table, player.id), name: pack.factions[player.faction]?.name ?? player.faction })))}
+      {target.startsWith('Elect Player') && choose('elect', t('plan.agenda.electPlayer'), [...table.players].sort((a, b) => a.seat - b.seat).map(player => ({ value: player.id, name: pack.factions[player.faction]?.name ?? player.faction })))}
       {/^Elect (Non-Home )?Planet/.test(target) && choose('elect', t('plan.agenda.electPlanet'), planetsOnMap(table, pack).map(planet => ({ value: planet.id, name: planet.name })))}
       {target.startsWith('Elect Strategy Card') && choose('card', t('plan.agenda.electCard'), strategyCards(table.expansions).map(card => ({ value: String(card.initiative), name: card.name })))}
       {target.startsWith('Elect Law') && choose('elect', t('plan.agenda.electLaw'), laws.flatMap(id => componentById(pack, id) ?? []).map(law => ({ value: law.id, name: law.name })))}

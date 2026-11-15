@@ -32,7 +32,7 @@ export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
-    { key: 'returned', kind: 'component', options: ctx => technologiesOf(ctx, ctx.key(ctx.holder)).filter(tech => returnable(ctx.pack, tech)) },
+    { key: 'returned', kind: 'component', options: ctx => technologiesOf(ctx, ctx.holder).filter(tech => returnable(ctx.pack, tech)) },
     { key: 'researched', kind: 'component', options: ctx => componentsOf(ctx.pack).filter(def => def.kind === 'technology' && !ctx.my.holds(def.id)).map(def => def.id) },
   ],
   holder: 'self',

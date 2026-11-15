@@ -19,6 +19,8 @@ import { draftNow, gameNow, seedGame } from '../testing/store';
 const pack = loadPack(['pok']);
 const act = () => useGame.getState();
 const game = (): Game => gameNow()!;
+/** The id of the viewer's player at the table: what the store calls them by. */
+const me = (): string => act().saved!.table.viewer;
 const plan = () => game().plans.find(p => p.id === game().activePlanId)!;
 const plans = () => game().plans;
 const round = () => plan().rounds[0];
@@ -144,13 +146,13 @@ describe('gameStore', () => {
     act().setEnemyUnits('1,0', b, {}); expect(game().enemyUnits['1,0']).toBeUndefined();
     act().setPlanetControl('p', b); expect(game().planetControl.p).toBe('enemy'); expect(game().planetOwner.p).toBe(b);
     act().setPlanetControl('p', a); expect(game().planetControl.p).toBe('enemy'); expect(game().planetOwner.p).toBe(a);
-    act().setPlanetControl('p', 'me'); expect(game().planetControl.p).toBe('me'); expect(game().planetOwner.p).toBeUndefined();
+    act().setPlanetControl('p', me()); expect(game().planetControl.p).toBe('me'); expect(game().planetOwner.p).toBeUndefined();
     act().setPlanetControl('p', b); act().setPlanetControl('p', null);
     expect(game().planetControl.p).toBeUndefined(); expect(game().planetOwner.p).toBeUndefined();
     act().setDock('p', true); expect(game().docks).toContain('p');
     act().setDock('p', false); expect(game().docks).not.toContain('p');
     act().setOpponent(0, { faction: 'hacan' }); expect(game().opponents[0].faction).toBe('hacan');
-    act().setSlice('res5', 'other'); expect(game().expedition.slices.res5).toBe('other');
+    act().setSlice('res5', 'p2'); expect(game().expedition.slices.res5).toBe('other');
     act().setThundersEdge('1,0'); expect(game().expedition.thundersEdgeSystem).toBe('1,0');
     act().setFractureActive(true); expect(game().fracture.active).toBe(true);
     act().toggleIngress('1,0'); expect(game().fracture.ingress).toEqual(['1,0']);
@@ -498,7 +500,8 @@ describe('removing an opponent in a game', () => {
     act().setPlanetControl('p', a);
     const before = game();
     act().removeOpponent(0);
-    expect(game().enemyUnits).toEqual({ '1,0': { [b]: { fighter: 1 } } });
+    // The one who stays moves up a seat, and a player's id is that of the seat.
+    expect(game().enemyUnits).toEqual({ '1,0': { [game().opponents[0].id]: { fighter: 1 } } });
     expect(game().planetControl.p).toBeUndefined();
     expect(game().planetOwner).toEqual({});
     act().undo();
@@ -520,7 +523,7 @@ describe("Thunder's Edge turned on in a game in progress", () => {
       type: 'tactical' as const, systemId: '0,0', moves: [{ from: 'mr', units: {} }],
       landings: [{ planetId: 'mr', units: { infantry: 1 } }], production: {}, payment: { planets: ['mr'], tradeGoods: 0 },
     };
-    act().setPlanetControl('mr', 'me');
+    act().setPlanetControl('mr', me());
     act().setDock('mr', true);
     const id = edits.addEntry(1, entry, 'action');
     edits.setEntryStatus(id, 'done');
@@ -550,7 +553,7 @@ describe("Thunder's Edge turned on in a game in progress", () => {
 
   test('a mark of a start holding is one undo step, for me and for an opponent', () => {
     const mine = game().start.me;
-    act().setStartHolding('me', 'technology:cv2', true);
+    act().setStartHolding(me(), 'technology:cv2', true);
     expect(game().start.me.technologies).toEqual([...(mine.technologies ?? []), 'technology:cv2']);
     const id = game().opponents[0].id;
     const theirs = game().start.opponents[id];
@@ -565,9 +568,9 @@ describe("Thunder's Edge turned on in a game in progress", () => {
   test('a leader\'s state set by hand is one undo step; null locks it again', () => {
     const id = game().opponents[0].id;
     act().setLeader(id, 'leader:solagent', 'exhausted');
-    act().setLeader('me', 'leader:solhero', 'unlocked');
+    act().setLeader(me(), 'leader:solhero', 'unlocked');
     expect(game().start.opponents[id].leaders).toEqual({ 'leader:solagent': 'exhausted' });
-    act().setLeader('me', 'leader:solhero', null);
+    act().setLeader(me(), 'leader:solhero', null);
     // My own agent has been unlocked since the game began.
     expect(game().start.me.leaders).toEqual({ 'leader:arborecagent': 'unlocked' });
     act().undo();
@@ -577,9 +580,12 @@ describe("Thunder's Edge turned on in a game in progress", () => {
   test('removing an opponent through the store removes their start holdings, and undo brings them back', () => {
     const id = game().opponents[0].id;
     const theirs = game().start.opponents[id];
+    const count = game().opponents.length;
     act().setStartHolding(id, 'technology:ff2', true);
     act().removeOpponent(0);
-    expect(game().start.opponents[id]).toBeUndefined();
+    // The next player takes the seat and its id: nobody holds what the one who left had.
+    expect(Object.keys(game().start.opponents)).toHaveLength(count - 1);
+    expect(Object.values(game().start.opponents).some(held => held.technologies?.includes('technology:ff2'))).toBe(false);
     act().undo();
     expect(game().start.opponents[id]).toEqual({ ...theirs, technologies: ['technology:ff2'] });
   });
@@ -678,7 +684,7 @@ describe('enemy ground units by planet', () => {
     act().setEnemyGround('p', other.id, { mech: 1 });
     expect(opponentHoldings(game(), id).units).toBe(2);
     act().removeOpponent(0);
-    expect(game().enemyGround).toEqual({ p: { [other.id]: { mech: 1 } } });
+    expect(game().enemyGround).toEqual({ p: { [game().opponents[0].id]: { mech: 1 } } });
   });
 });
 

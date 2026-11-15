@@ -149,7 +149,7 @@ export function HexMap({
     return [...keys, ...homes];
   }, [pack, playerCount, table.layout, table.map, homes]);
 
-  const colours = tableColours(table, viewer);
+  const colours = tableColours(table);
   const palette = Object.values(colours).join();
   useEffect(() => { void prepareSprites(palette.split(',')); }, [palette]);
 

@@ -49,7 +49,7 @@ beforeEach(() => setLanguage('en'));
 
 describe('StepHints', () => {
   test('names the components the players hold for the step, and a press opens the printed text', async () => {
-    render(<StepHints pack={pack} {...board([combat.id, production.id])} step="combat" players={['me']} />);
+    render(<StepHints pack={pack} {...board([combat.id, production.id])} step="combat" players={['p1']} />);
     const hints = screen.getByRole('group', { name: 'Reminders for this step' });
     expect(within(hints).getAllByTestId(/^component-/)).toHaveLength(1);
     expect(hints).not.toHaveTextContent(combat.text.slice(0, 24));
@@ -60,16 +60,16 @@ describe('StepHints', () => {
   });
 
   test('asks only the players named', () => {
-    const { rerender } = render(<StepHints pack={pack} {...board([], [combat.id])} step="combat" players={['me']} />);
+    const { rerender } = render(<StepHints pack={pack} {...board([], [combat.id])} step="combat" players={['p1']} />);
     expect(screen.queryByRole('group', { name: 'Reminders for this step' })).toBeNull();
-    rerender(<StepHints pack={pack} {...board([], [combat.id])} step="combat" players={['me', 'rival']} />);
+    rerender(<StepHints pack={pack} {...board([], [combat.id])} step="combat" players={['p1', 'p2']} />);
     expect(screen.getByRole('group', { name: 'Reminders for this step' })).toHaveTextContent(combat.name);
   });
 
   test('draws nothing when nothing is held for the step, or without a board', () => {
-    const { container, rerender } = render(<StepHints pack={pack} {...board([production.id])} step="combat" players={['me']} />);
+    const { container, rerender } = render(<StepHints pack={pack} {...board([production.id])} step="combat" players={['p1']} />);
     expect(container).toBeEmptyDOMElement();
-    rerender(<StepHints pack={pack} table={board([]).table} board={undefined} step="production" players={['me']} />);
+    rerender(<StepHints pack={pack} table={board([]).table} board={undefined} step="production" players={['p1']} />);
     expect(container).toBeEmptyDOMElement();
   });
 });
@@ -82,7 +82,7 @@ describe('the reminders in the editors', () => {
     useGame.getState().setTile('0,-3', null);
     useGame.getState().setTile('1,0', '5');
     useGame.getState().setTile(TARGET, '25');
-    for (const id of [combat.id, production.id, played.id]) useGame.getState().setStartHolding('me', id, true);
+    for (const id of [combat.id, production.id, played.id]) useGame.getState().setStartHolding('p1', id, true);
   });
   const hintsAfter = (text: RegExp) => {
     const row = screen.getByRole('button', { name: text }).closest('.source-row')!;
@@ -116,7 +116,7 @@ describe('the reminders in the editors', () => {
   });
 
   test('a strategy card shows the reminders of its step, the card', async () => {
-    useGame.getState().setStartHolding('me', PSYCHOARCHAEOLOGY, true);
+    useGame.getState().setStartHolding('p1', PSYCHOARCHAEOLOGY, true);
     edits.addEntry(1, { type: 'strategic', card: 4 }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit/ }));
@@ -128,7 +128,7 @@ describe('the reminders in the editors', () => {
   });
 
   test('a turn of the round shows the reminders of the round among what the entry brings', async () => {
-    useGame.getState().setStartHolding('me', PSYCHOARCHAEOLOGY, true);
+    useGame.getState().setStartHolding('p1', PSYCHOARCHAEOLOGY, true);
     edits.addEntry(1, { type: 'pass' }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit/ }));

@@ -78,12 +78,12 @@ export interface Strategic { kind: 'strategic'; card?: number; forToken?: boolea
 export interface Secondary { kind: 'secondary'; card?: number; effects?: CardEffects }
 export interface ComponentPlay { kind: 'component'; component?: ComponentId; note: string; effects?: CardEffects; payment?: Payment }
 export interface Pass { kind: 'pass' }
-/** The tokens, points and objectives of the status phase; `opponentVp` is by player. */
+/** The tokens, points and objectives of the status phase; `points` is what each player gained this round, the turn's own player among them. */
 export interface StatusPhase {
-  kind: 'status'; tactic: number; fleet: number; strategy: number; vp?: number;
-  opponentVp?: Record<PlayerId, number>; scored?: ComponentId[]; spend?: StatusSpend;
+  kind: 'status'; tactic: number; fleet: number; strategy: number;
+  points?: Record<PlayerId, number>; scored?: ComponentId[]; spend?: StatusSpend;
 }
-/** A card of the agenda phase and what it changed, as numbers; `choices` names the outcome and what was elected. */
+/** A card of the agenda phase and what it changed, as numbers; `choices` names the outcome and what was elected (a player by id). */
 export interface Agenda { kind: 'agenda'; label: string; delta: AdjustmentDelta; choices?: Record<string, string | number> }
 /** A set of events the rules do not model, with its label. `purpose` keeps the meaning of the kinds `losses`, `build` and `setup`. */
 export interface Correction { kind: 'correction'; label: string; delta: AdjustmentDelta; purpose?: AdjustmentKind }

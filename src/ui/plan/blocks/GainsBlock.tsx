@@ -46,7 +46,7 @@ export function GainsBlock({ turn, pack, view, lead, onChange }: GainsBlockProps
   const title = t('components.gains.title');
   const player = view && turn.player;
   const canLose = view && player !== undefined ? losableOf(view.board, player, turn) : losable(emptyHoldings(), turn);
-  const once = useMemo(() => heldOnce(view && player !== undefined ? shelfOf(view.table, view.board, player) : emptyHoldings()), [view, player]);
+  const once = useMemo(() => heldOnce(view && player !== undefined ? shelfOf(view.board, player) : emptyHoldings()), [view, player]);
   const nothing = canLose.length === 0;
   return (
     <Section label={title} title={title}>

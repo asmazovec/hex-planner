@@ -19,10 +19,10 @@ const PLACED = /you must place it faceup in your play area/i;
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-requirement: ({ pack, my, key, holder }) => ({
+requirement: ({ pack, my, holder }) => ({
     have: my.cards('promissory').filter(note => {
       const owner = noteAddress(note.id);
-      return owner !== undefined && owner !== key(holder) && PLACED.test(pack.originalTexts?.[noteBase(note.id)] ?? pack.texts[noteBase(note.id)] ?? '');
+      return owner !== undefined && owner !== holder && PLACED.test(pack.originalTexts?.[noteBase(note.id)] ?? pack.texts[noteBase(note.id)] ?? '');
     }).length,
     need: 1,
   }),

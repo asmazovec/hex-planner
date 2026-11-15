@@ -4,6 +4,7 @@
  * Alliance note, and the codes made by the play of a component. The components themselves have their own tests under
  * `components/`; a throwaway effect stands in for them here and is taken away after each test.
  */
+import { legacyKey } from '../../testing/old/game/keys';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { gain } from '../../game/abilities/emit';
 import { EXTENSION_CODES } from '../rules/codes';
@@ -76,8 +77,8 @@ describe('what `play` is given', () => {
     forecast(table.game, table.pack);
     const ctx = play.mock.calls[0][0];
     expect(ctx).toMatchObject({ id: CARD, choices: { planet: 'h1' }, held: true });
-    expect(ctx.key(ctx.holder)).toBe('me');
-    expect(ctx.table.players.map((p: { id: string }) => ctx.key(p.id)).sort()).toEqual(['me', 'o1']);
+    expect(legacyKey(ctx.table, ctx.holder)).toBe('me');
+    expect(ctx.table.players.map((p: { id: string }) => legacyKey(ctx.table, p.id)).sort()).toEqual(['me', 'o1']);
   });
 
   test('a rival\'s entry is played for the rival, and a component not held says so', () => {
@@ -87,7 +88,7 @@ describe('what `play` is given', () => {
     lend(effectOf(table.pack, CARD)!, { play: play });
     forecast(table.game, table.pack);
     const ctx = play.mock.calls[0][0];
-    expect(ctx.key(ctx.holder)).toBe('o1');
+    expect(legacyKey(ctx.table, ctx.holder)).toBe('o1');
     expect(ctx.held).toBe(false);
   });
 

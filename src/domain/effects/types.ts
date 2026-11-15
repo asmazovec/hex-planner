@@ -63,9 +63,9 @@ export type Modifiers = { [K in keyof ModifierContext]: (value: number, ctx: Mod
 export type ChoiceKind =
   /** A planet id. */
   | 'planet'
-  /** A slot of the map (`TableFacts.map`, the open Fracture). */
+  /** A slot of the map (`Table.map`, the open Fracture). */
   | 'system'
-  /** `me` or an opponent id. */
+  /** A player id of the table. */
   | 'player'
   /** A unit id. */
   | 'unit'

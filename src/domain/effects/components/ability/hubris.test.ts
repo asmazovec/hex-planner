@@ -25,7 +25,7 @@ describe('ability:hubris Hubris', () => {
   test('ability:hubris the Mahact player begins without their Alliance', () => {
     const { pack } = bench({ faction: 'mahact', expansions: ['pok'] });
     quote(pack, id, 'During setup, purge your "Alliance" promissory note.');
-    const start = startForFaction({ promissory: genericNotes(pack, 'me') }, '', 'mahact', pack);
+    const start = startForFaction({ promissory: genericNotes(pack, 'me') }, '', 'mahact', pack, 'me');
     expect(start.promissory).not.toContain(`${ALLIANCE}@me`);
     expect(start.promissory).toContain('promissory:<color>_ta@me');
   });
@@ -35,7 +35,7 @@ describe('ability:hubris Hubris', () => {
   // Why the default deal stands here: the purge is printed on the Mahact sheet.
   test('ability:hubris another faction begins with its Alliance', () => {
     const { pack } = bench({ faction: 'sol', expansions: ['pok'] });
-    expect(startForFaction({ promissory: genericNotes(pack, 'me') }, '', 'sol', pack).promissory).toContain(`${ALLIANCE}@me`);
+    expect(startForFaction({ promissory: genericNotes(pack, 'me') }, '', 'sol', pack, 'me').promissory).toContain(`${ALLIANCE}@me`);
   });
 
   // "Other players cannot give you their 'Alliance" promissory note."

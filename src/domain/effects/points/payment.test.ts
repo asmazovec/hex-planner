@@ -3,6 +3,7 @@
  * what is attached to it, the worth of a trade good, planet cards, the commodity value, the hook of a transaction and
  * the cost of a component action. A component's own file is never touched.
  */
+import { legacyKey } from '../../../testing/old/game/keys';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { pay } from '../../../testing/old/domain/replay/payment';
 import { autoPay, paymentValue } from '../../../testing/old/domain/payment';
@@ -138,7 +139,7 @@ describe('transactions: the hook of a deal', () => {
     const seen: string[] = [];
     throwaway['technology:deal'] = {
       tier: 'passive', rule: 'x', holder: 'anyone',
-      on: { dealt: (ctx, deal) => { seen.push(`${deal.side}:${ctx.key(deal.self)}->${ctx.key(deal.partner)} gave ${deal.gave.tradeGoods ?? 0} got ${deal.got.tradeGoods ?? 0}`); return [gain.tradeGoods(deal.self, 10)]; } },
+      on: { dealt: (ctx, deal) => { seen.push(`${deal.side}:${legacyKey(ctx.table, deal.self)}->${legacyKey(ctx.table, deal.partner)} gave ${deal.gave.tradeGoods ?? 0} got ${deal.got.tradeGoods ?? 0}`); return [gain.tradeGoods(deal.self, 10)]; } },
     };
     alwaysInForce.push('technology:deal');
     const turn = tactical(NEAR, { acts: [{ kind: 'transaction', with: 'o1', give: { tradeGoods: 2 }, get: {} }] });

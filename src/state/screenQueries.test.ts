@@ -1,12 +1,12 @@
 /** The questions of the screens over the kernel's rounds and boards, against the old questions they replaced. */
+import { toOld } from '../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { allTurns, holdingRoundsOf, mergedCountsOf, sliceOwnersOf, spendableOn, structureWarningsOn, upgradeRoundsOf } from '../game/screenQueries';
-import { holdingRounds } from '../domain/holdings';
-import { mergedCounts } from '../domain/losses';
+import { entryUpgradeRounds, holdingRounds } from '../testing/old/domain/holdings';
+import { mergedCounts } from '../testing/old/domain/losses';
 import { createGame } from '../testing/old/domain/newGame';
 import { sliceOwners } from '../testing/old/domain/thundersEdge';
-import { entryUpgradeRounds } from '../domain/unitStats';
 import type { Entry, Game } from '../testing/old/domain/types';
 import { projectionAtRound, timelineOf as oldTimeline } from '../testing/projection';
 import { savedOf } from '../testing/legacySave';
@@ -50,13 +50,16 @@ describe('the questions of the screens, kernel against old', () => {
 
   test('where the components of each player first appear, and the upgrades the plan researches', () => {
     for (const filter of ['now', 'forecast'] as const) {
-      expect(holdingRoundsOf(saved.table, saved.plans[0].rounds, filter)).toEqual(holdingRounds(g.plans[0], filter));
-      expect(upgradeRoundsOf(saved.table, saved.plans[0].rounds, filter, pack)).toEqual(entryUpgradeRounds(g.plans[0], filter, pack));
+      // By player in the kernel, by the old ids in the old plan.
+      expect(toOld(saved.table, holdingRoundsOf(saved.plans[0].rounds, filter))).toEqual(holdingRounds(g.plans[0], filter));
+      expect(upgradeRoundsOf(saved.table.viewer, saved.plans[0].rounds, filter, pack)).toEqual(entryUpgradeRounds(g.plans[0], filter, pack));
     }
   });
 
   test('who holds each expedition part', () => {
-    expect(sliceOwnersOf(saved)).toEqual(sliceOwners(g, g.plans[0]));
+    // The kernel says which player took a part; the old question only whether it was me or another.
+    const viewed = Object.fromEntries(Object.entries(sliceOwnersOf(saved)).map(([part, player]) => [part, player === saved.table.viewer ? 'me' : 'other']));
+    expect(viewed).toEqual(sliceOwners(g, g.plans[0]));
   });
 
   test('the structure limit of a planet and what the shop can spend, at the end of the round', () => {

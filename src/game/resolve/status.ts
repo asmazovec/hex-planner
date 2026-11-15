@@ -15,7 +15,6 @@ import { violation } from '../../domain/rules/registry';
 import type { Warning } from '../../domain/types';
 import type { TurnFacts } from '../turnFacts';
 import type { GameEvent } from '../events';
-import { playerOfKey } from '../keys';
 import { fleetPoolMaxWarnings, fleetPoolWarnings, planetsOf, readyPlanets, reinforcementWarnings, shipsIn, groundOn, statusTokensFree } from '../queries';
 import { slotsOf, mapSource } from '../space';
 import { contextOf } from './hooks';
@@ -37,11 +36,10 @@ function statusTokens(ctx: Ctx, entry: StatusEntry): void {
   if (entry.fleet < 0) warn(ctx, fleetPoolWarnings(ctx.table, ctx.board, ctx.pack, ctx.player, 'status'));
   if (entry.fleet > 0) warn(ctx, fleetPoolMaxWarnings(ctx.table, ctx.board, ctx.pack, ctx.player));
   const points: GameEvent[] = [];
-  if ((entry.vp ?? 0) !== 0) points.push({ type: 'PointsChanged', player: ctx.player, delta: entry.vp ?? 0 });
-  for (const [key, delta] of Object.entries(entry.opponentVp ?? {})) {
-    const rival = playerOfKey(ctx.table, key);
-    if (rival !== undefined && rival !== ctx.player && delta !== 0) points.push({ type: 'PointsChanged', player: rival, delta });
-  }
+  // The turn's own player first, then the others in the order they were written.
+  const gained = entry.points ?? {};
+  const scorers = [ctx.player, ...Object.keys(gained).filter(id => id !== ctx.player && ctx.table.players.some(p => p.id === id))];
+  for (const player of scorers) if ((gained[player] ?? 0) !== 0) points.push({ type: 'PointsChanged', player, delta: gained[player] });
   emit(ctx, points, { quiet: true });
 }
 

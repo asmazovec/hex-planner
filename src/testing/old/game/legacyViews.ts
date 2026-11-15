@@ -1,4 +1,5 @@
-import { holdingsOfCards, legacyKey, playerOfKey, kindOf } from '../../../game/keys';
+import { holdingsOfCards, kindOf } from '../../../game/keys';
+import { legacyKey, playerOfKey, toOld, toTable } from './keys';
 import { SAVE_FORMAT, type DataPack, type UnitCounts, type StructureCounts } from '../../../domain/types';
 import type { Game } from '../domain/types';
 import { type Holdings, type GameState } from '../domain/types';
@@ -132,7 +133,8 @@ export function legacyViewsFresh(table: Table, board: Board, pack: DataPack, mem
     const attached = Object.entries(board.planets).filter(([, planet]) => planet.attached.length > 0);
     return {
       holds: Object.fromEntries(Object.entries(board.planets).flatMap(([id, planet]) => (planet.owner !== undefined && planet.owner !== table.viewer ? [[id, legacyKey(table, planet.owner)]] : []))),
-      ...(attached.length > 0 ? { attached: Object.fromEntries(attached.map(([id, planet]) => [id, [...planet.attached]])) } : {}),
+      // A note attached to a planet is named with the old id of its player, as every note of the old model is.
+      ...(attached.length > 0 ? { attached: Object.fromEntries(attached.map(([id, planet]) => [id, toOld(table, [...planet.attached])])) } : {}),
     };
   }, memo);
   me.rivalHolds = holds;
@@ -145,7 +147,7 @@ export function legacyViewsFresh(table: Table, board: Board, pack: DataPack, mem
 }
 export interface OnPlanets { ground: Record<string, UnitCounts>; exhausted: string[]; control: GameState['control']; docks: string[]; pds: Record<string, number> }
 export const ON_PLANETS = new WeakMap<object, Map<string, OnPlanets>>();
-export const HELD = new WeakMap<object, { holdings: Holdings; onCard?: GameState['onCard'] }>();
+export const HELD = new WeakMap<object, { table: Table; holdings: Holdings; onCard?: GameState['onCard'] }>();
 export const CONTROLS = new WeakMap<object, Map<string, { control: Game['planetControl']; owners: Game['planetOwner'] }>>();
 /** One player's state of the board; `memo` shares the parts of it with the other views of the same boards (the views that may not be changed). */
 export function ownState(table: Table, board: Board, player: PlayerId, memo = false): GameState {
@@ -185,9 +187,10 @@ export function ownState(table: Table, board: Board, player: PlayerId, memo = fa
   }, memo);
   const cards = p?.cards ?? {};
   let held = memo ? HELD.get(cards) : undefined;
-  if (!held) {
-    const onCard = onCardOfCards(cards);
-    held = { holdings: holdingsOfCards(cards), ...(nonEmpty(onCard) ? { onCard } : {}) };
+  if (!held || held.table !== table) {
+    // The notes a player holds are addressed by the old ids of their players, as the old model has them.
+    const onCard = toOld(table, onCardOfCards(cards));
+    held = { table, holdings: toOld(table, holdingsOfCards(cards)), ...(nonEmpty(onCard) ? { onCard } : {}) };
     if (memo) HELD.set(cards, held);
   }
   const others = table.players.filter(x => x.id !== player);
@@ -215,9 +218,9 @@ export function blankViews(table: Table, game: Game): LegacyViews {
   }
   return { game, states };
 }
-/** The cards of a player as a view holds them, the breakthrough under the id of its faction's. */
-export function cardsIn(state: GameState, pack: DataPack): Record<ComponentId, CardHold> {
-  return cardsOfHoldings(state.holdings, state.faction === undefined ? undefined : breakthroughOf(pack, state.faction), state.onCard);
+/** The cards of a player as a view holds them, in the words of the table (a note under the id of its player), the breakthrough under the id of its faction's. */
+export function cardsIn(table: Table, state: GameState, pack: DataPack): Record<ComponentId, CardHold> {
+  return cardsOfHoldings(toTable(table, state.holdings), state.faction === undefined ? undefined : breakthroughOf(pack, state.faction), toTable(table, state.onCard));
 }
 /**
  * The events that take the views `before` to the views `after`, for what a board can say. `actor` is the player the
@@ -329,8 +332,8 @@ export function legacyEvents(table: Table, pack: DataPack, before: LegacyViews, 
       if (had && !has) out.push({ type: 'TokenReturned', player, system: slot, ...c });
     }
     // Cards.
-    const cardsWas = cardsIn(was, pack);
-    const cardsNow = cardsIn(now, pack);
+    const cardsWas = cardsIn(table, was, pack);
+    const cardsNow = cardsIn(table, now, pack);
     for (const id of new Set([...Object.keys(cardsWas), ...Object.keys(cardsNow)])) {
       const a = cardsWas[id];
       const b = cardsNow[id];
@@ -371,8 +374,7 @@ export function legacyEvents(table: Table, pack: DataPack, before: LegacyViews, 
   for (const objective of (me(after).revealed ?? []).filter(id => !(me(before).revealed ?? []).includes(id))) out.push({ type: 'ObjectiveRevealed', objective, ...c });
   for (const [planet, cards] of Object.entries(me(after).attachments ?? {})) {
     for (const card of cards) {
-      if (!(me(before).attachments?.[planet] ?? []).includes(card) && !lawsNow.includes(card)) out.push({ type: 'CardAttached', planet, card, ...c });
-      else if (!(me(before).attachments?.[planet] ?? []).includes(card)) out.push({ type: 'CardAttached', planet, card, ...c });
+      if (!(me(before).attachments?.[planet] ?? []).includes(card)) out.push({ type: 'CardAttached', planet, card: toTable(table, card), ...c });
     }
   }
   if (me(after).custodiansRemoved && !me(before).custodiansRemoved) out.push({ type: 'CustodiansRemoved', player: actor, ...c });

@@ -25,7 +25,7 @@ export const ability: Ability = {
   on: {
     dealt: (ctx, deal) => {
       for (const note of deal.got.components ?? []) {
-        if (noteBase(note) !== ALLIANCE || noteAddress(note) === ctx.key(deal.self)) continue;
+        if (noteBase(note) !== ALLIANCE || noteAddress(note) === deal.self) continue;
         ctx.warn(violation(noteRefused.code, { id: note, name: componentById(ctx.pack, note)?.name ?? note }));
       }
     },

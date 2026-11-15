@@ -53,7 +53,7 @@ test('a For/Against agenda: For and Against are chosen, one at a time, and a sec
 test('an Elect Player agenda offers every player by the name of their faction, and writes their id', async () => {
   const read = show('agenda:censure');
   await userEvent.click(screen.getByRole('button', { name: `Elect ${pack.factions.arborec.name}` }));
-  expect(read()).toEqual({ elect: 'me' });
+  expect(read()).toEqual({ elect: 'p1' });
 });
 
 test('an Elect Planet agenda offers the planets of the map, and writes the planet id', async () => {

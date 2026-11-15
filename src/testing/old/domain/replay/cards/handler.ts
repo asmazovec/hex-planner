@@ -1,4 +1,4 @@
-import type { CardEntry } from '../../../../../domain/strategy';
+import type { CardEntry } from '../../types';
 import type { DataPack, Warning } from '../../../../../domain/types';
 import type { Game } from '../../types';
 import type { GameState } from '../../types';

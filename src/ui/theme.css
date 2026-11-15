@@ -103,8 +103,8 @@
   --token-fill: #26303f;
   --token-spent: #12161e;
   --token-stroke: #566078;
-  --control-me: var(--accent);
-  --control-enemy: var(--danger);
+  --control-own: var(--accent);
+  --control-other: var(--danger);
 
   /* Players: each keeps one colour for the whole game. */
   --player-1: #7fb2ff;
@@ -389,8 +389,8 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 @keyframes tk-out { to { transform: scale(0); } }
 @media (prefers-reduced-motion: reduce) { .tk-out { display: none; } }
 .planet-disc { fill: var(--token-fill); stroke: var(--token-stroke); stroke-width: 0.85; transition: fill var(--motion), stroke var(--motion); }
-.planet-me { stroke: var(--control-me); stroke-width: 1.9; }
-.planet-enemy { stroke: var(--control-enemy); stroke-width: 1.9; }
+.planet-own { stroke: var(--control-own); stroke-width: 1.9; }
+.planet-other { stroke: var(--control-other); stroke-width: 1.9; }
 .tile .planet-values { font-size: 8.6px; font-weight: 700; }
 .tile .value-slash { fill: var(--text-dim); font-weight: 400; }
 .tile .planet-name { font-size: 9px; fill: var(--planet-name-ink); }
@@ -736,7 +736,7 @@ button.draft-chip { background: var(--accent-solid); border: 1px solid var(--acc
 .slice { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px 6px; line-height: 1.2; font-size: var(--font-s); }
 .slice[aria-pressed='true'] { border-color: var(--accent); }
 .slice[data-owner='other'] { background: color-mix(in srgb, var(--danger) 18%, var(--surface)); border-color: var(--danger); }
-.slice[data-owner='me'] { background: var(--accent-soft); }
+.slice[data-owner='own'] { background: var(--accent-soft); }
 .slice small { color: var(--text-muted); font-size: var(--font-xs); }
 .tile .fracture-label, .fracture-label { font-size: 18px; font-weight: 600; fill: var(--violet); text-anchor: middle; }
 .tile-fracture { cursor: default; }
@@ -804,7 +804,7 @@ button.chip::after, .side-actions button::after, .side-actions .button::after, .
 .players-aside .layout-picker p, .players-aside .layout-picker .row { font-size: 12px; margin: 0; line-height: 1.4; }
 
 .player-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; transition: border-color var(--motion), opacity var(--motion), transform var(--motion), box-shadow var(--motion); }
-.player-card.me { border-color: var(--border-me); box-shadow: inset 3px 0 0 var(--accent); }
+.player-card.own { border-color: var(--border-me); box-shadow: inset 3px 0 0 var(--accent); }
 .player-card.fresh { animation: card-in 0.25s ease; }
 .player-card.lifted { opacity: 0.35; transform: scale(0.985); }
 @keyframes card-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -912,7 +912,7 @@ body.seat-dragging, body.seat-dragging * { cursor: grabbing !important; user-sel
 
 @media (hover: hover) {
   .player-card:hover { border-color: var(--border-hover-card); }
-  .player-card.me:hover { border-color: var(--border-me); }
+  .player-card.own:hover { border-color: var(--border-me); }
   button.chip:hover:not(:disabled) { background: transparent; border-color: var(--border-hover-chip); color: var(--text-muted); }
   button.chip[aria-pressed='true']:hover:not(:disabled), button.chip[aria-checked='true']:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); }
   .add-opponent:hover:not(:disabled) { background: var(--accent-faint); border-color: var(--accent); color: var(--accent); }

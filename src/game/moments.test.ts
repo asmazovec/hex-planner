@@ -1,4 +1,5 @@
 /** The warnings of a moment (the round starts, the status phase starts or ends, a turn starts) stand in a step of the turn they come before, where a waiver can lift them. */
+import { toTable } from '../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { adjust, rulesGame, rulesPack } from '../domain/rules/kit';
 import { violation } from '../domain/rules/registry';
@@ -24,7 +25,7 @@ describe('the warning of a moment', () => {
 
   test('is lifted by a component the turn plays, and stays in the list as lifted', () => {
     const r = run({ ...adjust({}), uses: [NOTE] } as Entry);
-    expect(r.steps.flatMap(s => s.violations).find(v => v.code === 'notNeighbor')?.waivedBy).toEqual([NOTE]);
+    expect(r.steps.flatMap(s => s.violations).find(v => v.code === 'notNeighbor')?.waivedBy).toEqual([toTable(table, NOTE)]);
   });
 });
 
@@ -32,6 +33,6 @@ describe('the warning of what ends with the turn (the status phase, 81.4)', () =
   test('is lifted like the turn\'s own', () => {
     const entry = { ...adjust({}), uses: [NOTE] } as Entry;
     const r = resolveTurn(table, boardOf(game, pack), turnOf(table, entry, pack), pack, { closing: board => ({ board, violations: [moment()] }) });
-    expect(r.steps.flatMap(s => s.violations).find(v => v.code === 'notNeighbor')?.waivedBy).toEqual([NOTE]);
+    expect(r.steps.flatMap(s => s.violations).find(v => v.code === 'notNeighbor')?.waivedBy).toEqual([toTable(table, NOTE)]);
   });
 });

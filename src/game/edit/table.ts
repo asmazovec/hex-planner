@@ -3,10 +3,10 @@
  * map, the players and their factions, the seats, the layout, the map string and the expansions, and the making of a new
  * game. Each takes the saved game and hands back the same one when nothing changed. Pinned 1:1 against the old edits of
  * `TableFacts` (`table.test.ts`). A player's id is `p<seat>`; an edit that moves the seats renames the player where the start and
- * the plans name them.
+ * the plans name them: as a player, and as the address of a promissory note.
  */
 import { loadPack } from '../../data/loadPack';
-import { noteAddress } from '../../domain/components';
+import { noteAddress, noteFor } from '../../domain/components';
 import { genericNotes, startForFaction, withoutNotesOf } from '../../domain/holdings';
 import { defaultLayout, slotKeyOf, templateOf } from '../../domain/layouts';
 import { moveToTemplate, seatSlots, slotsFor, templateFor } from '../../domain/mapBuilder';
@@ -29,7 +29,6 @@ const DRAFT_EXPANSIONS: ExpansionId[] = ['pok', 'te'];
 
 const real = (table: Table): Player[] => table.players.filter(p => p.seat < GHOST_SEAT);
 const idOfSeat = (seat: number): PlayerId => `p${seat}`;
-const legacyOf = (p: Player): string => p.legacyId ?? p.id;
 
 /** The most players the map templates of the pack allow. */
 export const maxPlayers = (pack: DataPack): number => Math.max(MIN_PLAYERS, ...pack.templates.map(t => t.playerCount));
@@ -56,9 +55,15 @@ export function withTile(saved: SavedGame, slot: Slot, tile: TileRef | null): Sa
 // ---------------------------------------------------------------------------------------------------------------------
 // Walking the plans: ids of players and planets, slots and notes are renamed in what the turns say.
 
-/** A value with every string, key or value, that `ids` names replaced: plain JSON all the way down. */
+/** A value with every string, key or value, that `ids` names replaced, the address of a promissory note too: plain JSON all the way down. */
 function renamed<T>(value: T, ids: ReadonlyMap<string, string>): T {
-  const swap = (s: string): string => ids.get(s) ?? s;
+  const swap = (s: string): string => {
+    const direct = ids.get(s);
+    if (direct !== undefined) return direct;
+    const address = noteAddress(s);
+    const next = address === undefined ? undefined : ids.get(address);
+    return next === undefined ? s : noteFor(s, next);
+  };
   const walk = (v: unknown): unknown => {
     if (typeof v === 'string') return swap(v);
     if (Array.isArray(v)) return v.map(walk);
@@ -84,7 +89,7 @@ function mapTurns(turns: Turn[], edit: (turn: Turn) => Turn | null): Turn[] {
   });
 }
 
-/** A turn whose notes of a player who left are gone: those it takes, discards, plays or hands over in a transaction. */
+/** A turn whose notes of a player who left are gone: those it takes, discards, plays or hands over in a transaction; a transaction with that player goes whole. */
 function withoutNotes(turn: Turn, gone: (id: string) => boolean, left: Player): Turn {
   const kept = (ids: string[] | undefined): string[] | undefined => (ids?.some(gone) ? ids.filter(id => !gone(id)) : ids);
   const next: Turn = { ...turn };
@@ -98,10 +103,9 @@ function withoutNotes(turn: Turn, gone: (id: string) => boolean, left: Player): 
     void component;
     next.action = rest;
   }
+  if (next.acts.some(act => act.kind === 'transaction' && act.with === left.id)) next.acts = next.acts.filter(act => act.kind !== 'transaction' || act.with !== left.id);
   next.acts = next.acts.map(act => {
     if (act.kind !== 'transaction') return act;
-    // The one who left is no longer at the table: the transaction names them as the game of old did.
-    if (act.with === left.id) act = { ...act, with: left.legacyId ?? left.id };
     if (![act.give, act.get].some(goods => goods.components?.some(gone))) return act;
     const side = (goods: typeof act.give): typeof act.give => {
       const { components, ...rest } = goods;
@@ -116,24 +120,23 @@ function withoutNotes(turn: Turn, gone: (id: string) => boolean, left: Player): 
 /** The turns forget a player who left: their turns, their points, their place in card effects and their notes (69.7). */
 function withoutPlayerInPlans(saved: SavedGame, leaving: Player): SavedGame {
   const player = leaving.id;
-  const oldId = legacyOf(leaving);
-  const gone = (id: string): boolean => noteAddress(id) === oldId;
+  const gone = (id: string): boolean => noteAddress(id) === player;
   return mapRounds(saved, round => ({
     ...round,
     turns: mapTurns(round.turns, turn => {
       if (turn.player === player) return null;
       const made = withoutNotes(turn, gone, leaving);
       const action: Action = made.action;
-      if (action.kind === 'status' && action.opponentVp) {
-        const { [player]: dropped, ...opponentVp } = action.opponentVp;
+      if (action.kind === 'status' && action.points && player in action.points) {
+        const { [player]: dropped, ...points } = action.points;
         void dropped;
-        return { ...made, action: { ...action, opponentVp } };
+        return { ...made, action: { ...action, points } };
       }
       if ((action.kind === 'strategic' || action.kind === 'secondary') && action.effects) {
         const { speaker, freeSecondary, ...rest } = action.effects;
         const effects = { ...rest } as NonNullable<typeof action.effects>;
-        if (speaker !== undefined && speaker !== oldId) effects.speaker = speaker;
-        const free = (freeSecondary ?? []).filter(id => id !== oldId);
+        if (speaker !== undefined && speaker !== player) effects.speaker = speaker;
+        const free = (freeSecondary ?? []).filter(id => id !== player);
         if (free.length > 0) effects.freeSecondary = free;
         return { ...made, action: { ...action, effects } };
       }
@@ -281,13 +284,10 @@ function seatedAs(saved: SavedGame, list: Player[], start: StartEdits = saved.st
   const viewer = ids.get(list[0].id)!;
   const fracture = start.fracture.seat !== null && start.fracture.seat > count ? { ...start.fracture, seat: null } : start.fracture;
   const players = [...list.map(p => ({ ...p, id: ids.get(p.id)! })), ...strays];
-  // The expedition says who took a slice as me or another: the other is the first of the others.
-  const other = players.find(p => p.id !== viewer)?.id ?? 'other';
-  const slices = Object.fromEntries(Object.entries(start.expedition.slices).map(([slice, by]) => [slice, by === null ? null : (ids.get(by) ?? by) === viewer ? viewer : other]));
   const moved: SavedGame = {
     ...saved,
     table: { ...table, layout, map, players, viewer },
-    start: { ...(rename ? renamed({ ...start, fracture }, ids) : { ...start, fracture }), expedition: { ...start.expedition, slices } },
+    start: rename ? renamed({ ...start, fracture }, ids) : { ...start, fracture },
     plans: rename ? renamed(saved.plans, ids) : saved.plans,
   };
   if (count === real(table).length) return moved;
@@ -307,20 +307,20 @@ const listOf = (saved: SavedGame): Player[] => listPlayers(saved.table);
 const emptySetup = (): Player['setup'] => ({});
 
 /** A new opponent takes the last seat and the first free colour. The maximum of the pack stops it. */
-export function addPlayer(saved: SavedGame, newId: IdMaker = timeIdMaker): SavedGame {
+export function addPlayer(saved: SavedGame): SavedGame {
   const pack = loadPack(saved.table.expansions);
   const players = listOf(saved);
   if (players.length >= maxPlayers(pack)) return saved;
   const used = players.map(p => p.color);
   const color = Array.from({ length: COLORS }, (_, i) => i + 1).find(c => !used.includes(c)) ?? 1;
-  const oldId = makeId('opponent', newId);
   const seat = players.length + 1;
-  const fresh: Player = { id: 'new', faction: '', seat, color, setup: emptySetup(), legacyId: oldId };
+  // Under an id no player of the table has, until `seatedAs` gives the one of the seat (the notes follow it).
+  const fresh: Player = { id: 'new', faction: '', seat, color, setup: emptySetup() };
   const start: StartEdits = {
     ...saved.start,
     points: { ...saved.start.points, new: 0 },
     // The newcomer begins with the generic notes of their colour (69).
-    holdings: { ...saved.start.holdings, new: { promissory: genericNotes(pack, oldId) } },
+    holdings: { ...saved.start.holdings, new: { promissory: genericNotes(pack, 'new') } },
   };
   return settled(saved, seatedAs(saved, [...players, fresh], start));
 }
@@ -330,7 +330,6 @@ export function removePlayer(saved: SavedGame, index: number): SavedGame {
   const players = listOf(saved);
   const leaving = players[index];
   if (index === 0 || !leaving || players.length <= MIN_PLAYERS) return saved;
-  const oldId = legacyOf(leaving);
   const rest = players.filter((_, i) => i !== index).map(p => (p.seat > leaving.seat ? { ...p, seat: p.seat - 1 } : p));
   const { start } = saved;
   const planets = Object.keys(start.control).filter(id => start.control[id] === leaving.id);
@@ -347,7 +346,7 @@ export function removePlayer(saved: SavedGame, index: number): SavedGame {
     start: {
       ...start, points,
       // The notes of the player who leaves go with them, whoever held them (69.7).
-      holdings: Object.fromEntries(Object.entries(held).map(([id, theirs]) => [id, withoutNotesOf(theirs, oldId)])),
+      holdings: Object.fromEntries(Object.entries(held).map(([id, theirs]) => [id, withoutNotesOf(theirs, leaving.id)])),
       units: without(start.units), ground: without(start.ground),
       control: Object.fromEntries(Object.entries(start.control).filter(([id]) => !planets.includes(id))),
       docks: start.docks.filter(id => !planets.includes(id)),
@@ -368,8 +367,8 @@ export function setFaction(saved: SavedGame, index: number, faction: string): Sa
   if (!player || player.faction === faction) return saved;
   const seated = seatedAs(saved, players.map((p, i) => (i === index ? { ...p, faction } : p)));
   // The starting technologies follow the faction, for me and for an opponent alike.
-  const begins = startForFaction(saved.start.holdings[player.id], player.faction, faction, pack, legacyOf(player));
-  const next = withHeld(seated, seated.table.players.find(p => p.seat === player.seat)!.id, begins);
+  const begins = startForFaction(saved.start.holdings[player.id], player.faction, faction, pack, player.id);
+  const next = withHeld(seated, player.id, begins);
   if (index !== 0) return settled(saved, next);
   const old = homePlanets(players[0].faction, pack);
   const fresh = homePlanets(faction, pack);
@@ -477,11 +476,10 @@ export function createSaved(
   const structures = startStructures(input.faction, pack);
   const planId = makeId('plan', newId);
   const gameId = makeId('game', newId);
-  const opponents = Array.from({ length: Math.max(0, input.playerCount - 1) }, () => makeId('opponent', newId));
-  const mine = startForFaction({ promissory: genericNotes(pack, 'me') }, '', input.faction, pack);
+  const first = startForFaction({ promissory: genericNotes(pack, 'p1') }, '', input.faction, pack, 'p1');
   const players: Player[] = [
-    { id: 'p1', faction: input.faction, seat: 1, color: 1, legacyId: 'me', setup: mine.technologies?.length ? { technologies: [...mine.technologies] } : {} },
-    ...opponents.map((legacyId, i): Player => ({ id: idOfSeat(i + 2), faction: '', seat: i + 2, color: i + 2, legacyId, setup: {} })),
+    { id: 'p1', faction: input.faction, seat: 1, color: 1, setup: first.technologies?.length ? { technologies: [...first.technologies] } : {} },
+    ...Array.from({ length: Math.max(0, input.playerCount - 1) }, (_, i): Player => ({ id: idOfSeat(i + 2), faction: '', seat: i + 2, color: i + 2, setup: {} })),
   ];
   const control: Record<string, PlayerId> = {};
   for (const planetId of pack.tiles[faction?.homeTile ?? '']?.planetIds ?? []) control[planetId] = 'p1';
@@ -492,8 +490,8 @@ export function createSaved(
     start: {
       points: Object.fromEntries(players.map(p => [p.id, 0])),
       holdings: {
-        p1: mine,
-        ...Object.fromEntries(opponents.map((legacyId, i) => [idOfSeat(i + 2), { promissory: genericNotes(pack, legacyId) } as StartHoldings])),
+        p1: first,
+        ...Object.fromEntries(players.slice(1).map(p => [p.id, { promissory: genericNotes(pack, p.id) } as StartHoldings])),
       },
       units: {}, ground: {}, control, docks: structures.docks, pds: structures.pds,
       expedition: { slices: {}, thundersEdgeSystem: null }, fracture: { active: false, ingress: [], seat: null },
@@ -532,8 +530,8 @@ export function draftWithExpansions(draft: SavedGame, expansions: ExpansionId[],
     ...blank.start,
     points: Object.fromEntries(players.map(p => [ids.get(p.id)!, draft.start.points[p.id] ?? 0])),
     holdings: {
-      [ids.get(players[0].id)!]: blank.start.holdings.p1,
-      ...Object.fromEntries(players.slice(1).map(p => [ids.get(p.id)!, { promissory: genericNotes(pack, legacyOf(p)) } as StartHoldings])),
+      [ids.get(players[0].id)!]: renamed(blank.start.holdings.p1, new Map([['p1', ids.get(players[0].id)!]])),
+      ...Object.fromEntries(players.slice(1).map(p => [ids.get(p.id)!, { promissory: genericNotes(pack, ids.get(p.id)!) } as StartHoldings])),
     },
   };
   const empty: SavedGame = {

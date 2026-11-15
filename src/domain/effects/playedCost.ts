@@ -1,6 +1,6 @@
 import type { PaymentKind } from '../payment';
 import type { DataPack } from '../types';
-import type { TurnFacts } from '../../game/turnFacts';
+import type { TurnDeeds } from '../../game/turnFacts';
 import type { Ability } from './types';
 
 /**
@@ -9,7 +9,7 @@ import type { Ability } from './types';
  * The editor's label, the automatic payment and the replay's check all ask this. `effectOf` is the registry's, passed
  * in so that this file does not import the registry the components import through the domain.
  */
-export function playedCost(pack: DataPack, entry: TurnFacts, effectOf: (pack: DataPack, id: string) => Ability | undefined): { kind: PaymentKind; amount: number } | undefined {
+export function playedCost(pack: DataPack, entry: TurnDeeds, effectOf: (pack: DataPack, id: string) => Ability | undefined): { kind: PaymentKind; amount: number } | undefined {
   if (entry.type !== 'component') return undefined;
   const own = entry.componentId ? effectOf(pack, entry.componentId)?.cost : undefined;
   const followed = (entry.uses ?? []).flatMap(id => effectOf(pack, id)?.useCost?.(entry) ?? []);

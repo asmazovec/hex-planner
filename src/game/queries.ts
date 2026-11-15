@@ -249,7 +249,7 @@ export const statusTokensFree = (table: Table, board: Board, pack: DataPack, pla
 
 /** The same for a turn of the status phase: what it names in «Used» and the component it plays are the entry's. */
 export const statusTokensFreeOfTurn = (table: Table, board: Board, pack: DataPack, turn: Turn): number =>
-  statusTokensFree(table, board, pack, turn.player, factsOf(table, turn));
+  statusTokensFree(table, board, pack, turn.player, factsOf(turn));
 
 /** No more tokens than the sixteen of a faction: the pools, and with `onBoard` those on the board (20.3.1). */
 export function reinforcementWarnings(board: Board, player: PlayerId, onBoard: boolean, step?: RuleStep): Warning[] {

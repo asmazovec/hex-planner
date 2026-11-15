@@ -6,7 +6,6 @@
 import '../../../domain/effects/points/moments';
 import { CARD } from '../../../domain/replay/cards/ids';
 import { appliedOn } from '../../abilities/registry';
-import { playerOfKey } from '../../keys';
 import { areNeighbours } from '../../queries';
 import { emit } from '../context';
 import type { CardRule } from './rule';
@@ -25,8 +24,7 @@ export const trade: CardRule = {
     ], { quiet: true });
     const chosen = effects.freeSecondary ?? [];
     if (primary && chosen.length > 0) {
-      const players = chosen.map(key => playerOfKey(ctx.table, key) ?? key);
-      ctx.track.freeSecondary[CARD.trade] = [...new Set([...(ctx.track.freeSecondary[CARD.trade] ?? []), ...players])];
+      ctx.track.freeSecondary[CARD.trade] = [...new Set([...(ctx.track.freeSecondary[CARD.trade] ?? []), ...chosen])];
     }
   },
 };

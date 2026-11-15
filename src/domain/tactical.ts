@@ -8,10 +8,11 @@ import type { MapSource } from './replay/board';
 import { isOnMap, sourceSlot } from './replay';
 import type { Pools } from './readers';
 import type { AdjustmentDelta, DataPack, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
-import type { TurnFacts } from '../game/turnFacts';
+import type { TurnDeeds } from '../game/turnFacts';
 import type { TableFacts } from './facts';
 
-export type TacticalEntry = Extract<TurnFacts, { type: 'tactical' }>;
+/** A tactical action as its steps read it: what it did, whoever it belongs to. */
+export type TacticalEntry = Extract<TurnDeeds, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
 
 export const hasUnits = (units: UnitCounts | undefined): boolean =>
@@ -169,7 +170,7 @@ export function arrowsOf(game: TableFacts, pack: DataPack, entry: TacticalEntry)
 }
 
 /** The systems an entry touches, for the camera. */
-export function entrySystems(game: TableFacts, pack: DataPack, entry: TurnFacts): string[] {
+export function entrySystems(game: TableFacts, pack: DataPack, entry: TurnDeeds): string[] {
   const slots: (string | null | undefined)[] = [];
   if (entry.type === 'tactical') {
     slots.push(entry.systemId, ...sourcesOf(game, pack, entry));

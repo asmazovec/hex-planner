@@ -22,7 +22,7 @@ export const ability: Ability = {
     // "The elected player gains this card and 1 victory point": once, when the law is resolved. Its passing after a
     // planet of the owner's home system is taken is not modelled.
     gained: ctx => {
-      const who = ctx.playerOf(String(ctx.choices.elect ?? ctx.key(ctx.holder)));
+      const who = ctx.playerOf(String(ctx.choices.elect ?? ctx.holder));
       return who === undefined ? undefined : [gain.points(who, 1)];
     },
     // "... the previous owner of this card loses 1 victory point": a law taken out of play by an entry of its owner.

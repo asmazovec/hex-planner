@@ -9,7 +9,6 @@ import { boardAt, statusIn, tacticalNumbers, timelineOf } from '../../state/proj
 import { mapSource } from '../../game/space';
 import { cardTargetsOn } from '../../game/planQueries';
 import { tacticalOwner } from '../../game/edit/new';
-import { legacyKey, playerOfKey } from '../../game/keys';
 import { pausedPath, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect } from '../map/geometry';
 import { placeOffMap } from '../map/offMapHomes';
@@ -381,14 +380,13 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const shownBoard = boardAt(shownLine, round.number);
   // A type an entry upgrades cannot be toggled by hand, even if the baseline holds it too: a tap would change nothing.
   const roundsSoFar = plan.rounds.filter(r => r.number <= round.number);
-  const lockedUpgrades = upgradeRoundsOf(shownTable, roundsSoFar, shownFilter, pack);
-  const holdingSources = holdingRoundsOf(shownTable, roundsSoFar, shownFilter);
+  const lockedUpgrades = upgradeRoundsOf(shownTable.viewer, roundsSoFar, shownFilter, pack);
+  const holdingSources = holdingRoundsOf(roundsSoFar, shownFilter);
   // What the players hold and have on the board, read from the board the map shows.
   const seen = shownOf(shownTable, shownBoard, pack);
-  const shownUpgrades = upgradesOf(seen.players.me.shelf, pack);
   const structures = Object.fromEntries(Object.entries(seen.players).map(([id, p]) => [id, p.structures]));
-  const rivalUpgraded = Object.fromEntries(Object.entries(seen.players).filter(([id]) => id !== 'me').map(([id, p]) => [id, upgradesOf(p.shelf, pack)]));
-  const heldCount = holdingCount(seen.players.me.shelf);
+  const upgraded = Object.fromEntries(Object.entries(seen.players).map(([id, p]) => [id, upgradesOf(p.shelf, pack)]));
+  const heldCount = holdingCount(seen.players[shownTable.viewer]?.shelf ?? emptyHoldings());
   // Warfare's free action has its card's status: the card marked done turns its arrow done.
   const kernelRound = forecastKernel.rounds.find(r => r.number === round.number);
   const tacticals = allTurns(round).filter(isTacticalTurn);
@@ -482,7 +480,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     componentsTab.write(group);
     setComponentGroup(group);
   };
-  const shownHoldings = (componentsOf !== null && componentsOf !== 'me' ? seen.players[componentsOf]?.shelf : seen.players.me.shelf) ?? emptyHoldings();
+  const shownHoldings = seen.players[componentsOf ?? shownTable.viewer]?.shelf ?? emptyHoldings();
   const toggleTe = () => {
     // While the panel stands aside for the map, the button brings it back.
     if (teChoosing) stopTeChoice();
@@ -533,7 +531,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
                 />
               )}
               {/* The reminders of the round: what its player holds ready that speaks of the round as a whole, stated in every turn. */}
-              {isTurn && <StepHints pack={pack} table={view.table} board={view.board} step="round" players={[legacyKey(view.table, entry.player)]} />}
+              {isTurn && <StepHints pack={pack} table={view.table} board={view.board} step="round" players={[entry.player]} />}
               {/* What the entry gained and gave stands with what else it holds. */}
               <GainsBlock turn={turn} pack={pack} view={view} onChange={change} />
               {/* What the entry used beside its action: what it allows is marked among the entry's warnings. */}
@@ -723,7 +721,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
               ? (
                 <div className="players-panel">
                   <PlayerList
-                    live={{ upgraded: shownUpgrades, rivalUpgraded, structures, locked: lockedUpgrades, points: Object.fromEntries(Object.entries(seen.players).map(([id, p]) => [id, p.vp])) }}
+                    live={{ upgraded, structures, locked: { [shownTable.viewer]: lockedUpgrades }, points: Object.fromEntries(Object.entries(seen.players).map(([id, p]) => [id, p.vp])) }}
                   />
                 </div>
               )
@@ -806,7 +804,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
                             { value: null, label: t('plan.mine'), color: planTable.players.find(p => p.id === planTable.viewer)?.color ?? 1 },
                             ...opponentsBySeat(planTable, pack, t).map(o => {
                               const name = shortName(pack, o.faction, t('players.player', { n: o.seat }));
-                              return { value: playerOfKey(planTable, o.id) ?? o.id, label: name, color: o.color, tag: playerTag(name, Boolean(pack.factions[o.faction]), o.seat) };
+                              return { value: o.id, label: name, color: o.color, tag: playerTag(name, Boolean(pack.factions[o.faction]), o.seat) };
                             }),
                           ]}
                         />

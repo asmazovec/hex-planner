@@ -13,6 +13,7 @@ import {
 } from '../game/edit/plan';
 import type { Round } from '../game/round';
 import type { SavedGame, SavedPlan } from '../game/save';
+import type { PlayerId } from '../game/types';
 import { loadGame, listGames } from '../storage/db';
 import { errorText } from '../storage/errorText';
 
@@ -26,7 +27,6 @@ import {
   addExpansion, addPlayer, changeLayout, createSaved, draftWithExpansions, removePlayer, setFaction, startedGame, swapSeats, withMap, withName,
   withTile,
 } from '../game/edit/table';
-import { playerOfKey } from '../game/keys';
 import { forgetTimelines, startOfSaved } from './projection';
 
 export { flushSaves };
@@ -39,9 +39,6 @@ function mapSame<T>(items: T[], edit: (item: T) => T): T[] {
   const next = items.map(edit);
   return next.every((item, i) => item === items[i]) ? items : next;
 }
-
-/** The player an owner key (`me`, a rival's id) stands for at the table. */
-const pid = (saved: SavedGame, key: string): string => playerOfKey(saved.table, key) ?? key;
 
 const activePlan = (saved: SavedGame): SavedPlan | undefined => saved.plans.find(p => p.id === saved.activePlanId);
 const seated = (saved: SavedGame): number => saved.table.players.filter(p => p.seat < 100).length;
@@ -138,20 +135,22 @@ export interface GameStore {
   /** Switches the map template; see `changeLayout`. */
   setLayout(layout: MapLayout): void;
   setOpponent(index: number, patch: { faction: string }): void;
-  /** Marks by hand what a player (`me` or an opponent id) held when the plan begins, by component id; a unit upgrade is its technology. */
+  /** Marks by hand what a player held when the plan begins, by component id; a unit upgrade is its technology. */
   setStartHolding(player: string, id: string, present: boolean): void;
   /** Marks by hand a leader's state when the plan begins; `null` locks it again. */
   setLeader(player: string, id: string, state: LeaderState | null): void;
-  setEnemyUnits(systemId: string, opponentId: string, units: UnitCounts): void;
-  setEnemyGround(planetId: string, opponentId: string, units: UnitCounts): void;
-  /** `owner` is `me`, an opponent id, or null for a free planet. */
-  setPlanetControl(planetId: string, owner: string | null): void;
+  /** The units of a player written by hand for the start, in a system's space and on a planet. */
+  setEnemyUnits(systemId: string, player: PlayerId, units: UnitCounts): void;
+  setEnemyGround(planetId: string, player: PlayerId, units: UnitCounts): void;
+  /** `owner` is the player who controls the planet at the start, or null for a free planet. */
+  setPlanetControl(planetId: string, owner: PlayerId | null): void;
   /** Marks whether a planet has a space dock. */
   setDock(planetId: string, present: boolean): void;
   setPds(planetId: string, count: number): void;
   /** One tap on the big hex: edits the merged adjustment of that system and kind in the round. */
   changeAdjustment(roundNo: number, change: MergedChange): void;
-  setSlice(id: string, owner: 'me' | 'other' | null): void;
+  /** Who took an expedition part before the plan (null: free). */
+  setSlice(id: string, owner: PlayerId | null): void;
   setThundersEdge(systemId: string | null): void;
   setFractureActive(active: boolean): void;
   /** Seat the Fracture group sits next to; null is the default edge. */
@@ -368,11 +367,11 @@ export const useGame = create<GameStore>((set, get) => {
     setMap: (map, layout) => commitSetup(saved => withMap(saved, map, layout)),
     setLayout: layout => commitSetup(saved => changeLayout(saved, layout)),
     setOpponent: (index, { faction }) => commitSetup(saved => setFaction(saved, index + 1, faction)),
-    setStartHolding: (player, id, present) => commit(s => withStartHolding(s, pid(s, player), id, present)),
-    setLeader: (player, id, state) => commit(s => withLeader(s, pid(s, player), id, state)),
-    setEnemyUnits: (systemId, opponentId, units) => commit(s => withUnitsAt(s, systemId, pid(s, opponentId), units)),
-    setEnemyGround: (planetId, opponentId, units) => commit(s => withGroundAt(s, planetId, pid(s, opponentId), units)),
-    setPlanetControl: (planetId, owner) => commit(s => withControl(s, planetId, owner === null ? null : pid(s, owner))),
+    setStartHolding: (player, id, present) => commit(s => withStartHolding(s, player, id, present)),
+    setLeader: (player, id, state) => commit(s => withLeader(s, player, id, state)),
+    setEnemyUnits: (systemId, player, units) => commit(s => withUnitsAt(s, systemId, player, units)),
+    setEnemyGround: (planetId, player, units) => commit(s => withGroundAt(s, planetId, player, units)),
+    setPlanetControl: (planetId, owner) => commit(s => withControl(s, planetId, owner)),
     setDock: (planetId, present) => commit(s => withDock(s, planetId, present)),
     setPds: (planetId, count) => commit(s => withPds(s, planetId, count)),
     changeAdjustment: (roundNo, change) => commit(s => {
@@ -384,7 +383,7 @@ export const useGame = create<GameStore>((set, get) => {
       const made = changeOnBoard(table, start, pack, plan.rounds, roundNo, change, newId);
       return !made || made === round ? s : editRound(s, roundNo, () => made);
     }),
-    setSlice: (id, owner) => commit(s => withSlice(s, id, owner === null ? null : owner === 'me' ? s.table.viewer : s.table.players.find(q => q.id !== s.table.viewer)?.id ?? 'other')),
+    setSlice: (id, owner) => commit(s => withSlice(s, id, owner)),
     setThundersEdge: systemId => commit(s => withThundersEdge(s, systemId)),
     setFractureActive: active => commit(s => withFractureActive(s, active)),
     setFractureSeat: seat => commit(s => withFractureSeat(s, seat)),

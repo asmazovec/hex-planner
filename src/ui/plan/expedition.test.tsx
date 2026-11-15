@@ -87,9 +87,9 @@ test('the button shows the expedition count, asks for the system at six, then sh
   render(<PlanScreen />);
   expect(teButton()).toHaveTextContent("Thunder's Edge · 0/6");
   expect(teButton()).not.toHaveClass('te-ready');
-  act(() => { for (const id of SLICES.slice(0, 3)) useGame.getState().setSlice(id, 'other'); });
+  act(() => { for (const id of SLICES.slice(0, 3)) useGame.getState().setSlice(id, 'p2'); });
   expect(teButton()).toHaveTextContent("Thunder's Edge · 3/6");
-  act(() => { for (const id of SLICES) useGame.getState().setSlice(id, 'other'); });
+  act(() => { for (const id of SLICES) useGame.getState().setSlice(id, 'p2'); });
   expect(teButton()).toHaveTextContent("Thunder's Edge · 6/6");
   expect(teButton()).toHaveClass('te-ready');
   act(() => useGame.getState().setThundersEdge(ok));
@@ -114,7 +114,7 @@ test('the counter shows taken parts, mine from the plan and others by tapping', 
 });
 
 test('a part taken by another player cannot be chosen in the expedition of a turn', async () => {
-  useGame.getState().setSlice('inf5', 'other');
+  useGame.getState().setSlice('inf5', 'p2');
   render(<PlanScreen />);
   const id = edits.addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: null, payment: { planets: [], tradeGoods: 0 } }] }, 'action');
   await userEvent.click(await screen.findByRole('button', { name: 'Edit: Component action' }));
@@ -128,7 +128,7 @@ test('a part taken by another player cannot be chosen in the expedition of a tur
 
 test('suitable systems light up only while choosing, and Thunder\'s Edge can be placed', async () => {
   const { ok, bad } = slots();
-  for (const id of SLICES.slice(0, 5)) useGame.getState().setSlice(id, 'other');
+  for (const id of SLICES.slice(0, 5)) useGame.getState().setSlice(id, 'p2');
   await openPanel();
   expect(document.querySelector('.tile-valid')).toBeNull();
   await userEvent.click(part('Technology'));

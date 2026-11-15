@@ -29,8 +29,8 @@ export const isCardTurn = (turn: Turn): turn is CardTurn => turn.action.kind ===
 /** The primary is the strategic action, the secondary the other. */
 export const isPrimary = (turn: Turn): boolean => turn.action.kind === 'strategic';
 
-/** The old entry of a card turn, for the handlers of the cards that still read one. */
-export const cardEntryOf = (table: Table, turn: CardTurn): CardEntry => factsOf(table, turn) as CardEntry;
+/** The facts of a card turn, for the handlers of the cards that read them. */
+export const cardEntryOf = (turn: CardTurn): CardEntry => factsOf(turn) as CardEntry;
 
 /** The effects a card turn chose; empty before any choice. */
 export const effectsOf = (turn: Turn): NonNullable<Strategic['effects']> => (isCardTurn(turn) ? turn.action.effects ?? {} : {});
@@ -47,16 +47,16 @@ export const primaryForTokenOf = (turn: CardTurn, held: number[]): boolean =>
 
 /** How many strategy tokens the turn owes: the components in force for the player, and those the turn names, say how many. */
 export function strategyTokensOwedOn(table: Table, board: Board, pack: DataPack, turn: CardTurn, play: { held?: number[]; free?: boolean } = {}): number {
-  return strategyTokensOwedOf(cardEntryOf(table, turn), play, holderIn(table, board, turn.player), pack);
+  return strategyTokensOwedOf(cardEntryOf(turn), play, holderIn(table, board, turn.player), pack);
 }
 
 /** Whether a token is owed at all, before the components change its number. */
-export const costsTokenOn = (table: Table, turn: CardTurn, play: { held?: number[]; free?: boolean } = {}): boolean =>
-  costsStrategyToken(cardEntryOf(table, turn), play);
+export const costsTokenOn = (turn: CardTurn, play: { held?: number[]; free?: boolean } = {}): boolean =>
+  costsStrategyToken(cardEntryOf(turn), play);
 
 /** What the card gives to distribute: its own tokens, with `board` the board just before the turn (Warfare reads where my tokens stand). */
 export function freeTokensOn(table: Table, board: Board, turn: CardTurn): number {
-  const entry = cardEntryOf(table, turn);
+  const entry = cardEntryOf(turn);
   return handlerOf(entry.card).freeTokens?.(entry, table.expansions, { tokensOnMap: tokensOnMapOf(board, turn.player) }) ?? 0;
 }
 
@@ -69,13 +69,13 @@ export function researchTokensGivenOn(table: Table, board: Board, pack: DataPack
 /** What the turn owes in resources or influence: bought tokens, research, or the units it produces, as the check asks them. */
 export function cardCostOn(table: Table, board: Board, pack: DataPack, turn: CardTurn): { kind: PaymentKind; amount: number } {
   const faction = table.players.find(p => p.id === turn.player)?.faction ?? '';
-  return cardCostOf(cardEntryOf(table, turn), faction, holderIn(table, board, turn.player), pack, units => productionDueOnBoard(table, board, pack, turn.player, units, turn));
+  return cardCostOf(cardEntryOf(turn), faction, holderIn(table, board, turn.player), pack, units => productionDueOnBoard(table, board, pack, turn.player, units, turn));
 }
 
 /** How many technologies the card lets the player research, and how many at its price (the card's own rule). */
 export function researchLimitOn(table: Table, board: Board, pack: DataPack, turn: CardTurn): number {
   const faction = table.players.find(p => p.id === turn.player)?.faction ?? '';
-  return researchLimit(cardEntryOf(table, turn), holderIn(table, board, turn.player).holdings, { pack, faction });
+  return researchLimit(cardEntryOf(turn), holderIn(table, board, turn.player).holdings, { pack, faction });
 }
 
 /** Where the units a card bought stand: the system's space area, and the planets, as the replay places them (68.3). */
@@ -93,7 +93,7 @@ export function boughtOn(table: Table, board: Board, pack: DataPack, player: Pla
 export function readyChoicesOn(table: Table, board: Board, pack: DataPack, turn: CardTurn): PlanetDef[] {
   const mine = (id: string): boolean => ownerOf(board, id) === turn.player;
   const effects = effectsOf(turn);
-  if (readyLimit(cardEntryOf(table, turn), table.expansions) === null) {
+  if (readyLimit(cardEntryOf(turn), table.expansions) === null) {
     return effects.systemId ? planetsIn(table, board, pack, effects.systemId).filter(mine).flatMap(id => pack.planets[id] ?? []) : [];
   }
   const exhausted = Object.keys(board.planets).filter(id => board.planets[id].exhausted && mine(id));

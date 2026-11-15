@@ -6,7 +6,6 @@ import { notesOfFirst, tradable, TRANSACTION_KINDS } from '../../../domain/holdi
 import type { ComponentKind, DataPack, Warning } from '../../../domain/types';
 import type { Goods, Transaction, Turn } from '../../../game/actions';
 import { withAct } from '../../../game/edit/turn';
-import { legacyKey } from '../../../game/keys';
 import { effectOfComponent as effectOf } from '../../../game/planQueries';
 import { shelfOf } from '../../../game/shelf';
 import { ComponentCard } from '../../components/ComponentCard';
@@ -71,7 +70,7 @@ export function TransactionStep({ pack, view, turn, index, warnings, onChange, o
   const kinds: readonly ComponentKind[] = uses.some(id => effectOf(pack, id)?.permit?.some(w => w.code === 'transactionKind'))
     ? [...TRANSACTION_KINDS, 'relic', 'secretObjective'] : TRANSACTION_KINDS;
   const offer = (key: Side): string[] => {
-    return notesOfFirst(tradable(shelfOf(view.table, view.board, giver(key)), act[key].components ?? [], kinds), legacyKey(view.table, giver(key === 'give' ? 'get' : 'give')));
+    return notesOfFirst(tradable(shelfOf(view.board, giver(key)), act[key].components ?? [], kinds), giver(key === 'give' ? 'get' : 'give'));
   };
   const side = (key: Side, title: string) => {
     const goods = act[key];
@@ -105,7 +104,7 @@ export function TransactionStep({ pack, view, turn, index, warnings, onChange, o
       {side('get', t('plan.acts.get'))}
       {/* Under the goods: a warning above them would push the counters from under the finger. */}
       <WarningList warnings={placeWarnings(warnings).at('deal')} table={view.table} board={view.board} pack={pack} />
-      <StepHints pack={pack} table={view.table} board={view.board} step="transaction" players={[legacyKey(view.table, owner), legacyKey(view.table, act.with)]} />
+      <StepHints pack={pack} table={view.table} board={view.board} step="transaction" players={[owner, act.with]} />
       {picking && (
         <ComponentPicker
           ids={offer(picking)} table={view.table} player={giver(picking)} onClose={() => setPicking(null)}

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { changeMerged, mergedCounts, mergedEntry } from './losses';
+import { changeMerged, mergedCounts, mergedEntry } from '../testing/old/domain/losses';
 import { changeOnBoard } from '../testing/oldMerged';
 import { createGame } from '../testing/old/domain/newGame';
 import { project } from '../testing/old/domain/project';

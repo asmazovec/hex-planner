@@ -1,9 +1,9 @@
 /** The replayed state: where it begins, and the helpers every step uses to change its counts. */
 import { violation } from '../rules/registry';
 import type { RuleStep, UnitCounts, UnitId, Warning } from '../types';
-import type { TurnFacts } from '../../game/turnFacts';
+import type { TurnDeeds } from '../../game/turnFacts';
 
-export type TacticalEntry = Extract<TurnFacts, { type: 'tactical' }>;
+export type TacticalEntry = Extract<TurnDeeds, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
 
 /** The command tokens a player starts with in each pool (LRR 20.2, setup). */

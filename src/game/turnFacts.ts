@@ -1,14 +1,14 @@
 /**
  * A read view of a turn for the rules and the components: what its action did, by the names the checks read
  * (`type`, `systemId`, `moves`, `landings`, `uses`, `gains`, `spends`, `componentId`, `card`). `factsOf` makes it
- * from a turn of the kernel; the old plans of the tests speak the same shape. `owner` is the old key of the player the
- * turn is expected of (the address a promissory note carries; absent for me), `id` is the turn's id.
+ * from a turn of the kernel. `player` is whose turn it is, a player id of the table like every other player the facts
+ * name (the other side of a transaction, the points of a status phase, a choice, the address of a promissory note);
+ * `id` is the turn's id.
  */
 import type { Act, AdjustmentDelta, AdjustmentKind, CardEffects, CardPlay, EntryStatus, Payment, Phase, StatusSpend, StructureCounts, UnitCounts } from '../domain/types';
 import type { Turn } from './actions';
-import { legacyPlayer } from './entry';
 import type { Place } from './events';
-import type { Table } from './types';
+import type { PlayerId } from './types';
 
 /**
  * `systemId` is a map slot key. A tactical entry's `moves` carry units from `from`
@@ -30,8 +30,7 @@ export type TurnBody = (
       /** Ships I remove from the active system beyond my fleet pool (37.3): gone on arrival, or after the production if built then. */ fleetRemovals?: UnitCounts;
       /** Where the ground forces of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
       /** The system the ships of `production` are placed in when it is not the active one (68.2 places them there; a component may lift the warning). */ shipsTo?: string;
-      /** Warfare's primary in Thunder's Edge: no tactic token is spent and no command token goes down. */ free?: boolean;
-      /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string; acts?: Act[] }
+      /** Warfare's primary in Thunder's Edge: no tactic token is spent and no command token goes down. */ free?: boolean; acts?: Act[] }
   | ({ type: 'strategic'; acts?: Act[] } & CardPlay)
   | ({ type: 'secondary' } & CardPlay)
   | { type: 'component';
@@ -42,11 +41,10 @@ export type TurnBody = (
       /** What the component costs when its effect declares a `cost`: the planets exhausted and the trade goods spent. */ payment?: Payment }
   | { type: 'pass'; acts?: Act[] }
   | { type: 'adjustment'; label: string; delta: AdjustmentDelta; kind?: AdjustmentKind;
-      /** An agenda of the agenda phase: its outcome (`for` or `against`) and what was elected (`elect`: a planet id, a law id, `me` or an opponent id), the strategy card elected (`card`, its initiative as text or number). */ choices?: Record<string, string | number> }
+      /** An agenda of the agenda phase: its outcome (`for` or `against`) and what was elected (`elect`: a planet id, a law id, a player id), the strategy card elected (`card`, its initiative as text or number). */ choices?: Record<string, string | number> }
   | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number;
-      /** My points gained this round. */ vp?: number;
-      /** Rival id to the points they gained this round. */ opponentVp?: Record<string, number>;
-      /** Objectives the owner scored, by component id: a secret one leaves the hand for the scored ones, a public one joins them. */ scored?: string[];
+      /** The points each player gained this round, by player id; the turn's own player among them. */ points?: Record<PlayerId, number>;
+      /** Objectives the player scored, by component id: a secret one leaves the hand for the scored ones, a public one joins them. */ scored?: string[];
       /** What scoring them cost, when an objective is scored by spending (61.10): tokens from the pools, trade goods, planets paying resources or influence. */ spend?: StatusSpend }
 ) & {
   /** Components the owner of the entry gains with it, by id: drawn action cards, a relic, a note received. */
@@ -61,7 +59,7 @@ export type TurnBody = (
   uses?: string[];
   /**
    * What the player chose for the component the entry plays (its component action), by the names its effect asks for
-   * (`Ability.choose`): a planet id, a system slot, a player (`me` or an opponent id), a unit type, a number.
+   * (`Ability.choose`): a planet id, a system slot, a player id, a unit type, a number.
    * On an entry with no component action it goes to the components it uses.
    */
   choices?: Record<string, string | number>;
@@ -69,28 +67,31 @@ export type TurnBody = (
   useChoices?: Record<string, Record<string, string | number>>;
 };
 
-export type TurnFacts = TurnBody & { id: string; phase: Phase; status: EntryStatus;
-  /** The opponent this is expected of; without it the entry is mine. */ owner?: string };
+/** What every turn carries beside its body, whoever it belongs to. */
+export interface TurnHead { id: string; phase: Phase; status: EntryStatus }
+
+/** What a turn did, whoever it belongs to: what a count reads when it does not ask whose turn it is. */
+export type TurnDeeds = TurnBody & TurnHead;
+
+export type TurnFacts = TurnDeeds & { /** Whose turn it is. */ player: PlayerId };
 
 /** A round as the rules read it: its card choices and its turns. */
 export interface RoundFacts { number: number; strategyCard: number | null; backupCard: number | null; entries: TurnFacts[]; }
 
 /** The facts of a turn: what its action did, in the shape the rules and the components read. */
-export function factsOf(table: Table, turn: Turn): TurnFacts {
+export function factsOf(turn: Turn): TurnFacts {
   const action = turn.action;
-  const owner = legacyPlayer(table, turn.player);
   const slotOrPlanet = (at: Place): string => ('slot' in at ? at.slot : at.planet);
   const mine = (units: Record<string, UnitCounts> | undefined): UnitCounts | undefined => units?.[turn.player];
   const common = {
-    id: turn.id, status: turn.status,
-    ...(owner === 'me' ? {} : { owner }),
+    id: turn.id, status: turn.status, player: turn.player,
     ...(turn.gains ? { gains: turn.gains } : {}), ...(turn.spends ? { spends: turn.spends } : {}),
     ...(turn.used.length > 0 ? { uses: turn.used.map(u => u.component) } : {}),
     ...(turn.used.some(u => u.choices) ? { useChoices: Object.fromEntries(turn.used.flatMap(u => (u.choices ? [[u.component, u.choices]] : []))) } : {}),
   };
   const acts = (): { acts: Act[] } => ({
     acts: turn.acts.map((act): Act => (act.kind === 'transaction'
-      ? { kind: 'transaction', with: legacyPlayer(table, act.with), give: act.give, get: act.get }
+      ? { kind: 'transaction', with: act.with, give: act.give, get: act.get }
       : { kind: 'expedition', sliceId: act.slice, payment: act.payment })),
   });
   const choices = turn.choices ? { choices: turn.choices } : {};
@@ -126,8 +127,7 @@ export function factsOf(table: Table, turn: Turn): TurnFacts {
     case 'status':
       return {
         ...common, phase: turn.phase ?? 'status', type: 'statusTokens', tactic: action.tactic, fleet: action.fleet, strategy: action.strategy,
-        ...(action.vp !== undefined ? { vp: action.vp } : {}),
-        ...(action.opponentVp ? { opponentVp: Object.fromEntries(Object.entries(action.opponentVp).map(([id, n]) => [legacyPlayer(table, id), n])) } : {}),
+        ...(action.points ? { points: action.points } : {}),
         ...(action.scored ? { scored: action.scored } : {}), ...(action.spend ? { spend: action.spend } : {}), ...choices,
       } as TurnFacts;
     case 'agenda':

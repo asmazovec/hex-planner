@@ -1,4 +1,5 @@
 /** The table edits against the old edits of `Game` they replace: the saved game each makes is the one the old edit makes. */
+import { playerOfKey } from '../../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { LAYOUT_CHOICES, slotKeyOf } from '../../domain/layouts';
@@ -113,7 +114,7 @@ describe('players', () => {
   test.each([3, 4, 5, 6, 7, 8])('a player added to a game of %i is the old one added', n => {
     const g = draft(Math.min(n, 6));
     const expected = viaOld(g, x => oldAdd(x, pack, counter()));
-    expectSame(addPlayer(savedOf(g), counter()), savedOf(expected));
+    expectSame(addPlayer(savedOf(g)), savedOf(expected));
   });
   test('the pack maximum stops it', () => {
     const s = savedOf(draft(6));
@@ -122,7 +123,11 @@ describe('players', () => {
   });
   test.each([1, 2, 3])('the opponent %i leaves with their units, planets, notes and entries', index => {
     const g = draft(5);
-    expectSame(removePlayer(savedOf(g), index), savedOf(viaOld(g, x => oldRemove(x, index, pack))));
+    // The old edit left a transaction with the one who left standing, under their old id; the kernel takes it out with them.
+    const expected = savedOf(viaOld(g, x => oldRemove(x, index, pack)));
+    const seated = new Set(expected.table.players.map(p => p.id));
+    const kept = (turn: SavedGame['plans'][number]['rounds'][number]['turns'][number]) => ({ ...turn, acts: turn.acts.filter(act => act.kind !== 'transaction' || seated.has(act.with)) });
+    expectSame(removePlayer(savedOf(g), index), { ...expected, plans: expected.plans.map(plan => ({ ...plan, rounds: plan.rounds.map(round => ({ ...round, turns: round.turns.map(kept) })) })) });
   });
   test('my player and the last three stay', () => {
     const s = savedOf(draft(4));
@@ -157,7 +162,7 @@ describe('players', () => {
     const at = slotKeyOf(first.q, first.r);
     const entries = g0.plans[0].rounds[0].entries.map(e => (e.id === 't1' && e.type === 'tactical' ? { ...e, systemId: at, moves: [{ from: at, units: { cruiser: 1 }, via: [at] }] } : e));
     const g = { ...g0, enemyUnits: { [at]: { [g0.opponents[0].id]: { cruiser: 1 } } }, fracture: { active: true, ingress: [at], seat: null }, plans: [{ ...g0.plans[0], rounds: [{ ...g0.plans[0].rounds[0], entries }] }] };
-    expectSame(addPlayer(savedOf(g), counter()), savedOf(viaOld(g, x => oldAdd(x, pack, counter()))));
+    expectSame(addPlayer(savedOf(g)), savedOf(viaOld(g, x => oldAdd(x, pack, counter()))));
     expectSame(changeLayout(savedOf(g), 'hyperlanes'), savedOf(viaOld(g, x => oldChangeLayout(x, 'hyperlanes', pack))));
   });
 });
@@ -256,7 +261,7 @@ describe('what the map builder reads of the table, as the old builder reads it o
     expect(mapIsEmpty(saved.table, loadedPack)).toBe(oldMapIsEmpty(g, loadedPack));
     expect(readyToPlay(saved.table, loadedPack)).toBe(oldReady(g, loadedPack));
     for (const n of [count - 1, count + 1]) expect(countChangeEffect(saved.table, n, loadedPack)).toEqual(oldCount(g, n, loadedPack));
-    for (const o of g.opponents) expect(opponentHoldings(saved.start, saved.table.players.find(q => q.legacyId === o.id)!.id)).toEqual(oldHoldings(g, o.id));
+    for (const o of g.opponents) expect(opponentHoldings(saved.start, playerOfKey(saved.table, o.id)!)).toEqual(oldHoldings(g, o.id));
     expect(homeNotes(saved.table, loadedPack)).toEqual(oldHomeNotes(g, loadedPack));
     for (const layout of LAYOUT_CHOICES[count] ?? []) expect(tilesLostByLayout(saved, layout, loadedPack)).toBe(oldLost(g, layout, loadedPack));
   });

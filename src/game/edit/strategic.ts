@@ -64,7 +64,7 @@ export function withFreshChange(table: Table, board: Board, pack: DataPack, turn
 
 /** The effects with a chosen system; what belongs to the old system goes. */
 export function withChosenSystem(table: Table, turn: Turn, systemId: string): Turn {
-  return isCardTurn(turn) ? withCard(turn, { effects: withSystem(cardEntryOf(table, turn), systemId, table.expansions) }) : turn;
+  return isCardTurn(turn) ? withCard(turn, { effects: withSystem(cardEntryOf(turn), systemId, table.expansions) }) : turn;
 }
 
 /** One tap of the shop: a card produces in one system, ground forces by planet. */

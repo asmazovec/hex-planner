@@ -52,9 +52,9 @@ const searchBox = () => within(drawer()).getByRole('searchbox', { name: 'Search 
 
 describe('the components drawer', () => {
   test('lists my technologies as one list, each with the mark of its type by its name, and the unit cards in a section of their own', async () => {
-    useGame.getState().setStartHolding('me', 'technology:st', true);
-    useGame.getState().setStartHolding('me', 'technology:amd', true);
-    useGame.getState().setStartHolding('me', 'technology:pds2', true);
+    useGame.getState().setStartHolding('p1', 'technology:st', true);
+    useGame.getState().setStartHolding('p1', 'technology:amd', true);
+    useGame.getState().setStartHolding('p1', 'technology:pds2', true);
     await openDrawer();
     const technologies = section('Researched technologies');
     expect(within(technologies).queryByTestId('upgrade-carrier')).toBeNull();
@@ -77,7 +77,7 @@ describe('the components drawer', () => {
   test('the tab counts what I hold', async () => {
     render(<PlanScreen />);
     expect(tab()).toHaveAccessibleName('Components · 8');
-    useGame.getState().setStartHolding('me', 'relic:shard', true);
+    useGame.getState().setStartHolding('p1', 'relic:shard', true);
     expect(await screen.findByRole('button', { name: 'Components · 9' })).toBeVisible();
   });
 
@@ -129,7 +129,7 @@ describe('the components drawer', () => {
   });
 
   test('what the player holds stands first in the results, the rest after it with an add button', async () => {
-    useGame.getState().setStartHolding('me', 'relic:shard', true);
+    useGame.getState().setStartHolding('p1', 'relic:shard', true);
     await openDrawer();
     await userEvent.type(searchBox(), 'shard of the throne');
     const results = await screen.findByRole('group', { name: 'Search results' });
@@ -164,7 +164,7 @@ describe('the components drawer', () => {
   });
 
   test('a press on a card opens its printed text in place', async () => {
-    useGame.getState().setStartHolding('me', 'relic:shard', true);
+    useGame.getState().setStartHolding('p1', 'relic:shard', true);
     await openDrawer('Relics');
     const card = within(section('Relics')).getByTestId('component-relic:shard');
     const text = pack.texts['relic:shard'];
@@ -175,7 +175,7 @@ describe('the components drawer', () => {
   });
 
   test('the open card follows a change of the language in place: the text is translated, the name stays English', async () => {
-    useGame.getState().setStartHolding('me', 'relic:shard', true);
+    useGame.getState().setStartHolding('p1', 'relic:shard', true);
     await openDrawer('Relics');
     const card = screen.getByTestId('component-relic:shard');
     await userEvent.click(within(card).getByRole('button', { name: /Shard of the Throne/, expanded: false }));
@@ -212,7 +212,7 @@ describe('the components drawer', () => {
   });
 
   test('a card held from the start is taken off by its cross', async () => {
-    useGame.getState().setStartHolding('me', 'relic:shard', true);
+    useGame.getState().setStartHolding('p1', 'relic:shard', true);
     await openDrawer('Relics');
     await userEvent.click(within(section('Relics')).getByRole('button', { name: 'Remove Shard of the Throne' }));
     expect(game().start.me.relics).toEqual([]);
@@ -220,8 +220,8 @@ describe('the components drawer', () => {
   });
 
   test('the same action card twice is one card with its count, and a stepper changes it', async () => {
-    useGame.getState().setStartHolding('me', 'actionCard:sabo1', true);
-    useGame.getState().setStartHolding('me', 'actionCard:sabo1', true);
+    useGame.getState().setStartHolding('p1', 'actionCard:sabo1', true);
+    useGame.getState().setStartHolding('p1', 'actionCard:sabo1', true);
     await openDrawer('Cards');
     const cards = section('Action cards');
     expect(within(cards).getAllByTestId('component-actionCard:sabo1')).toHaveLength(1);
@@ -236,7 +236,7 @@ describe('the components drawer', () => {
   test('a note of another player I hold says whose it is: the owner by name, and in its text instead of <color>', async () => {
     // I hold the Trade Agreement of Hacan when the plan begins: it is with me and no more with them.
     const theirs = `promissory:<color>_ta@${rival().id}`;
-    useGame.getState().setStartHolding('me', theirs, true);
+    useGame.getState().setStartHolding('p1', theirs, true);
     expect(game().start.opponents[rival().id].promissory).not.toContain(theirs);
     await openDrawer('Cards');
     const notes = section('Notes of other players');
@@ -254,26 +254,27 @@ describe('the components drawer', () => {
   });
 
   test('my notes are always all in sight, each with where it is now: in hand, with a player, out of the game', async () => {
-    const ta = 'promissory:<color>_ta@me';
-    const cf = 'promissory:<color>_cf@me';
+    // The notes as the table names them: under the id of my player.
+    const ta = 'promissory:<color>_ta@p1';
+    const cf = 'promissory:<color>_cf@p1';
     // My Trade Agreement is with Hacan when the plan begins, my Ceasefire is out of the game.
     useGame.getState().setStartHolding(rival().id, ta, true);
-    useGame.getState().setStartHolding('me', cf, false);
+    useGame.getState().setStartHolding('p1', cf, false);
     await openDrawer('Cards');
     const mine = section('My promissory notes');
     expect(within(mine).getAllByTestId(/^component-promissory:/).map(card => card.getAttribute('data-testid')!.slice('component-promissory:'.length)))
-      .toEqual(['<color>_cf@me', '<color>_ps@me', '<color>_sftt@me', '<color>_ta@me', '<color>_an@me', 'stymie@me']);
+      .toEqual(['<color>_cf@p1', '<color>_ps@p1', '<color>_sftt@p1', '<color>_ta@p1', '<color>_an@p1', 'stymie@p1']);
     expect(within(mine).getByTestId(`component-${ta}`)).toHaveTextContent('with Hacan');
     expect(within(mine).getByTestId(`component-${ta}`)).not.toHaveClass('on');
-    expect(within(mine).getByTestId('component-promissory:stymie@me')).toHaveTextContent('in hand');
-    expect(within(mine).getByTestId('component-promissory:stymie@me')).toHaveClass('on');
+    expect(within(mine).getByTestId('component-promissory:stymie@p1')).toHaveTextContent('in hand');
+    expect(within(mine).getByTestId('component-promissory:stymie@p1')).toHaveClass('on');
     expect(within(mine).getByTestId(`component-${cf}`)).toHaveTextContent('out of the game');
     // The text of my note names me.
     await userEvent.click(within(within(mine).getByTestId(`component-${ta}`)).getByRole('button', { name: /^Trade Agreement/ }));
     expect(within(mine).getByTestId(`component-${ta}`)).toHaveTextContent('When the Arborec player replenishes commodities');
     // A note nobody holds comes back to my hand by its plus.
     await userEvent.click(within(mine).getByRole('button', { name: 'Add Ceasefire' }));
-    expect(game().start.me.promissory).toContain(cf);
+    expect(game().start.me.promissory).toContain('promissory:<color>_cf@me');
     // The opponent's sheet lists their notes the same way, and my note among those of others.
     await userEvent.click(within(screen.getByRole('group', { name: 'Whose components' })).getByRole('button', { name: /Hacan/ }));
     expect(within(section('Promissory notes of Hacan')).getAllByTestId(/^component-promissory:/).length).toBeGreaterThan(5);
@@ -284,7 +285,7 @@ describe('the components drawer', () => {
     const ta = 'promissory:<color>_ta@me';
     edits.addEntry(1, { type: 'pass', acts: [{ kind: 'transaction', with: rival().id, give: { components: [ta] }, get: {} }] }, 'action');
     await openDrawer('Cards');
-    const card = within(section('My promissory notes')).getByTestId(`component-${ta}`);
+    const card = within(section('My promissory notes')).getByTestId('component-promissory:<color>_ta@p1');
     expect(card).toHaveTextContent('with Hacan');
     expect(card).not.toHaveClass('on');
   });
@@ -295,7 +296,7 @@ describe('the components drawer', () => {
     const results = await screen.findByRole('group', { name: 'Search results' });
     const cards = within(results).getAllByTestId(/^component-promissory:<color>_cf@/);
     expect(cards).toHaveLength(6);
-    expect(cards[0]).toHaveAttribute('data-testid', 'component-promissory:<color>_cf@me');
+    expect(cards[0]).toHaveAttribute('data-testid', 'component-promissory:<color>_cf@p1');
   });
 
   const leaderId = (type: string) => componentsOf(pack).find(c => c.kind === 'leader' && c.faction === 'arborec' && c.detail?.type === type)!.id;
@@ -374,7 +375,7 @@ describe('the components drawer', () => {
   });
 
   test('a holding the data no longer knows shows nothing and breaks nothing', async () => {
-    useGame.getState().setStartHolding('me', 'relic:gone', true);
+    useGame.getState().setStartHolding('p1', 'relic:gone', true);
     await openDrawer('Relics');
     expect(section('Relics')).toHaveTextContent(/none$/);
   });
@@ -479,9 +480,9 @@ describe('the stack and the fan of the component tabs', () => {
   });
 
   test('a tab counts what the shown player holds in its group, and says no number for nothing', async () => {
-    useGame.getState().setStartHolding('me', 'relic:shard', true);
-    useGame.getState().setStartHolding('me', 'actionCard:sabo1', true);
-    useGame.getState().setStartHolding('me', 'actionCard:sabo1', true);
+    useGame.getState().setStartHolding('p1', 'relic:shard', true);
+    useGame.getState().setStartHolding('p1', 'actionCard:sabo1', true);
+    useGame.getState().setStartHolding('p1', 'actionCard:sabo1', true);
     await openDrawer();
     expect(railNames()).toEqual(['Technologies · 1', 'Cards · 8', 'Faction · 1', 'Relics · 1', 'Objectives & laws']);
     await userEvent.click(within(screen.getByRole('group', { name: 'Whose components' })).getByRole('button', { name: /Hacan/ }));

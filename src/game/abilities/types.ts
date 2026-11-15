@@ -103,7 +103,7 @@ export interface HookPayloads {
   /** The checks a component in force adds after an entry; its warnings go through `ctx.warn`, the entry is `ctx.entry`. */
   restrict: Record<string, never>;
   /** The holder has just taken a planet: `fromPlayer` whether another player held it, `explores` that it was newly gained (35.1), `lost` the structures of the old owner that went with it. */
-  onGainControl: { planetId: string; fromPlayer: boolean; explores: boolean; lost: { kind: 'pds' | 'spacedock'; owner: string; count: number }[] };
+  onGainControl: { planetId: string; fromPlayer: boolean; explores: boolean; lost: { kind: 'pds' | 'spacedock'; owner: PlayerId; count: number }[] };
   onRoundStart: Record<string, never>;
   onStatusStart: Record<string, never>;
   onStatusEnd: Record<string, never>;
@@ -136,16 +136,14 @@ export interface AbilityContext {
   of(player: PlayerId): Reader;
   /** Whether it is the holder's own action. */
   readonly own: boolean;
-  /** The id the old model gives a player (`me` or the opponent's own id): notes carry it as their address. */
-  key(player: PlayerId): string;
   /** The component asked, as held (a note under its address). */
   readonly id: ComponentId;
   /** The entry of the action the moment belongs to, when there is one. */
   readonly entry?: TurnFacts;
   /** The commodity value of a player: the faction's printed value after the components that change it (21.1). */
   commodityValue(player: PlayerId): number;
-  /** The player an old-model key (`me`, an opponent id; a note's address) names. */
-  playerOf(key: string): PlayerId | undefined;
+  /** The player of the table a value names (a choice kept by an entry, the address of a note); none when it names no one seated. */
+  playerOf(id: string): PlayerId | undefined;
   /** The planets of a player's home system (where their faction, or their seat, puts them). */
   home(player: PlayerId): string[];
   /** Whether two players are neighbours (LRR 60). */

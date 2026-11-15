@@ -23,7 +23,6 @@ import type { AbilityContext, HookKind, HookPayloads } from '../abilities/types'
 import { applyAll, applyChecked } from '../apply';
 import type { GameEvent } from '../events';
 import { tradeGoods } from '../abilities/emit';
-import { legacyKey, playerOfKey } from '../keys';
 import type { Board, DataPack, PlayerId, RuleStep, Table } from '../types';
 import { emit, NO_TACTICAL, warn, type Ctx } from './context';
 import { checkPay, pay } from './payment';
@@ -115,9 +114,9 @@ export function contextOf(
   return {
     board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), held: options.held ?? true, choices: options.choices ?? {}, own: player === options.actor,
     get my(): Reader { return readerOf(table, at, pack, player); }, of: other => readerOf(table, at, pack, other),
-    key: other => legacyKey(table, other), id, ...(options.entry ? { entry: options.entry } : {}),
+    id, ...(options.entry ? { entry: options.entry } : {}),
     commodityValue: other => { const faction = table.players.find(p => p.id === other)?.faction ?? ''; return appliedOn(table, at, pack, other, 'commodityValue', pack.factions[faction]?.commodities ?? 0, { faction }).value; },
-    playerOf: key => playerOfKey(table, key),
+    playerOf: named => table.players.find(p => p.id === named)?.id,
     home: other => homeOf(table, table.players.find(p => p.id === other)!, pack)?.planets ?? [],
     neighbours: (a, b) => areNeighbours(table, at, pack, a, b),
     applied: (point, base, extra) => appliedOn(table, at, pack, player, point, base, extra).value,

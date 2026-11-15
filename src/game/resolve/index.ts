@@ -20,7 +20,6 @@ import { cardAction } from './strategic';
 import { componentAction, correctionAction, passAction, statusAction } from './others';
 import { claimStations, gainControl, landUnits, placeCarried, type Lost } from './invasion';
 import { turnActs } from './acts';
-import { playerOfKey } from '../keys';
 import { hook } from './hooks';
 import { playNamed } from './play';
 import { waive } from './waive';
@@ -47,7 +46,7 @@ export type Stage = 'activated' | 'moved' | 'landed' | 'built';
 
 /** The tactical action itself (89.1-89.5). `at` is told of each stage; answering true stops the action there (the board stands as it is). */
 function tacticalAction(ctx: Ctx, target: string, at?: (stage: Stage, flown?: Flown) => boolean | void): Lost {
-  const none: Lost = { planets: [], hooked: [] };
+  const none: Lost = { planets: [], hooked: {} };
   activation(ctx, target);
   if (at?.('activated')) return none;
   const flown = movement(ctx, target);
@@ -129,7 +128,7 @@ export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPa
   }
   begin(ctx, 'round');
   warn(ctx, checkFlow(ctx));
-  let lost: Lost = { planets: [], hooked: [] };
+  let lost: Lost = { planets: [], hooked: {} };
   switch (action.kind) {
     case 'tactical':
       if (action.system !== null) lost = tacticalAction(ctx, action.system);
@@ -159,9 +158,9 @@ export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPa
   }
   begin(ctx, 'transaction');
   turnActs(ctx);
-  // A rival's landing takes planets of the viewer's: what the viewer's components hooked on the loss are asked, once the turn is over.
+  // A landing took planets of other players: what the components of each of them hooked on the loss are asked, once the turn is over.
   begin(ctx, 'invasion');
-  if (lost.hooked.length > 0) for (const { planetId, to } of lost.planets) hook(ctx, 'onControlLost', [ctx.table.viewer], { planetId, to: playerOfKey(ctx.table, to) ?? to }, { only: lost.hooked });
+  for (const { planetId, from, to } of lost.planets) if ((lost.hooked[from] ?? []).length > 0) hook(ctx, 'onControlLost', [from], { planetId, to }, { only: lost.hooked[from] });
   if (options.closing) {
     const closed = options.closing(ctx.board);
     ctx.board = closed.board;

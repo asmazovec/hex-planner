@@ -28,6 +28,6 @@ export const ability: Ability = {
     code: 'shortStrategy',
     rule: 'You do not have to spend or place a command token to resolve the secondary ability of that strategy card',
     // Only a note of another player's: the owner cannot play their own (69.2).
-    when: (_warning, { entry }) => (entry?.uses ?? []).some(used => noteBase(used) === id && noteAddress(used) !== (entry?.owner ?? 'me')),
+    when: (_warning, { entry }) => (entry?.uses ?? []).some(used => noteBase(used) === id && noteAddress(used) !== entry?.player),
   }],
 };

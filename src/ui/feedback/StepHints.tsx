@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { DataPack, RuleStep } from '../../domain/types';
 import { hintsAtSteps } from '../../game/abilities/registry';
-import { playerOfKey } from '../../game/keys';
 import type { Board, PlayerId, Table } from '../../game/types';
 import { ComponentCard } from '../components/ComponentCard';
 
@@ -11,8 +10,8 @@ export interface StepHintsProps {
   /** The whole board just before the entry; without it nothing is shown. */
   board: Board | undefined;
   step: RuleStep;
-  /** Whose components count, the actor first: `me` or opponent ids as the entries name them. */
-  players: string[];
+  /** Whose components count, the actor first. */
+  players: PlayerId[];
 }
 
 /**
@@ -31,9 +30,9 @@ export function StepHints({ pack, table, board, step, players }: StepHintsProps)
   );
 }
 
-/** The reminders of a step for the players named by their keys (the actor first); a key of nobody at the table counts for nobody. */
-function hintsOf(table: Table, board: Board, pack: DataPack, step: RuleStep, players: string[]) {
-  const ids = players.flatMap(key => playerOfKey(table, key) ?? []);
+/** The reminders of a step for the players named (the actor first); an id of nobody at the table counts for nobody. */
+function hintsOf(table: Table, board: Board, pack: DataPack, step: RuleStep, players: PlayerId[]) {
+  const ids = players.filter(id => table.players.some(p => p.id === id));
   const actor: PlayerId | undefined = ids[0];
   return actor === undefined ? [] : hintsAtSteps(table, board, pack, actor, [step], () => ids).get(step) ?? [];
 }

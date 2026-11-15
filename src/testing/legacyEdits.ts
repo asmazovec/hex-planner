@@ -7,8 +7,7 @@ import type { Phase } from '../domain/types';
 import type { Entry, EntryBody } from './old/domain/types';
 import type { Turn } from '../game/actions';
 import { findTurn } from '../game/edit/plan';
-import { factsOf } from '../game/turnFacts';
-import { nestedEntries } from './old/game/entry';
+import { entryOf, nestedEntries } from './old/game/entry';
 import { turnOf } from './old/game/fromLegacy';
 import type { SavedGame } from '../game/save';
 
@@ -25,7 +24,7 @@ export function patchedTurn(saved: SavedGame, id: string, patch: Partial<EntryBo
   if (!found) return undefined;
   const { turn, parent } = found;
   const pack = loadPack(saved.table.expansions);
-  const entry = factsOf(saved.table, turn);
+  const entry = entryOf(saved.table, turn);
   const was = entry as Entry & { card?: number };
   const replayed = (was.type === 'strategic' || was.type === 'secondary')
     && (('card' in patch && (patch as { card?: number }).card !== was.card) || ('type' in patch && patch.type !== was.type));

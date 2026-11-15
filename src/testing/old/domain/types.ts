@@ -53,9 +53,44 @@ export interface GameState {
   onCard?: Record<string, { units?: UnitCounts; technology?: string }>;
 }
 
-export type EntryBody = TurnBody;
-export type Entry = TurnFacts;
-export type Round = RoundFacts;
+type Status = Extract<TurnBody, { type: 'statusTokens' }>;
+type Tactical = Extract<TurnBody, { type: 'tactical' }>;
+/**
+ * The body of an old entry: the facts of a turn as the rules read them, with the old model's own words where it names
+ * players. A status entry counts my points (`vp`) apart from the rivals' (`opponentVp`, by opponent id); a tactical
+ * action a card gave names its card (`fromCard`). The players an entry names anywhere (the other side of a transaction,
+ * a choice, the address of a note) are `me` or an opponent id.
+ */
+export type EntryBody =
+  | Exclude<TurnBody, Status | Tactical>
+  | (Tactical & { /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string })
+  | (Omit<Status, 'points'> & { /** My points gained this round. */ vp?: number; /** Rival id to the points they gained this round. */ opponentVp?: Record<string, number> });
+export type Entry = EntryBody & Pick<TurnFacts, 'id' | 'phase' | 'status'> & { /** The opponent this is expected of; without it the entry is mine. */ owner?: string };
+export interface Round extends Omit<RoundFacts, 'entries'> { entries: Entry[] }
+/** A tactical entry, and the entry of a strategy card, of the old plan. */
+export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
+export type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;
+
+/**
+ * An old entry as the facts of a turn, for the counting functions the old replay shares with the application: the old
+ * ids stand as the ids of the players (`me` is a player's id like any other there), my points and the rivals' are one record.
+ */
+export function factsOfEntry<E extends Entry>(entry: E): Extract<TurnFacts, { type: E['type'] }>;
+export function factsOfEntry<E extends Entry>(entry: E | undefined): Extract<TurnFacts, { type: E['type'] }> | undefined;
+export function factsOfEntry(entry: Entry | undefined): TurnFacts | undefined {
+  if (entry === undefined) return undefined;
+  const known = FACTS.get(entry);
+  if (known) return known;
+  const { owner, ...rest } = entry as Entry & { vp?: number; opponentVp?: Record<string, number>; fromCard?: string };
+  const player = owner ?? 'me';
+  const { vp, opponentVp, fromCard, ...body } = rest;
+  void fromCard;
+  const points = vp === undefined && opponentVp === undefined ? undefined : { ...opponentVp, ...(vp === undefined ? {} : { [player]: vp }) };
+  const facts = { ...body, player, ...(points ? { points } : {}) } as TurnFacts;
+  FACTS.set(entry, facts);
+  return facts;
+}
+const FACTS = new WeakMap<Entry, TurnFacts>();
 export interface Plan { id: string; name: string; rounds: Round[]; }
 
 export interface Game {

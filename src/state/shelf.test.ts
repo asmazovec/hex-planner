@@ -4,9 +4,10 @@ import { createGame } from '../testing/old/domain/newGame';
 import { setPlayerFaction } from '../testing/old/domain/players';
 import type { Entry } from '../testing/old/domain/types';
 import { timelineOf } from '../testing/projection';
-import { legacyKey } from '../game/keys';
+import { legacyKey, playerOfKey, toOld } from '../testing/old/game/keys';
 import { ownNotes } from '../testing/old/domain/holdings';
-import { legacyNotes, shelfOf, shownOf } from '../game/shelf';
+import { notesOf } from '../game/planQueries';
+import { shelfOf, shownOf } from '../game/shelf';
 
 const pack = loadPack(['pok', 'te']);
 let game = createGame({ expansions: ['pok', 'te'], playerCount: 3, faction: 'sol' }, pack);
@@ -24,7 +25,8 @@ describe('the shelf of a player', () => {
       for (const p of table.players) {
         const key = legacyKey(table, p.id);
         const old = key === 'me' ? line.end.holdings : line.end.rivals?.[key]?.holdings;
-        expect(sorted(shelfOf(table, board, p.id)), key).toEqual(sorted(old!));
+        // The shelf addresses a note by the id of its player; the old holdings by the old id.
+        expect(sorted(toOld(table, shelfOf(board, p.id))), key).toEqual(sorted(old!));
       }
     });
   }
@@ -40,7 +42,7 @@ describe('the notes of a player', () => {
     const { table } = line.kernel;
     const holdings = { me: line.end.holdings, ...Object.fromEntries(Object.entries(line.end.rivals ?? {}).map(([id, s]) => [id, s.holdings])) };
     for (const key of ['me', rival.id]) {
-      expect(legacyNotes(table, line.kernel.end, pack, key)).toEqual(ownNotes(g, pack, key, holdings));
+      expect(toOld(table, notesOf(table, line.kernel.end, pack, playerOfKey(table, key)!))).toEqual(ownNotes(g, pack, key, holdings));
     }
   });
 });
@@ -51,12 +53,13 @@ describe('what the plan screen shows', () => {
     const { table } = line.kernel;
     const shown = shownOf(table, line.kernel.end, pack);
     const count = (s: { docks: string[]; pds: Record<string, number> }) => ({ docks: s.docks.length, pds: Object.values(s.pds).reduce((sum, n) => sum + n, 0) });
-    expect(shown.players.me.structures).toEqual(count(line.end));
-    expect(shown.players.me.vp).toBe(line.end.vp);
+    expect(shown.players[table.viewer].structures).toEqual(count(line.end));
+    expect(shown.players[table.viewer].vp).toBe(line.end.vp);
     expect(shown.laws).toEqual(line.end.laws ?? []);
     for (const [id, rival] of Object.entries(line.end.rivals ?? {})) {
-      expect(shown.players[id].structures, id).toEqual(count(rival));
-      expect(shown.players[id].vp, id).toBe(line.end.opponentVp?.[id] ?? 0);
+      const player = playerOfKey(table, id)!;
+      expect(shown.players[player].structures, id).toEqual(count(rival));
+      expect(shown.players[player].vp, id).toBe(line.end.opponentVp?.[id] ?? 0);
     }
   });
 });

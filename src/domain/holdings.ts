@@ -5,7 +5,6 @@
  */
 import { componentsOf, noteAddress, noteBase, noteId, ownedBy } from './components';
 import type { ComponentDef, ComponentKind, DataPack, LeaderState, StartHoldings, UpgradeId } from './types';
-import type { RoundFacts } from '../game/turnFacts';
 import type { Shelf } from './shelf';
 
 /** The ability that purges its player's own Alliance note at setup, and the base id of that note. */
@@ -92,14 +91,14 @@ export const startingAgents = (pack: DataPack, factionId: string): string[] =>
 const notesOf = (pack: DataPack, player: string, mine: (def: ComponentDef) => boolean): string[] =>
   componentsOf(pack).filter(c => c.kind === 'promissory' && mine(c)).map(c => noteId(c.id, player));
 
-/** The generic notes a player (`me` or an opponent id) begins with, addressed to them (69): four in the base game, Alliance with Prophecy of Kings. */
+/** The generic notes a player begins with, addressed to them by player id (69): four in the base game, Alliance with Prophecy of Kings. */
 export const genericNotes = (pack: DataPack, player: string): string[] => notesOf(pack, player, c => c.faction === undefined);
 
 /** The notes of a faction, addressed to the player who plays it; none without a faction. */
 export const factionNotes = (pack: DataPack, factionId: string, player: string): string[] =>
   (factionId === '' ? [] : notesOf(pack, player, c => c.faction === factionId));
 
-/** A note of a player and the player who holds it now, `me` or an opponent id; nobody when it is out of the game. */
+/** A note of a player and the player who holds it now, by player id; nobody when it is out of the game. */
 export interface NotePlace { id: string; holder: string | undefined }
 
 /** A start without the notes of a player who left the game. */
@@ -112,7 +111,7 @@ export function withoutNotesOf(start: StartHoldings, player: string): StartHoldi
  * A player's start after their faction changed: the old faction's starting technologies, leaders and notes go, the new
  * one's starting technologies and notes come, and its agents come unlocked. `player` is whose start it is.
  */
-export function startForFaction(start: StartHoldings = {}, from: string, to: string, pack: DataPack, player = 'me'): StartHoldings {
+export function startForFaction(start: StartHoldings = {}, from: string, to: string, pack: DataPack, player: string): StartHoldings {
   const gone = startingTechnologies(pack, from);
   const kept = (start.technologies ?? []).filter(id => !gone.includes(id));
   const technologies = [...kept, ...startingTechnologies(pack, to).filter(id => !kept.includes(id))];
@@ -202,25 +201,3 @@ export function tradable(holdings: Shelf, chosen: string[] = [], kinds: readonly
  */
 export const notesOfFirst = (ids: string[], player: string): string[] =>
   [...ids.filter(id => noteAddress(id) === player), ...ids.filter(id => noteAddress(id) !== player)];
-
-/**
- * The first round whose entries bring each component, by player (`me` or an opponent id): gains, research and scored
- * objectives; done entries for `now`, planned ones too for `forecast`. What is held from the start is not listed.
- */
-export function holdingRounds(plan: { rounds: RoundFacts[] }, filter: 'now' | 'forecast'): Record<string, Record<string, number>> {
-  const rounds: Record<string, Record<string, number>> = {};
-  for (const round of [...plan.rounds].sort((a, b) => a.number - b.number)) {
-    for (const entry of round.entries) {
-      if (entry.status === 'cancelled' || (filter === 'now' && entry.status !== 'done')) continue;
-      const ids = [
-        ...(entry.gains ?? []),
-        ...(entry.type === 'strategic' || entry.type === 'secondary' ? entry.effects?.researched ?? [] : []),
-        ...(entry.type === 'statusTokens' ? entry.scored ?? [] : []),
-      ];
-      if (ids.length === 0) continue;
-      const mine = (rounds[entry.owner ?? 'me'] ??= {});
-      for (const id of ids) mine[id] ??= round.number;
-    }
-  }
-  return rounds;
-}

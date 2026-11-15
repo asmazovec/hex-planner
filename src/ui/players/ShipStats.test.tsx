@@ -187,7 +187,7 @@ describe('the unit cards of the components drawer', () => {
 
   test('a type in the baseline that an entry also upgrades shows the entry and takes no tap; the baseline stays', async () => {
     startPlan();
-    act(() => useGame.getState().setStartHolding('me', 'technology:cv2', true));
+    act(() => useGame.getState().setStartHolding('p1', 'technology:cv2', true));
     addEntry({ type: 'strategic', effects: { researched: ['technology:cv2'] } });
     const panel = await open();
     expect(card(panel, 'carrier')).toBeDisabled();

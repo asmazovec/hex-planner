@@ -56,7 +56,7 @@ test('a planet shows who controls it and whether it is exhausted', () => {
   const id = pack.tiles['25'].planetIds[0];
   setup('25', (_g, s) => { s.control[id] = 'me'; s.exhausted.push(id); });
   const group = screen.getByLabelText(new RegExp(`^${pack.planets[id].name}:`));
-  expect(group).toHaveAttribute('data-control', 'me');
+  expect(group).toHaveAttribute('data-control', 'own');
   expect(group).toHaveAttribute('data-exhausted', 'true');
   expect(group.getAttribute('aria-label')).toMatch(/exhausted/);
 });
@@ -65,7 +65,7 @@ test('an enemy planet and a free planet are told apart', () => {
   const id = pack.tiles['25'].planetIds[0];
   setup('25', (_g, s) => { s.control[id] = 'enemy'; });
   const group = screen.getByLabelText(new RegExp(`^${pack.planets[id].name}:`));
-  expect(group).toHaveAttribute('data-control', 'enemy');
+  expect(group).toHaveAttribute('data-control', 'other');
   expect(group).toHaveAttribute('data-exhausted', 'false');
 });
 
@@ -281,11 +281,11 @@ test('stacks stay the same nodes when they move, new ones grow in and removed on
     expect(stackOf('Fighter ×2').firstElementChild).toHaveClass('tk-in');
 
     rerender(view({ '1,0': { carrier: 1 } }));
-    const leaving = document.querySelector('[data-stack="me|fighter|-"]')!;
+    const leaving = document.querySelector('[data-stack="p1|fighter|-"]')!;
     expect(leaving.firstElementChild).toHaveClass('tk-out');
     expect(screen.queryByLabelText('Fighter ×2')).toBeNull();
     act(() => { vi.advanceTimersByTime(500); });
-    expect(document.querySelector('[data-stack="me|fighter|-"]')).toBeNull();
+    expect(document.querySelector('[data-stack="p1|fighter|-"]')).toBeNull();
   } finally {
     vi.useRealTimers();
   }
@@ -568,7 +568,7 @@ test('a planet disc is tinted by its trait, a two-trait planet is split down the
 test('control stays on the rim and an exhausted planet keeps its look with the tint on it', () => {
   renderFull('66', s => { s.control.hopesend = 'me'; s.exhausted.push('hopesend'); });
   const group = screen.getByLabelText(/^Hope's End:/);
-  expect(group.querySelector('circle.planet-disc')).toHaveClass('planet-me');
+  expect(group.querySelector('circle.planet-disc')).toHaveClass('planet-own');
   expect(group).toHaveClass('planet-exhausted');
   expect(group.querySelector('.planet-trait-hazardous')).not.toBeNull();
 });

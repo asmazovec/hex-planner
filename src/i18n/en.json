@@ -84,8 +84,8 @@
     "emptySlot": "Empty slot",
     "unknownTile": "Unknown tile {{id}}",
     "control": {
-      "me": "yours",
-      "enemy": "enemy"
+      "own": "yours",
+      "other": "enemy"
     },
     "tech": {
       "propulsion": "Propulsion",
@@ -621,11 +621,9 @@
   "expedition": {
     "title": "Expedition",
     "counter": "{{n}} of {{total}}",
-    "hint": "A tap marks a part as taken by another player. You play your own part as a plan entry, at the end of your turn.",
-    "owner": {
-      "me": "you",
-      "other": "other"
-    },
+    "hint": "A tap marks a part as taken by the chosen player, and another tap frees it. You play your own part as a plan entry, at the end of your turn.",
+    "mine": "you",
+    "taker": "Who took the part",
     "complete": "All six parts are taken. Choose a system for Thunder's Edge.",
     "choose": "Choose system",
     "remove": "Remove Thunder's Edge",

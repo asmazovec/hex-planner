@@ -3,7 +3,7 @@
  * merging so that no shared interface is edited. A component asks and answers them like any other point.
  */
 import type { DataPack } from '../../types';
-import type { TurnFacts } from '../../../game/turnFacts';
+import type { TurnDeeds } from '../../../game/turnFacts';
 import { stacked, type Applied } from '../apply';
 import { effectOf, orderOf, passivesOf, type Holder } from '../registry';
 import type { Ability } from '../types';
@@ -27,7 +27,7 @@ declare module '../types' {
      * deploys after an ability): paid with the same `payment` as the action's own `cost`, which it is added to. None
      * for an entry it does not follow.
      */
-    useCost?: (entry: TurnFacts) => { kind: 'resources' | 'influence'; amount: number } | undefined;
+    useCost?: (entry: TurnDeeds) => { kind: 'resources' | 'influence'; amount: number } | undefined;
   }
 }
 

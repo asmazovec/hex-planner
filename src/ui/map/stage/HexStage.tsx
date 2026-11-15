@@ -115,10 +115,10 @@ export function HexStage(props: HexStageProps) {
           {/* It answers a tap on the hex, so it stands at the top of the panel beside it. */}
           {stage.tapNote && <WarningList message={t(`stage.tapNote.${stage.tapNote}`)} />}
 
-          {(mode === 'setup' || mode === 'build') && !only && mine === 'me' && (
+          {(mode === 'setup' || mode === 'build') && !only && mine === table.viewer && (
             <PlayerChoice
               label={t('stage.owner')} chosen={value => side === value} onPick={value => setSide(value)}
-              options={[{ value: 'me', label: t('stage.mine'), color: viewerColor }, ...seated.map(seatOption)]}
+              options={[{ value: table.viewer, label: t('stage.mine'), color: viewerColor }, ...seated.map(seatOption)]}
             />
           )}
 
@@ -133,12 +133,12 @@ export function HexStage(props: HexStageProps) {
           {(mode === 'setup' || mode === 'build') && stage.handover && (
             <p className="muted">{t('stage.handover', {
               planet: stage.handover.planet,
-              player: stage.handover.player === 'me' ? t('stage.you') : seatName(seated.find(o => o.id === stage.handover?.player) ?? { name: '', faction: '' }),
+              player: stage.handover.player === table.viewer ? t('stage.you') : seatName(seated.find(o => o.id === stage.handover?.player) ?? { name: '', faction: '' }),
             })}</p>
           )}
           {mode === 'battle' && (
             <BattlePanel
-              players={[{ id: 'me', heading: t('stage.lossesMine') }, ...seated.map(o => ({ id: o.id, heading: t('stage.lossesOf', { name: seatName(o) }) }))].filter(p => stage.fights(p.id))}
+              players={[{ id: table.viewer, heading: t('stage.lossesMine') }, ...seated.map(o => ({ id: o.id, heading: t('stage.lossesOf', { name: seatName(o) }) }))].filter(p => stage.fights(p.id))}
               colours={colours} lossesFor={stage.lossesFor} planets={planets} kindName={stage.kindName}
             />
           )}

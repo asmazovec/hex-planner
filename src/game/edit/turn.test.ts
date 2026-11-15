@@ -1,3 +1,4 @@
+import { legacyKey } from '../../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { createGame } from '../../testing/old/domain/newGame';
@@ -5,8 +6,7 @@ import { withChoices } from '../../domain/effects/choices';
 import { stateBeforeEntry } from '../../testing/old/domain/project';
 import { repaid } from '../../testing/old/domain/strategy';
 import type { Entry, Game } from '../../testing/old/domain/types';
-import { factsOf } from '../turnFacts';
-import { turnOf } from '../../testing/old/game/fromLegacy';
+import { entryOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { timelineOf } from '../../testing/projection';
 import * as now from './turn';
 
@@ -25,15 +25,15 @@ const game: Game = createGame({ expansions: ['pok'], playerCount: 3, faction: 's
 game.plans[0].rounds = [{ number: 1, strategyCard: null, backupCard: null, entries: bodies as unknown as Entry[] }];
 const { kernel } = timelineOf(game, game.plans[0], 'forecast', pack);
 const { table } = kernel;
-const entryOf = (id: string): Entry => game.plans[0].rounds[0].entries.find(e => e.id === id)!;
-const turnOfId = (id: string) => turnOf(table, entryOf(id), pack);
+const entryAt = (id: string): Entry => game.plans[0].rounds[0].entries.find(e => e.id === id)!;
+const turnOfId = (id: string) => turnOf(table, entryAt(id), pack);
 const board = (id: string) => kernel.byTurn.get(id)!.before;
 const plain = (e: unknown) => JSON.parse(JSON.stringify(e, (key, value) => (key === 'acts' && Array.isArray(value) && value.length === 0 ? undefined : value)));
 /** The old entry with the patch the screen wrote, against the entry of the edited turn. */
 const same = (id: string, next: ReturnType<typeof turnOfId>, patch: Record<string, unknown>) => {
-  const merged: Record<string, unknown> = { ...entryOf(id), ...patch };
+  const merged: Record<string, unknown> = { ...entryAt(id), ...patch };
   for (const key of Object.keys(merged)) if (merged[key] === undefined) delete merged[key];
-  expect(plain(factsOf(table, next))).toEqual(plain(merged));
+  expect(plain(entryOf(table, next))).toEqual(plain(merged));
 };
 
 describe('the edits of component actions, passes and what every turn holds, against what the screens wrote', () => {
@@ -55,7 +55,7 @@ describe('the edits of component actions, passes and what every turn holds, agai
   });
   test('choices: of the played component and of a used one', () => {
     for (const [id, component, chosen] of [['comp', 'cmp', { b: 2 }], ['comp', 'x', { k: 'w' }], ['comp', 'y', { k: 'w' }], ['comp', 'x', {}], ['tac', 'x', { k: 1 }], ['comp', 'cmp', {}]] as const) {
-      same(id, now.withChoicesOf(turnOfId(id), component, chosen), withChoices(entryOf(id), component, chosen));
+      same(id, now.withChoicesOf(turnOfId(id), component, chosen), withChoices(entryAt(id), component, chosen));
     }
     expect(now.choicesOfTurn(turnOfId('comp'), 'x')).toEqual({ k: 'v' });
     expect(now.choicesOfTurn(turnOfId('comp'), 'cmp')).toEqual({ a: 1 });
@@ -65,14 +65,14 @@ describe('the edits of component actions, passes and what every turn holds, agai
     const next = now.withUses(turn, ['x']);
     const before = stateBeforeEntry(game, game.plans[0], 'comp', pack);
     for (const manual of [false, true]) {
-      const patch = repaid(entryOf('comp'), { uses: ['x'] }, before, game, pack, manual);
+      const patch = repaid(entryAt('comp'), { uses: ['x'] }, before, game, pack, manual);
       same('comp', now.withUsesRepriced(table, board('comp'), pack, turn, next, manual), patch);
     }
     for (const id of ['tac', 'str']) {
       const was = turnOfId(id);
       const before = stateBeforeEntry(game, game.plans[0], id, pack);
       for (const manual of [false, true]) {
-        const patch = repaid(entryOf(id), { uses: ['x', 'y'] }, before, game, pack, manual);
+        const patch = repaid(entryAt(id), { uses: ['x', 'y'] }, before, game, pack, manual);
         same(id, now.withUsesRepriced(table, board(id), pack, was, now.withUses(was, ['x', 'y']), manual), patch);
       }
     }
@@ -97,7 +97,7 @@ describe('the edits of component actions, passes and what every turn holds, agai
     same('status', now.withStatusTokens(turnOfId('status'), { tactic: 2, fleet: 0, strategy: 0 }), { tactic: 2, fleet: 0, strategy: 0 });
     same('status', now.withRoundPoints(turnOfId('status'), table.viewer, 3), { vp: 3 });
     const other = table.players.find(p => p.id !== table.viewer)!;
-    same('status', now.withRoundPoints(turnOfId('status'), other.id, 2), { opponentVp: { [other.legacyId!]: 2 } });
+    same('status', now.withRoundPoints(turnOfId('status'), other.id, 2), { opponentVp: { [legacyKey(table, other.id)]: 2 } });
     same('status', now.withScored(turnOfId('status'), ['s', 't']), { scored: ['s', 't'] });
     same('status', now.withScored(turnOfId('status'), []), { scored: undefined });
     same('status', now.withSpend(turnOfId('status'), undefined), { spend: undefined });

@@ -22,7 +22,7 @@ export const ability: Ability = {
   holder: 'anyone',
   on: {
     // Received in a transaction, from another player: faceup in my play area, and 1 victory point.
-    dealt: (ctx, deal) => (deal.got.components ?? []).filter(note => noteBase(note) === id && noteAddress(note) !== ctx.key(deal.self)).map(() => gain.points(deal.self, 1)),
+    dealt: (_ctx, deal) => (deal.got.components ?? []).filter(note => noteBase(note) === id && noteAddress(note) !== deal.self).map(() => gain.points(deal.self, 1)),
     // Activating a system with the owner's units: lose the point and return the card.
     restrict: ctx => returnOnActivation(ctx, id, () => [gain.points(ctx.holder, -1)]),
   },

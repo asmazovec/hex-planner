@@ -1,13 +1,7 @@
 /** The round (LRR 40): its phases in order, and the entries that only mark the flow of the round. */
 import { componentById } from '../components';
-import { violation } from '../rules/registry';
-import { heldCards } from '../strategy';
-import type { DataPack, Warning } from '../types';
-import type { TurnFacts, RoundFacts } from '../../game/turnFacts';
-import type { TableFacts } from '../facts';
-
-/** What a round remembers of its flow: whose pass has been replayed, by owner ('' for me). */
-export interface RoundFlow { round: RoundFacts; passed: Set<string> }
+import type { DataPack } from '../types';
+import type { TurnFacts } from '../../game/turnFacts';
 
 /** An action card played in a window of its own ("After ...", "When ..."): not a component action, so no turn (2.6, 40.2). */
 const inWindow = (pack: DataPack | undefined, id: string): boolean => {
@@ -30,21 +24,3 @@ export const isTurn = (entry: TurnFacts, pack?: DataPack): boolean => {
   if (entry.type === 'secondary') return [...(entry.spends ?? []), ...(entry.uses ?? [])].some(id => actsAsAction(pack, id));
   return entry.type === 'tactical' || entry.type === 'strategic' || entry.type === 'pass';
 };
-
-/**
- * Check of the round's flow before an entry applies, and the pass it records: a turn outside the action phase (40.2), a
- * turn after the player passed (3.3; secondaries stay allowed, 3.3.2), a pass before the primary of each card the player
- * holds (3.4, 82.2). A rival's cards are not planned, so only my passes are checked against cards. `primaries` holds the
- * cards whose primary has been played this round.
- */
-export function checkFlow(game: TableFacts, entry: TurnFacts, flow: RoundFlow, primaries: (number | undefined)[], pack?: DataPack): Warning[] {
-  if (!isTurn(entry, pack)) return [];
-  if (entry.phase !== 'action') return [violation('actionOutsidePhase', {})];
-  const owner = entry.owner ?? '';
-  if (flow.passed.has(owner)) return entry.type === 'pass' ? [] : [violation('actionAfterPass', {})];
-  if (entry.type !== 'pass') return [];
-  flow.passed.add(owner);
-  if (entry.owner) return [];
-  const unplayed = heldCards(flow.round, game.playerCount).filter(card => !primaries.includes(card));
-  return unplayed.length > 0 ? [violation('passBeforeStrategy', { cards: unplayed.length })] : [];
-}

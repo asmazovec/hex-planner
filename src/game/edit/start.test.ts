@@ -9,7 +9,7 @@ import { startingDocks, startingPds } from '../../domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
 import type { Game } from '../../testing/old/domain/types';
 import { gameOf, savedOf } from '../../testing/legacySave';
-import { playerOfLegacy } from '../entry';
+import { playerOfLegacy, toTable } from '../../testing/old/game/keys';
 import type { SavedGame } from '../save';
 import {
   enemyChangeOf, startingPdsOf, structureAtStart, withControl, withDock, withFractureActive, withFractureSeat, withGroundAt, withIngressToggled, withLeader, withPds, withSlice,
@@ -84,10 +84,12 @@ describe('holdings and leaders', () => {
       pinned(x => setStartHolding(x, opp, id, true), x => withStartHolding(x, o, id, true));
     }
     const note = Object.values(g.start.me.promissory ?? [])[0] as string;
-    pinned(x => setStartHolding(x, opp, note, true), x => withStartHolding(x, o, note, true));
-    pinned(x => setStartHolding(x, 'me', note, false), x => withStartHolding(x, me, note, false));
+    // The same note as the saved game names it: under the id of its player.
+    const mine = toTable(s.table, note);
+    pinned(x => setStartHolding(x, opp, note, true), x => withStartHolding(x, o, mine, true));
+    pinned(x => setStartHolding(x, 'me', note, false), x => withStartHolding(x, me, mine, false));
     const lent = setStartHolding(g, opp, note, true);
-    pinned(x => setStartHolding(x, opp, note, false), x => withStartHolding(x, o, note, false), lent);
+    pinned(x => setStartHolding(x, opp, note, false), x => withStartHolding(x, o, mine, false), lent);
   });
   test('a leader state set and cleared', () => {
     const g = base(); const s = savedOf(g); const { me } = sol(s, g);

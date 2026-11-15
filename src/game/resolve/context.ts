@@ -48,7 +48,7 @@ export interface Ctx {
 
 export function newCtx(table: Table, board: Board, turn: Turn, tactical: Tactical, pack: DataPack, blockers: Blockers, track: RoundTrack): Ctx {
   return {
-    table, pack, turn, tactical, track, player: turn.player, entry: factsOf(table, turn), board, blockers, steps: [],
+    table, pack, turn, tactical, track, player: turn.player, entry: factsOf(turn), board, blockers, steps: [],
     cur: { step: 'activation', events: [], violations: [], hints: [] }, warnings: [], memo: new Map(),
   };
 }

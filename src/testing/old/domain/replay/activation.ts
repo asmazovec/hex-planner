@@ -1,7 +1,7 @@
 import type { DataPack, Warning } from '../../../../domain/types';
 import type { Game } from '../types';
 import type { GameState } from '../types';
-import type { TacticalEntry } from '../../../../domain/replay/state';
+import type { TacticalEntry } from '../types';
 import { inForceOf, holderOf, effectOf } from '../../../../domain/effects/registry';
 import { violation } from '../../../../domain/rules/registry';
 import { gameAs } from '../players';

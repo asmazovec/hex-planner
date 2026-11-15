@@ -180,8 +180,8 @@ describe('the board of the others', () => {
       return seen[0];
     };
     expect(near(ctx => ctx.mecatolSlot())).toBe(NEAR);
-    expect(near(ctx => ctx.playerNear('me', NEAR))).toBe(true);
-    expect(near(ctx => ctx.playerNear('me', FARTHER))).toBe(false);
+    expect(near(ctx => ctx.playerNear(ctx.table.viewer, NEAR))).toBe(true);
+    expect(near(ctx => ctx.playerNear(ctx.table.viewer, FARTHER))).toBe(false);
     const t = sol({ game });
     expect(adjacentTo(t.game, NEAR, t.pack).sort()).toEqual([HOME, TARGET].sort());
   });

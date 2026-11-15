@@ -5,6 +5,7 @@ import type { Game, Plan } from '../../domain/types';
 import { loadPack } from '../../../../data/loadPack';
 import { tableOf, planOf, boardOf, legacyState } from '../fromLegacy';
 import { normalState, normalWarnings } from '../compare';
+import { warningsToOld } from '../keys';
 
 export const hash = (value: unknown): string =>
   createHash('sha1').update(JSON.stringify(value, (_, v: unknown) => (v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : 1))) : v))).digest('base64').slice(0, 9);
@@ -50,7 +51,7 @@ export function marksOf(game: Game, pack: DataPack, plan: Plan, filter: Filter, 
   for (const [entryId, frame] of line.byTurn) {
     if (!frame.applied) continue;
     const state = normalState(legacyState(table, frame.after, pack, table.viewer));
-    const warnings = normalWarnings(frame.violations);
+    const warnings = normalWarnings(warningsToOld(table, frame.violations));
     marks.push([entryId, hash(state), hash(warnings), agree ? (agree(entryId, state, warnings) ? 1 : 0) : 1]);
   }
   return marks;

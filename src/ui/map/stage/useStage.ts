@@ -11,17 +11,16 @@ import { useSetupWrites } from '../../../state/setupWrites';
 import { lossesOf, withFleetRemoval, withLoss } from '../../../game/edit/tactical';
 import { withProductionOn } from '../../../game/edit/tacticalRead';
 import type { Turn } from '../../../game/actions';
-import type { Board } from '../../../game/types';
+import type { Board, PlayerId } from '../../../game/types';
 import { writeSaved } from '../../../state/turnBridge';
 import { warningsByTurn } from '../../../game/rowWarnings';
 import { fleetExcessOf, flightOf, productionSites } from '../../../game/flight';
-import { playerOfKey } from '../../../game/keys';
 import { productionDueOnBoard } from '../../../game/planQueries';
 import { allTurns, isTacticalTurn, mergedCountsOf, spendableOn, structureWarningsOn, type TacticalTurn } from '../../../game/screenQueries';
 import { shelfOf } from '../../../game/shelf';
 import { capacityIn, fleetIn, fleetLimit, ownerOf, reinforcementsOf, shipsIn, structuresOf } from '../../../game/queries';
 import { planetsIn } from '../../../game/space';
-import { ownerKey, tileStacks } from '../../../game/tile';
+import { tileStacks } from '../../../game/tile';
 import { placesOf, type WarningPlace } from '../../feedback/warningPlaces';
 import { tableColours } from '../../units/sprites';
 import { UNIT_ORDER } from '../../units/unitOrder';
@@ -73,15 +72,15 @@ export interface MeterRow {
 }
 
 /**
- * What the big hex edits and how: placing, losses and purchases, for me or an opponent. Enemy units and structures
- * have no entry to hold what was lost or bought, so those strips last as long as the hex stays open.
+ * What the big hex edits and how: placing, losses and purchases, for the player whose hand it is in or for another.
+ * The units and structures of the others have no entry to hold what was lost or bought, so those strips last as long as the hex stays open.
  */
 export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onPurchase, manualPayments = [], tacticalId, adjustmentId, owner: ownerGiven, shownBoard }: HexStageProps) {
   const { t } = useTranslation();
   const saved = useGame(s => s.saved);
   const setup = useSetupWrites();
   const [mode, setMode] = useState<StageMode>(initialMode);
-  const [chosenSide, setSide] = useState<string | null>(null);
+  const [chosenSide, setSide] = useState<PlayerId | null>(null);
   const [chosenPlanet, setPlanet] = useState(0);
   const [news, setNews] = useState<Record<string, number>>({});
   const [lost, setLost] = useState<Record<string, number>>({});
@@ -102,25 +101,22 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const target = Math.min(chosenPlanet, Math.max(0, planets.length - 1));
   const targetPlanet = planets.at(target);
   const planetIdOf = (planet: number | undefined): string | null => (planet === undefined ? null : planets[planet]?.id ?? null);
-  /** Whose hand this hex is in: mine, or the opponent whose expected action is being set up. */
-  const mine = ownerKey(table, table.viewer, ownerGiven ?? (turnById(tacticalId) ?? turnById(adjustmentId))?.player ?? table.viewer);
+  /** Whose hand this hex is in: the viewer's, or the player's whose expected action is being set up. */
+  const mine: PlayerId = ownerGiven ?? (turnById(tacticalId) ?? turnById(adjustmentId))?.player ?? table.viewer;
   const side = only ? mine : chosenSide ?? mine;
   const colours = tableColours(table);
   const seated = opponentsBySeat(table, pack, t);
-  /** The player whose side `mine` is, on the board. */
-  const actor = playerOfKey(table, mine) ?? table.viewer;
+  const actor = mine;
   const faction = table.players.find(p => p.id === actor)?.faction ?? '';
-  /** Who controls the planet on the board: me, an opponent (by the id a saved game has for them), or nobody. */
-  const controllerOf = (planetId: string): string | null => {
-    const owner = ownerOf(board, planetId);
-    return owner === undefined ? null : ownerKey(table, table.viewer, owner);
-  };
-  const holderOf = (planetId: string): string => controllerOf(planetId) ?? 'me';
+  /** Who controls the planet on the board, or nobody. */
+  const controllerOf = (planetId: string): PlayerId | null => ownerOf(board, planetId) ?? null;
+  /** Whose a structure on the planet is: its controller's, the viewer's on a planet no one controls. */
+  const holderOf = (planetId: string): PlayerId => controllerOf(planetId) ?? table.viewer;
   const hasDock = (planetId: string): boolean => (board.planets[planetId]?.structures.spacedock ?? 0) > 0;
   const kindName = (kind: TokenKind): string => (kind === 'pds' ? t('map.pds') : kind === 'spacedock' ? t('map.spaceDock') : t(`unit.${kind}`));
 
   /** Ground forces go by planet; one still listed with the system comes off there. */
-  const changeEnemy = (owner: string, unit: UnitId, planetId: string | null, amount: number) => setup.changeEnemy(slot, owner, unit, planetId, amount);
+  const changeEnemy = (owner: PlayerId, unit: UnitId, planetId: string | null, amount: number) => setup.changePlaced(slot, owner, unit, planetId, amount);
   /** The tactical action this hex was opened from: its battle belongs to it, its purchases too while it stands on this system, and the fleet limit counts it. */
   const fightingFor = tacticalId ? turns.find((e): e is TacticalTurn => e.id === tacticalId && isTacticalTurn(e)) : undefined;
   const adjusting = adjustmentId ? turns.find(e => e.id === adjustmentId && (e.action.kind === 'correction' || e.action.kind === 'agenda')) : undefined;
@@ -236,7 +232,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const onToken = (stack: PlacedStack) => {
     setTapNote(null);
     // The control mode edits no units, and in an opponent's expected action only their own units are theirs to touch.
-    if (mode === 'control' || (mine !== 'me' && stack.owner !== mine)) return;
+    if (mode === 'control' || (mine !== table.viewer && stack.owner !== mine)) return;
     (mode === 'build' ? unbuy : takeOff)(stack, planetIdOf(stack.planet));
   };
 
@@ -247,7 +243,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     setLost(bumped(lost, key, -1));
   };
 
-  const myLosses = fightingFor ? lossesOf(fightingFor) : mine === 'me' ? mergedCountsOf(round, 'losses', slot).filter(c => c.count < 0) : [];
+  const myLosses = fightingFor ? lossesOf(fightingFor) : mine === table.viewer ? mergedCountsOf(round, 'losses', slot).filter(c => c.count < 0) : [];
   /** What one player lost here: mine from the entries, an opponent's from this view. */
   const lossesFor = (owner: string): LossPicture[] => [
     ...(owner === mine ? myLosses.map(c => ({
@@ -264,9 +260,9 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
 
   const sideFaction = side === mine ? faction : seated.find(o => o.id === side)?.faction ?? '';
   /** The player the shop buys for, and the board whose holdings its prices follow: what they held just before the action, or at the end of the round. */
-  const sidePlayer = playerOfKey(table, side);
+  const sidePlayer: PlayerId | undefined = table.players.find(p => p.id === side)?.id;
   const sideBoard = side === mine ? onPurchase?.view?.board ?? beforeTactical ?? board : board;
-  const sideHoldings = sidePlayer === undefined ? emptyHoldings() : shelfOf(table, sideBoard, sidePlayer);
+  const sideHoldings = sidePlayer === undefined ? emptyHoldings() : shelfOf(sideBoard, sidePlayer);
   const sideUpgrades = upgradesOf(sideHoldings, pack);
   const inBuild = mode === 'build';
   const units = UNIT_ORDER.filter(u => pack.units[u]);

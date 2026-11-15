@@ -1,11 +1,13 @@
 import type { PlanetValues } from '../../domain/payment';
 import type { PlanetDef } from '../../domain/types';
+import type { Held } from './held';
 import { PlanetMark } from './TileView';
 
 export interface PlanetBadgeProps {
   planet: PlanetDef;
-  control?: 'me' | 'enemy';
-  /** The colour number of the player who holds it, where the edge shows the holder and not only mine or theirs. */
+  /** How the one who looks holds it: the edge of its picture. */
+  held?: Held;
+  /** The colour number of the player who holds it, where the edge shows the holder and not only one's own or another's. */
   holderColor?: number;
   exhausted: boolean;
   /** Resources and influence after the components that change them; the printed ones without it. */
@@ -26,15 +28,15 @@ const COMPACT_PX = 36;
  * marks of technology and legend, the strike when exhausted, the edge of who controls it. The one way to name a planet
  * beside a choice.
  */
-export function PlanetBadge({ planet, control, holderColor, exhausted, values, facts, compact, bare }: PlanetBadgeProps) {
+export function PlanetBadge({ planet, held, holderColor, exhausted, values, facts, compact, bare }: PlanetBadgeProps) {
   const px = compact ? COMPACT_PX : PX;
   return (
     <span className={`planet-badge${compact ? ' planet-badge-compact' : ''}`}>
       <svg viewBox="-12 -12 24 24" width={px} height={px} aria-hidden="true">
         {/* The numbers of a planet take their size from the tile they stand on. */}
         <g className="tile">
-          <g className={`planet${exhausted ? ' planet-exhausted' : ''}`} data-control={control ?? 'none'} data-exhausted={exhausted ? 'true' : 'false'}>
-            <PlanetMark planet={planet} control={control} holderColor={holderColor} exhausted={exhausted} values={values} />
+          <g className={`planet${exhausted ? ' planet-exhausted' : ''}`} data-control={held ?? 'none'} data-exhausted={exhausted ? 'true' : 'false'}>
+            <PlanetMark planet={planet} held={held} holderColor={holderColor} exhausted={exhausted} values={values} />
           </g>
         </g>
       </svg>

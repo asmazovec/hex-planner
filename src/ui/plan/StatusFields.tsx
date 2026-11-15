@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import type { DataPack, Warning } from '../../domain/types';
 import type { Turn } from '../../game/actions';
 import { roundPointsOf, withRoundPoints, withStatusTokens } from '../../game/edit/turn';
-import { legacyKey } from '../../game/keys';
 import { statusTokensFreeOfTurn } from '../../game/queries';
 import { StepHints } from '../feedback/StepHints';
 import { WarningList } from '../feedback/WarningText';
@@ -64,7 +63,7 @@ export function StatusFields({ turn, pack, view, end, warnings, onChange }: Stat
       })}
       <p className="muted status-reminder">{t('plan.entries.planetsRefresh')}</p>
       {/* The objectives scored and their reminders come after the points: the warning under the tiles stays above the points. */}
-      <StepHints pack={pack} table={view.table} board={view.board} step="status" players={[legacyKey(view.table, turn.player)]} />
+      <StepHints pack={pack} table={view.table} board={view.board} step="status" players={[turn.player]} />
       <ScoredBlock turn={turn} pack={pack} view={view} onChange={onChange} />
       {/* Last: a card taken stands under its buttons and moves nothing above. */}
       <GainsBlock turn={turn} pack={pack} view={view} lead="actionCard" onChange={onChange} />

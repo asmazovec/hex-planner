@@ -1,7 +1,9 @@
 import type { CardPlay, DataPack, Payment, CardEffects } from '../../../domain/types';
+import { factsOfEntry } from './types';
 import type { Round, Entry, Game } from './types';
 import type { GameState, Holdings } from './types';
-import { type CardEntry, heldCards, primaryForToken, strategyTokensOwedOf, cardCostOf, type HomeNote } from '../../../domain/strategy';
+import { heldCards, primaryForToken, strategyTokensOwedOf, cardCostOf, type HomeNote } from '../../../domain/strategy';
+import type { CardEntry } from './types';
 import { holderOf, type Holder, effectOf } from '../../../domain/effects/registry';
 import { type PaymentKind } from '../../../domain/payment';
 import { autoPay } from './payment';
@@ -21,7 +23,7 @@ export function withForTokenOfRound(round: Round, playerCount: number): Round {
   let changed = false;
   const entries = round.entries.map(entry => {
     if (entry.type !== 'strategic' || entry.owner) return entry;
-    const forToken = primaryForToken(entry, held) || undefined;
+    const forToken = primaryForToken(factsOfEntry(entry), held) || undefined;
     if (entry.forToken === forToken) return entry;
     changed = true;
     const next = { ...entry, forToken };
@@ -31,7 +33,7 @@ export function withForTokenOfRound(round: Round, playerCount: number): Round {
   return changed ? { ...round, entries } : round;
 }
 export const isMainPrimary = (entry: Entry, held: number[]): boolean =>
-  entry.type === 'strategic' && !primaryForToken(entry, held) && entry.status !== 'cancelled';
+  entry.type === 'strategic' && !primaryForToken(factsOfEntry(entry), held) && entry.status !== 'cancelled';
 /** How a card is played: its primary is free on a card of mine and on a rival's, whose cards are not planned, and costs a token otherwise. */
 export function playOf(round: Round, playerCount: number, card: number, primary: boolean, mine: boolean): Pick<CardPatch, 'type' | 'forToken'> {
   if (!primary) return { type: 'secondary', forToken: undefined };
@@ -58,13 +60,13 @@ export function plannedCard(round: Round, playerCount: number): number | undefin
 export function strategyTokensOwed(
   entry: CardEntry, play: { held?: number[]; free?: boolean }, game: Pick<Game, 'faction'>, state: GameState, shared: GameState, pack: DataPack,
 ): number {
-  return strategyTokensOwedOf(entry, play, holderOf(game, state, shared), pack);
+  return strategyTokensOwedOf(factsOfEntry(entry), play, holderOf(game, state, shared), pack);
 }
 /** What the entry owes in resources or influence: Leadership's bought tokens, Technology's research, or the units it produces. */
 export function cardCost(
   entry: CardEntry, factionId: string, who: Holdings | Holder, pack: DataPack, at?: { game: Game; state: GameState },
 ): { kind: PaymentKind; amount: number } {
-  return cardCostOf(entry, factionId, who, pack, at && (units => productionDue(at.game, at.state, units, pack, entry)));
+  return cardCostOf(factsOfEntry(entry), factionId, who, pack, at && (units => productionDue(at.game, at.state, units, pack, entry)));
 }
 /**
  * A switch of the card or of its side starts the play over: what the old one chose (effects, payment, research) goes,
@@ -97,8 +99,8 @@ export function repaid<P extends object>(entry: Entry, patch: P, before: GameSta
     return cost === was ? patch : { ...patch, payment: autoPay(before, cost, 'resources', pack, { faction: game.faction }) };
   }
   if (entry.type === 'component' && next.type === 'component') {
-    const was = playedCost(pack, entry, effectOf);
-    const cost = playedCost(pack, next, effectOf);
+    const was = playedCost(pack, factsOfEntry(entry), effectOf);
+    const cost = playedCost(pack, factsOfEntry(next), effectOf);
     return was?.amount === cost?.amount && was?.kind === cost?.kind || !cost ? patch : { ...patch, payment: autoPay(before, cost.amount, cost.kind, pack, { faction: game.faction }) };
   }
   if (entry.type === 'strategic' || entry.type === 'secondary') return cardChange(entry, patch as CardPatch, before, game.faction, pack, manual, game) as P & { effects: CardEffects };

@@ -11,8 +11,7 @@ import { autoPay } from '../../testing/old/domain/payment';
 import type { UnitCounts } from '../../domain/types';
 import type { Entry, EntryBody, Game } from '../../testing/old/domain/types';
 import { holderOf, inForceOf } from '../../domain/effects/registry';
-import { factsOf } from '../turnFacts';
-import { turnOf } from '../../testing/old/game/fromLegacy';
+import { entryOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { routeHintOn } from '../flight';
 import { planetsIn } from '../space';
 import { timelineOf } from '../../testing/projection';
@@ -110,7 +109,7 @@ describe.each(['sol', 'naalu', 'arborec'])('the readers of a tactical action, %s
 describe('the edits that read the board', () => {
   const t = build('sol', { ...BODY, landings: [], moves: [{ from: 'A', units: { carrier: 1 } }], production: {}, shipsTo: undefined });
   const same = (patch: Partial<Entry>, edited: ReturnType<typeof turnOf>) =>
-    expect(factsOf(t.table, edited)).toEqual(factsOf(t.table, turnOf(t.table, { ...t.e, ...patch } as Entry, pack)));
+    expect(entryOf(t.table, edited)).toEqual(entryOf(t.table, turnOf(t.table, { ...t.e, ...patch } as Entry, pack)));
 
   test('the production: the price the check asks, the payment of the ready planets, by hand or not', () => {
     for (const [unit, planet, amount, manual] of [['cruiser', null, 1, false], ['carrier', null, 1, true], ['infantry', pb, 1, false]] as ['cruiser', string | null, 1, boolean][]) {
@@ -137,7 +136,7 @@ describe('the edits that read the board', () => {
 });
 
 function same2(t: ReturnType<typeof build>, patch: Partial<Entry>, edited: ReturnType<typeof turnOf>) {
-  expect(factsOf(t.table, edited)).toEqual(factsOf(t.table, turnOf(t.table, { ...t.e, ...patch } as Entry, pack)));
+  expect(entryOf(t.table, edited)).toEqual(entryOf(t.table, turnOf(t.table, { ...t.e, ...patch } as Entry, pack)));
 }
 
 describe('the losses, the custodians and the places of a turn', () => {

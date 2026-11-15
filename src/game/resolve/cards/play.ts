@@ -18,7 +18,6 @@ import { checkedPay, shortOf } from '../payment';
 import { place } from '../production';
 import { hook } from '../hooks';
 import { noteAddress, noteBase } from '../../../domain/components';
-import { legacyKey } from '../../keys';
 import { ACQUIESCENCE } from '../natives';
 import { playerCountOf } from '../../space';
 import { buildStructures } from '../structures';
@@ -55,8 +54,7 @@ function checkPlay(ctx: Ctx, entry: CardEntry): { held?: number[]; free?: boolea
 
 /** The secondary names a held note of Acquiescence that is another player's (69.2: its owner cannot play it). */
 function acquiesced(ctx: Ctx, entry: CardEntry): boolean {
-  const mine = legacyKey(ctx.table, ctx.player);
-  return (entry.uses ?? []).some(used => noteBase(used) === ACQUIESCENCE && noteAddress(used) !== mine && ctx.board.players[ctx.player]?.cards[used] !== undefined);
+  return (entry.uses ?? []).some(used => noteBase(used) === ACQUIESCENCE && noteAddress(used) !== ctx.player && ctx.board.players[ctx.player]?.cards[used] !== undefined);
 }
 
 const POOLS = ['tactic', 'fleet', 'strategy'] as const;

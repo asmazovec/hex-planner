@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DataPack, PlanetDef, TileDef } from '../../../domain/types';
-import { ownerKey, planetShown } from '../../../game/tile';
+import { planetSeen } from '../held';
 import type { Board, PlayerId, Table } from '../../../game/types';
 import { useGame } from '../../../state/gameStore';
 import { PlayerChoice, type PlayerOption } from '../../primitives/player';
@@ -19,7 +19,7 @@ export interface ControlPanelProps {
   planets: PlanetDef[];
   /** What the map shows: control and readiness follow it. */
   shown: Board;
-  /** Each opponent as the control choice names them. */
+  /** Each player other than the viewer, as the control choice names them. */
   seated: PlayerOption[];
   /** The planet tapped on the hex: marked here and brought into view. */
   chosen?: string;
@@ -45,8 +45,8 @@ export function ControlPanel({ table, viewer = table.viewer, pack, tile, rotatio
     tile && tile.wormholes.length > 0 ? t('map.sheet.wormholes', { list: tile.wormholes.join(', ') }) : '',
     tile && !anomalies && tile.wormholes.length === 0 ? t('map.sheet.plain') : '',
   ].filter(Boolean);
-  const owners: { value: string | null; label: string; color?: number }[] = [
-    { value: 'me', label: t('map.sheet.mine'), color: table.players.find(p => p.id === viewer)?.color },
+  const owners: { value: PlayerId | null; label: string; color?: number }[] = [
+    { value: viewer, label: t('map.sheet.mine'), color: table.players.find(p => p.id === viewer)?.color },
     ...seated,
     { value: null, label: t('map.sheet.none') },
   ];
@@ -56,8 +56,8 @@ export function ControlPanel({ table, viewer = table.viewer, pack, tile, rotatio
       {facts.length > 0 && <p className="muted">{facts.join(' · ')}</p>}
       {tile && planets.length === 0 && <p className="muted">{t('map.sheet.noPlanets')}</p>}
       {planets.map((planet, index) => {
-        const { control, holder: owner, exhausted, values } = planetShown(table, shown, pack, viewer, planet.id);
-        const holder = control === 'me' ? 'me' : owner === undefined ? null : ownerKey(table, viewer, owner);
+        const { held, holder: owner, exhausted, values } = planetSeen(table, shown, pack, viewer, planet.id);
+        const holder = owner ?? null;
         return (
           <div
             key={planet.id} role="group" aria-label={planet.name} ref={planet.id === marked ? chosenRef : undefined}
@@ -67,7 +67,7 @@ export function ControlPanel({ table, viewer = table.viewer, pack, tile, rotatio
           >
             <PlanetDetails
               planet={planet} pack={pack} relic={tile?.kind === 'fracture'} exhausted={exhausted}
-              control={control} holderColor={table.players.find(p => p.id === owner)?.color}
+              held={held} holderColor={held === 'other' ? table.players.find(p => p.id === owner)?.color : undefined}
               values={values}
             />
             <PlayerChoice

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { componentById, noteAddress, noteBase, noteId, textOf } from './components';
-import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, notesOfFirst, tradable, upgradesOf, upgradeTech } from './holdings';
+import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingsOf, losable, notesOfFirst, tradable, upgradesOf, upgradeTech } from './holdings';
+import { holdingRounds } from '../testing/old/domain/holdings';
 import { noteCards, noteOwner, noteText, ownNotes, setLeader, setStartHolding } from '../testing/old/domain/holdings';
 import { createGame } from '../testing/old/domain/newGame';
 import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction } from '../testing/old/domain/players';

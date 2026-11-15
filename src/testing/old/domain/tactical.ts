@@ -1,7 +1,9 @@
+import { factsOfEntry } from './types';
 import type { DataPack, UnitId, StructureKind, StructureCounts, UnitCounts } from '../../../domain/types';
 import type { Game } from './types';
 import type { GameState, Holdings } from './types';
-import { type TacticalEntry, poolOf, hasUnits, withCount, hasStructures, withStructure, type Move, groupOf, hasCargo, isGround, unitsIn, addUnits, sourcesOf } from '../../../domain/tactical';
+import { poolOf, hasUnits, withCount, hasStructures, withStructure, type Move, groupOf, hasCargo, isGround, unitsIn, addUnits, sourcesOf } from '../../../domain/tactical';
+import type { TacticalEntry } from './types';
 import { sourceSlot, productionCost, systemPlanets, fightersFly, tileIdOf, routeSteps } from '../../../domain/replay/index';
 import { holderOf } from '../../../domain/effects/registry';
 import { autoPay } from './payment';
@@ -85,7 +87,7 @@ export function withProduction(
   const production = withCount(entry.production, unit, (entry.production[unit] ?? 0) + amount);
   const holder = holderOf({ faction }, before);
   // With the game the price is what the check asks (the combined cost counts); without it, the sum of the units.
-  const due = (units: UnitCounts) => (game ? productionDue(game, before, units, pack, entry) : productionCost(units, faction, holder, pack, entry));
+  const due = (units: UnitCounts) => (game ? productionDue(game, before, units, pack, entry) : productionCost(units, faction, holder, pack, factsOfEntry(entry)));
   const cost = due(production);
   const seed = !manualPayment && cost !== due(entry.production);
   const { [planetId ?? '']: onPlanet = {}, ...others } = entry.productionGround ?? {};

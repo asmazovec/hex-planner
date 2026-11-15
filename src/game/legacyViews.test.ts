@@ -1,3 +1,4 @@
+import { playerOfKey } from '../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from '../testing/old/domain/newGame';
@@ -32,7 +33,7 @@ describe('a board in the old model and back', () => {
     const placed = { ...game, enemyUnits: { ...game.enemyUnits, [slot]: { ...game.enemyUnits[slot], [opponent.id]: { cruiser: 2 } } } };
     const board = boardOf(placed, pack);
     const t = tableOf(placed);
-    expect(board.systems[slot].ships[t.players.find(p => p.legacyId === opponent.id)!.id]).toEqual({ cruiser: 2 });
+    expect(board.systems[slot].ships[playerOfKey(t, opponent.id)!]).toEqual({ cruiser: 2 });
     expect(normalState(legacyState(t, board, pack, t.viewer))).toEqual(normalState(startOf(placed, pack)));
   });
 

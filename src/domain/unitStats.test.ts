@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { upgradeTech } from './holdings';
-import { entryUpgradeRounds, hasLevelTwo, isUniqueShip, unitStats } from './unitStats';
+import { hasLevelTwo, isUniqueShip, unitStats } from './unitStats';
+import { entryUpgradeRounds } from '../testing/old/domain/holdings';
 import type { UnitId } from './types';
 import type { Entry, Plan } from '../testing/old/domain/types';
 

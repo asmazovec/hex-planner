@@ -2,8 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { FAR, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../domain/rules/kit';
 import type { Entry } from '../testing/old/domain/types';
-import { legacyPlayer, playerOfLegacy, tableOf, turnOf } from '../testing/old/game/fromLegacy';
-import { factsOf } from './turnFacts';
+import { entryOf, legacyPlayer, playerOfLegacy, tableOf, turnOf } from '../testing/old/game/fromLegacy';
 
 const pack = rulesPack();
 const game = rulesGame({ game: { opponents: [{ id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 }] } });
@@ -29,19 +28,19 @@ describe('turnOf', () => {
     expect(turn.action.production).toMatchObject({ units: { cruiser: 1 }, ground: { h1: { infantry: 1 } }, shipsTo: NEAR });
   });
 
-  test('factsOf gives the entry back, whoever the owner is', () => {
+  test('entryOf gives the entry back, whoever the owner is', () => {
     const mine = turnOf(table, entry, pack);
-    expect(factsOf(table, mine)).toMatchObject({ type: 'tactical', systemId: TARGET, moves: entry.type === 'tactical' ? entry.moves : [], losses: { fighter: 1 }, groundLosses: { t1: { infantry: 1 } }, free: true });
+    expect(entryOf(table, mine)).toMatchObject({ type: 'tactical', systemId: TARGET, moves: entry.type === 'tactical' ? entry.moves : [], losses: { fighter: 1 }, groundLosses: { t1: { infantry: 1 } }, free: true });
     const theirs = tactical(TARGET, { losses: { cruiser: 1 } }, { owner: 'o1' });
     const turn = turnOf(table, theirs, pack);
     expect(turn.player).toBe(playerOfLegacy(table, 'o1'));
-    expect(factsOf(table, turn)).toMatchObject({ owner: 'o1', losses: { cruiser: 1 } });
+    expect(entryOf(table, turn)).toMatchObject({ owner: 'o1', losses: { cruiser: 1 } });
     expect(legacyPlayer(table, turn.player)).toBe('o1');
   });
 
   test('every kind of entry becomes a turn and comes back as the entry it was', () => {
     const pass: Entry = { id: 'x', phase: 'action', status: 'planned', type: 'pass' };
     expect(turnOf(table, pass, pack).action).toEqual({ kind: 'pass' });
-    expect(factsOf(table, turnOf(table, pass, pack))).toMatchObject({ type: 'pass', phase: 'action' });
+    expect(entryOf(table, turnOf(table, pass, pack))).toMatchObject({ type: 'pass', phase: 'action' });
   });
 });

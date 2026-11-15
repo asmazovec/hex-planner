@@ -1,9 +1,7 @@
 import { appliedFor } from './effects/entryApply';
 import { holderFor, type Who } from './effects/registry';
-import { holdingRounds, upgradesOf } from './holdings';
-import type { DataPack, ShipLevels, ShipStats, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
+import type { DataPack, ShipLevels, ShipStats, StructureKind, UnitCounts, UnitId } from './types';
 import type { TurnFacts } from '../game/turnFacts';
-import type { RoundFacts } from '../game/turnFacts';
 
 /**
  * Fighters and infantry cost 0.5, so each unit type is rounded up to whole resources on its own. `who` is the holdings
@@ -49,13 +47,3 @@ export const upgradableStructures = (pack: DataPack): StructureKind[] =>
 /** A ship of the faction's own: its name stays English, while a common type's name is translated. */
 export const isUniqueShip = (factionId: string, kind: UnitId, pack: DataPack): boolean =>
   pack.factions[factionId]?.ships?.[kind] !== undefined;
-
-/** The first round whose entries of mine research each unit upgrade: done ones for `now`, planned ones too for `forecast`. */
-export function entryUpgradeRounds(plan: { rounds: RoundFacts[] }, filter: 'now' | 'forecast', pack: DataPack): Partial<Record<UpgradeId, number>> {
-  const rounds: Partial<Record<UpgradeId, number>> = {};
-  for (const [id, round] of Object.entries(holdingRounds(plan, filter).me ?? {})) {
-    const [unit] = upgradesOf({ technologies: [id] }, pack);
-    if (unit) rounds[unit] = Math.min(rounds[unit] ?? round, round);
-  }
-  return rounds;
-}

@@ -7,7 +7,6 @@ import { standing } from '../../../domain/replay';
 import { stepPlayers } from '../../../game/abilities/registry';
 import { fleetExcessOf, flightOf as flightAt } from '../../../game/flight';
 import type { Turn } from '../../../game/actions';
-import { legacyKey } from '../../../game/keys';
 import { planetsIn, stepsOf } from '../../../game/space';
 import { poolsOf, tokensOnMapOf } from '../../../game/queries';
 import {
@@ -143,7 +142,7 @@ export function TacticalEditor({
   const tokens = poolsOf(board, player).tactic;
   /** The reminders of a step: what its players hold for it, under the block of the step. */
   const hints = (step: RuleStep) => {
-    const players = stepPlayers(table, board, player, step, target, planets.map(p => p.id)).map(id => legacyKey(table, id));
+    const players = stepPlayers(table, board, player, step, target, planets.map(p => p.id));
     return <StepHints pack={pack} table={table} board={board} step={step} players={players} />;
   };
 

@@ -6,7 +6,7 @@ import type { UnitId } from './types';
  */
 
 export type TokenKind = UnitId | 'pds' | 'spacedock';
-/** `me` or an opponent id. */
+/** The id of the player a stack belongs to. */
 export type StackOwner = string;
 
 export interface SpaceStack { kind: TokenKind; owner: StackOwner; count: number }
@@ -19,8 +19,10 @@ export interface HexLayoutInput {
   planets: number;
   ground: GroundStack[];
   space: SpaceStack[];
-  /** Rival ids in seat order. Any other owner follows them in order of appearance. */
-  opponents?: string[];
+  /** Whose eyes the tile is drawn for: their stacks stand first, in the places kept for one's own. */
+  viewer?: StackOwner;
+  /** The players in seat order. Any other owner follows them in order of appearance. */
+  seats?: StackOwner[];
   /** Markers drawn on this tile: the command token, the ingress, the seat badge. */
   obstacles?: LayoutObstacle[];
 }
@@ -108,18 +110,18 @@ function planetsAt(count: number, size: number): Circle[] {
   return (PLANETS[count] ?? ringOfPlanets(count)).map(p => ({ x: p.x, y: p.y, r: p.r * k }));
 }
 
-/** The opponents among the stacks, in the order they stand on a tile. */
-const opponentOrder = (input: HexLayoutInput, stacks: SpaceStack[]): StackOwner[] =>
-  [...new Set([...(input.opponents ?? []), ...stacks.map(s => s.owner)])].filter(owner => owner !== 'me');
+/** The owners among the stacks other than the viewer, in the order they stand on a tile. */
+const othersOrder = (input: HexLayoutInput, stacks: SpaceStack[]): StackOwner[] =>
+  [...new Set([...(input.seats ?? []), ...stacks.map(s => s.owner)])].filter(owner => owner !== input.viewer);
 
-/** The stacks of each planet on an arc around it, own from one end, then each opponent. Null when they do not fit. */
-function placeGround(stacks: GroundStack[], opponents: StackOwner[], planets: Circle[], size: number, obstacles: Circle[]): { stack: GroundStack; x: number; y: number }[] | null {
+/** The stacks of each planet on an arc around it, the viewer's from one end, then each other player's. Null when they do not fit. */
+function placeGround(stacks: GroundStack[], viewer: StackOwner | undefined, rest: StackOwner[], planets: Circle[], size: number, obstacles: Circle[]): { stack: GroundStack; x: number; y: number }[] | null {
   const r = size * 0.54;
   const out: { stack: GroundStack; x: number; y: number }[] = [];
   for (let i = 0; i < planets.length; i += 1) {
     const planet = planets[i];
-    const own = stacks.filter(s => s.planet === i && s.owner === 'me').sort((a, b) => rank(a) - rank(b));
-    const others = opponents.flatMap(owner => stacks.filter(s => s.planet === i && s.owner === owner).sort((a, b) => rank(b) - rank(a)));
+    const own = stacks.filter(s => s.planet === i && s.owner === viewer).sort((a, b) => rank(a) - rank(b));
+    const others = rest.flatMap(owner => stacks.filter(s => s.planet === i && s.owner === owner).sort((a, b) => rank(b) - rank(a)));
     const arc = [...own, ...others];
     if (arc.length === 0) continue;
     const radius = planet.r + r + 1;
@@ -249,17 +251,17 @@ function attempt(input: HexLayoutInput, ground: GroundStack[], space: SpaceStack
   const onPlanet = groundSize(size);
   const markers = (input.obstacles ?? []).map(o => ({ x: o.x / HEX_SCALE, y: o.y / HEX_SCALE, r: o.r / HEX_SCALE }));
   const obstacles: Circle[] = [NUMBER_SPOT, ...markers, ...planets];
-  const opponents = opponentOrder(input, [...ground, ...space]);
-  const placedGround = placeGround(ground, opponents, planets, onPlanet, obstacles);
+  const rest = othersOrder(input, [...ground, ...space]);
+  const placedGround = placeGround(ground, input.viewer, rest, planets, onPlanet, obstacles);
   if (!placedGround) return null;
   const cells = comb(space.length, size, obstacles, insistOnMirror);
   if (!cells) return null;
 
-  // Own stacks fill the cells from the left, each opponent a group of the rest; within a group they go in rows by rank.
+  // The viewer's stacks fill the cells from the left, each other player a group of the rest; within a group they go in rows by rank.
   const fromLeft = [...cells].sort((a, b) => a.x - b.x || a.y - b.y);
   const ofOwner = (owner: StackOwner) => space.filter(s => s.owner === owner).sort((a, b) => rank(a) - rank(b));
-  const own = ofOwner('me');
-  const others = opponents.map(ofOwner);
+  const own = input.viewer === undefined ? [] : ofOwner(input.viewer);
+  const others = rest.map(ofOwner);
   const ownCells = fromLeft.slice(0, own.length).sort(byRow);
   const otherCells = groupsOfCells(fromLeft.slice(own.length), others.map(stacks => stacks.length), size * COMB_SPACING);
   const scale = (value: number) => value * HEX_SCALE;
@@ -286,7 +288,7 @@ function attempt(input: HexLayoutInput, ground: GroundStack[], space: SpaceStack
 
 /** For a tile too full for arcs and comb: every stack in a plain grid over the hex, own ones on the left. */
 function plainGrid(input: HexLayoutInput, ground: GroundStack[], space: SpaceStack[]): HexLayout {
-  const owners = ['me', ...opponentOrder(input, [...ground, ...space])];
+  const owners = [...(input.viewer === undefined ? [] : [input.viewer]), ...othersOrder(input, [...ground, ...space])];
   const stacks = [...ground, ...space].sort((a, b) => owners.indexOf(a.owner) - owners.indexOf(b.owner));
   const columns = Math.ceil(Math.sqrt(stacks.length));
   const step = 64 / columns;

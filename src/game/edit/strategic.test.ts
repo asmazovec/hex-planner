@@ -6,8 +6,7 @@ import * as old from '../../domain/strategy';
 import * as oldOld from '../../testing/old/domain/strategy';
 import { researchTokensGiven } from '../../testing/old/domain/replay/research';
 import type { Entry, Game } from '../../testing/old/domain/types';
-import { factsOf } from '../turnFacts';
-import { planOf, turnOf } from '../../testing/old/game/fromLegacy';
+import { entryOf, planOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { timelineOf } from '../../testing/projection';
 import * as read from './strategicRead';
 import * as now from './strategic';
@@ -44,8 +43,8 @@ const plain = (e: unknown) => {
   if (entry.type === 'secondary') delete entry.forToken;
   return entry;
 };
-const sameEntry = (table: Parameters<typeof factsOf>[0], turn: Parameters<typeof factsOf>[1], e: Entry, patch: Record<string, unknown>) =>
-  expect(plain(factsOf(table, turn))).toEqual(plain({ ...e, ...patch }));
+const sameEntry = (table: Parameters<typeof entryOf>[0], turn: Parameters<typeof entryOf>[1], e: Entry, patch: Record<string, unknown>) =>
+  expect(plain(entryOf(table, turn))).toEqual(plain({ ...e, ...patch }));
 
 const BODIES = [
   { type: 'strategic', card: CARD.leadership, effects: { tokens: { tactic: 4, fleet: 1 }, boughtTokens: 2, payment: { planets: [], tradeGoods: 0 } } },
@@ -73,7 +72,7 @@ describe.each(['sol', 'naalu', 'arborec', 'titans'])('the readers of a card turn
       expect(read.strategyTokensOwedOn(t.table, board, pack, turn, { held: heldOf })).toBe(oldOld.strategyTokensOwed(e, { held: heldOf }, t.g, before, before, pack));
     }
     expect(read.strategyTokensOwedOn(t.table, board, pack, turn, { free: true })).toBe(oldOld.strategyTokensOwed(e, { free: true }, t.g, before, before, pack));
-    expect(read.costsTokenOn(t.table, turn, { held })).toBe(old.costsStrategyToken(e, { held }));
+    expect(read.costsTokenOn(turn, { held })).toBe(old.costsStrategyToken(e, { held }));
     expect(read.primaryForTokenOf(turn, held)).toBe(old.primaryForToken(e, held));
     expect(read.freeTokensOn(t.table, board, turn)).toBe(old.freeTokens(e, ['pok'], before));
     expect(read.researchTokensGivenOn(t.table, board, pack, turn.player, e.effects?.researched)).toBe(researchTokensGiven(pack, t.g, before, before, e.effects?.researched));

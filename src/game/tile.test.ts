@@ -7,7 +7,8 @@ import { stacksOf } from '../testing/old/domain/stacks';
 import { systemPlanets } from '../testing/old/domain/project';
 import { boardOf, legacyState, tableOf } from '../testing/old/game/fromLegacy';
 import { seatSlots } from '../domain/mapBuilder';
-import { ownerKey, playerOfOwner, seatCount, shownPlanetValues, tileStacks } from './tile';
+import { seatCount, shownPlanetValues, tileStacks } from './tile';
+import { legacyKey } from '../testing/old/game/keys';
 
 const pack = loadPack(['pok']);
 const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
@@ -22,22 +23,21 @@ describe('tileStacks', () => {
       const old = stacksOf(game, state, slot, planets, pack);
       const now = tileStacks(table, board, table.viewer, slot, planets);
       const byKey = (stacks: { kind: string; owner: string; count: number; planet?: number }[]) => stacks.map(s => `${s.owner}|${s.kind}|${s.planet ?? '-'}|${s.count}`).sort();
-      expect(byKey(now.space), slot).toEqual(byKey(old.space));
-      expect(byKey(now.ground), slot).toEqual(byKey(old.ground));
+      // The kernel names the owner of a stack by player id, the old stacks by the old id.
+      const named = <S extends { owner: string }>(stacks: S[]): S[] => stacks.map(s => ({ ...s, owner: legacyKey(table, s.owner) }));
+      expect(byKey(named(now.space)), slot).toEqual(byKey(old.space));
+      expect(byKey(named(now.ground)), slot).toEqual(byKey(old.ground));
     }
   });
 
-  test('the viewer is `me`, the others are named by the id a saved game has for them, and back', () => {
-    const others = table.players.filter(p => p.id !== table.viewer);
-    expect(ownerKey(table, table.viewer, table.viewer)).toBe('me');
-    for (const other of others) {
-      const key = ownerKey(table, table.viewer, other.id);
-      expect(key).toBe(other.legacyId);
-      expect(playerOfOwner(table, table.viewer, key)).toBe(other.id);
-    }
-    // Seen by an opponent, the real viewer is no `me`: the name stays apart.
-    const [rival] = others;
-    expect(ownerKey(table, rival.id, table.viewer)).toBe(table.viewer);
+  test('a stack is named by the player it belongs to, the viewer too', () => {
+    const ids = table.players.map(p => p.id);
+    const owners = new Set(seatSlots(6, pack, game.layout).flatMap(slot => {
+      const stacks = tileStacks(table, board, table.viewer, slot, systemPlanets(game, slot, pack));
+      return [...stacks.space, ...stacks.ground].map(stack => stack.owner);
+    }));
+    expect(owners.has(table.viewer)).toBe(true);
+    for (const owner of owners) expect(ids).toContain(owner);
     expect(seatCount(table)).toBe(6);
   });
 });

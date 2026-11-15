@@ -15,7 +15,7 @@ export interface ResearchBlockProps {
   note: string;
   /** The technologies the entry researches, by component id. */
   researched: string[];
-  /** Whose entry it is: `me` or an opponent id. */
+  /** Whose entry it is. */
   table: Table;
   player: PlayerId;
   pack: DataPack;

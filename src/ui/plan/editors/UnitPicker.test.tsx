@@ -13,8 +13,7 @@ import type { GameState } from '../../../testing/old/domain/types';
 import { setLanguage } from '../../../i18n';
 import type { Move, TacticalEntry } from '../tactical';
 import { UnitPicker } from './UnitPicker';
-import { factsOf } from '../../../game/turnFacts';
-import { turnOf } from '../../../testing/old/game/fromLegacy';
+import { entryOf, turnOf } from '../../../testing/old/game/fromLegacy';
 
 const pack = loadPack(['pok']);
 
@@ -42,7 +41,7 @@ function setup(moves: Move[], before: Partial<GameState> = {}, production: UnitC
     return (
       <UnitPicker view={view}
         pack={pack} turn={turnOf(view.table, { ...entry, moves: list }, pack)} source={SOURCE}
-        onChange={next => { const kept = (factsOf(view.table, next) as TacticalEntry).moves; onChange(kept); setList(kept); }} onClose={() => undefined} onFly={onFly}
+        onChange={next => { const kept = (entryOf(view.table, next) as TacticalEntry).moves; onChange(kept); setList(kept); }} onClose={() => undefined} onFly={onFly}
       />
     );
   }

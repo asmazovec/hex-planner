@@ -1,5 +1,5 @@
 import { legacyGame, blankViews, legacyEvents } from './legacyViews';
-import { playerOfLegacy } from '../../../game/entry';
+import { legacyKey, nameOld, playerOfKey, toTable } from './keys';
 import type { DataPack, UnitCounts } from '../../../domain/types';
 import type { Game, Entry, Plan } from '../domain/types';
 import type { GameState } from '../domain/types';
@@ -15,16 +15,16 @@ import type { Turn, Transaction, Expedition, ComponentUse, Action } from '../../
 import { type Round, PHASES } from '../../../game/round';
 import { heldCards } from '../../../domain/strategy';
 
-export { legacyState, legacyViews, legacyGame, legacyKey } from './legacyViews';
-export { legacyPlayer, playerOfLegacy } from '../../../game/entry';
-export { nestedEntries } from './entry';
+export { legacyState, legacyViews, legacyGame } from './legacyViews';
+export { legacyKey, legacyPlayer, playerOfKey, playerOfLegacy } from './keys';
+export { entryOf, nestedEntries } from './entry';
 /** Me and the opponents become players `p<seat>`, in seat order; the viewer is my player. */
 export function tableOf(game: Game): Table {
   const players = playersOf(game).map(p => {
     const start = p.id === 'me' ? game.start.me : game.start.opponents[p.id];
     const technologies = start?.technologies ?? [];
     return {
-      id: idOfSeat(p.seat), faction: p.faction, seat: p.seat, color: p.color, legacyId: p.id,
+      id: idOfSeat(p.seat), faction: p.faction, seat: p.seat, color: p.color, old: p.id,
       setup: technologies.length > 0 ? { technologies: [...technologies] } : {},
     };
   }).sort((a, b) => a.seat - b.seat);
@@ -35,11 +35,13 @@ export function tableOf(game: Game): Table {
     ...Object.values(game.enemyUnits).flatMap(byOwner => Object.keys(byOwner)), ...Object.values(game.enemyGround).flatMap(byOwner => Object.keys(byOwner)),
     ...Object.values(game.planetOwner),
   ])].filter(id => !known.has(id)).sort();
-  strays.forEach((id, i) => players.push({ id: idOfSeat(GHOST_SEAT + i), faction: '', seat: GHOST_SEAT + i, color: 0, legacyId: id, setup: {} }));
+  strays.forEach((id, i) => players.push({ id: idOfSeat(GHOST_SEAT + i), faction: '', seat: GHOST_SEAT + i, color: 0, old: id, setup: {} }));
   const table: Table = {
     id: game.id, name: game.name ?? '', expansions: [...game.expansions], layout: game.layout, map: { ...game.map },
-    players, viewer: idOfSeat(game.seat),
+    players: players.map(({ old, ...player }) => { void old; return player; }), viewer: idOfSeat(game.seat),
   };
+  // The one place the old ids are tied to the players of the table: every converter asks `keys.ts` from here on.
+  nameOld(table, players.map(p => [p.id, p.old] as const));
   SOURCES.set(table, game);
   ORIGINS.set(table, game);
   return table;
@@ -54,7 +56,7 @@ export function boardFromLegacy(table: Table, state: GameState, pack: DataPack):
   // Someone who is not at the table (see `tableOf`) holds what was written for them by hand, which no entry changes.
   const source = ORIGINS.get(table);
   for (const p of table.players.filter(q => q.seat >= GHOST_SEAT)) {
-    const key = p.legacyId ?? p.id;
+    const key = legacyKey(table, p.id);
     const pick = (record: Game['enemyUnits'] | undefined): Record<string, UnitCounts> => Object.fromEntries(Object.entries(record ?? {}).flatMap(([place, byOwner]) => (byOwner[key] ? [[place, { ...byOwner[key] }]] : [])));
     const control = Object.fromEntries(Object.entries(source?.planetOwner ?? {}).filter(([, owner]) => owner === key).map(([id]) => [id, 'me' as const]));
     states[key] = { ...blankViews(table, game).states[key], systems: pick(source?.enemyUnits), ground: pick(source?.enemyGround), control };
@@ -86,18 +88,23 @@ export function boardOf(game: Game, pack: DataPack): Board {
  */
 export function turnOf(table: Table, entry: Entry, pack?: DataPack, linked?: Entry): Turn {
   const owner = entry.owner ?? 'me';
-  const player = playerOfLegacy(table, owner) ?? table.viewer;
-  const key = (id: string): PlayerId => playerOfLegacy(table, id) ?? id;
+  const player = playerOfKey(table, owner) ?? table.viewer;
+  const key = (id: string): PlayerId => playerOfKey(table, id) ?? id;
+  /** What the entry says with the old ids of players in it (a note's address, a player chosen) in the words of the table. */
+  const said = <T,>(value: T): T => toTable(table, value);
+  const effectsOf = <E extends { speaker?: string; freeSecondary?: string[] }>(effects: E): E => ({
+    ...effects, ...(effects.speaker === undefined ? {} : { speaker: key(effects.speaker) }), ...(effects.freeSecondary ? { freeSecondary: effects.freeSecondary.map(key) } : {}),
+  });
   const isPlanet = (id: string): boolean => (pack ? id in pack.planets : !SLOT.test(id) && !(id in table.map));
   const placeOf = (id: string): Place => (isPlanet(id) ? { planet: id } : { slot: id });
   const acts = ('acts' in entry ? entry.acts ?? [] : []).map((act): Transaction | Expedition => (act.kind === 'transaction'
-    ? { kind: 'transaction', with: key(act.with), give: { ...act.give, ...(act.give.components ? { components: [...act.give.components] } : {}) }, get: { ...act.get, ...(act.get.components ? { components: [...act.get.components] } : {}) } }
+    ? { kind: 'transaction', with: key(act.with), give: { ...act.give, ...(act.give.components ? { components: said([...act.give.components]) } : {}) }, get: { ...act.get, ...(act.get.components ? { components: said([...act.get.components]) } : {}) } }
     : { kind: 'expedition', slice: act.sliceId, payment: act.payment }));
-  const used: ComponentUse[] = (entry.uses ?? []).map(component => ({ component, ...(entry.useChoices?.[component] ? { choices: entry.useChoices[component] } : {}) }));
+  const used: ComponentUse[] = (entry.uses ?? []).map(component => ({ component: said(component), ...(entry.useChoices?.[component] ? { choices: said(entry.useChoices[component]) } : {}) }));
   const common = {
     id: entry.id, player, status: entry.status, phase: entry.phase, acts, used,
-    ...(entry.gains ? { gains: [...entry.gains] } : {}), ...(entry.spends ? { spends: [...entry.spends] } : {}),
-    ...(entry.choices && entry.type !== 'adjustment' ? { choices: entry.choices } : {}),
+    ...(entry.gains ? { gains: said([...entry.gains]) } : {}), ...(entry.spends ? { spends: said([...entry.spends]) } : {}),
+    ...(entry.choices && entry.type !== 'adjustment' ? { choices: said(entry.choices) } : {}),
   };
   let action: Action;
   switch (entry.type) {
@@ -118,15 +125,15 @@ export function turnOf(table: Table, entry: Entry, pack?: DataPack, linked?: Ent
       break;
     case 'strategic':
       action = {
-        kind: 'strategic', ...(entry.card !== undefined ? { card: entry.card } : {}), ...(entry.forToken ? { forToken: true } : {}), ...(entry.effects ? { effects: entry.effects } : {}),
+        kind: 'strategic', ...(entry.card !== undefined ? { card: entry.card } : {}), ...(entry.forToken ? { forToken: true } : {}), ...(entry.effects ? { effects: effectsOf(entry.effects) } : {}),
         ...(linked ? { nested: [{ ...turnOf(table, linked, pack), status: entry.status }] } : {}),
       };
       break;
     case 'secondary':
-      action = { kind: 'secondary', ...(entry.card !== undefined ? { card: entry.card } : {}), ...(entry.effects ? { effects: entry.effects } : {}) };
+      action = { kind: 'secondary', ...(entry.card !== undefined ? { card: entry.card } : {}), ...(entry.effects ? { effects: effectsOf(entry.effects) } : {}) };
       break;
     case 'component':
-      action = { kind: 'component', note: entry.note, ...(entry.componentId !== undefined ? { component: entry.componentId } : {}), ...(entry.effects ? { effects: entry.effects } : {}), ...(entry.payment ? { payment: entry.payment } : {}) };
+      action = { kind: 'component', note: entry.note, ...(entry.componentId !== undefined ? { component: said(entry.componentId) } : {}), ...(entry.effects ? { effects: effectsOf(entry.effects) } : {}), ...(entry.payment ? { payment: entry.payment } : {}) };
       break;
     case 'pass':
       action = { kind: 'pass' };
@@ -134,14 +141,17 @@ export function turnOf(table: Table, entry: Entry, pack?: DataPack, linked?: Ent
     case 'statusTokens':
       action = {
         kind: 'status', tactic: entry.tactic, fleet: entry.fleet, strategy: entry.strategy,
-        ...(entry.vp !== undefined ? { vp: entry.vp } : {}),
-        ...(entry.opponentVp ? { opponentVp: Object.fromEntries(Object.entries(entry.opponentVp).map(([id, n]) => [key(id), n])) } : {}),
+        // My points and the rivals' are one record by player; an entry never counts its own player among the rivals.
+        ...(entry.vp !== undefined || entry.opponentVp ? { points: {
+          ...Object.fromEntries(Object.entries(entry.opponentVp ?? {}).map(([id, n]) => [key(id), n] as const).filter(([id]) => id !== player)),
+          ...(entry.vp !== undefined ? { [player]: entry.vp } : {}),
+        } } : {}),
         ...(entry.scored ? { scored: [...entry.scored] } : {}), ...(entry.spend ? { spend: entry.spend } : {}),
       };
       break;
     case 'adjustment':
       action = entry.phase === 'agenda'
-        ? { kind: 'agenda', label: entry.label, delta: entry.delta, ...(entry.choices ? { choices: entry.choices } : {}) }
+        ? { kind: 'agenda', label: entry.label, delta: entry.delta, ...(entry.choices ? { choices: said(entry.choices) } : {}) }
         : { kind: 'correction', label: entry.label, delta: entry.delta, ...(entry.kind ? { purpose: entry.kind } : {}) };
       break;
   }
