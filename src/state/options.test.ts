@@ -172,7 +172,7 @@ describe('the strategy card', () => {
     expect(of(1).adds.length).toBeGreaterThan(0);
   });
 
-  test('the primary of a card the player does not hold costs a strategy token: with none left it is warned', () => {
+  test('the primary of a card the player holds and has not played yet is clean', () => {
     const turn = primary(4);
     const game = rulesGame({ entries: [turn] });
     game.plans[0].rounds[0].strategyCard = 4;
