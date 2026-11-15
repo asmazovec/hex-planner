@@ -56,3 +56,11 @@ test('the status editor offers the objectives scored, and the reminder of a secr
   expect(screen.getByRole('button', { name: 'Score an objective' })).toBeVisible();
   expect(screen.getByRole('group', { name: 'Reminders for this step' })).toHaveTextContent('Adapt New Strategies');
 });
+
+test('a status turn enters the points of its own player only: with a turn for each player nobody\'s points can be entered twice', () => {
+  openStatus('arborec');
+  const rows = [...document.querySelectorAll('.status-player')];
+  expect(rows).toHaveLength(1);
+  expect(within(rows[0] as HTMLElement).getByRole('group', { name: 'Arborec' })).toBeVisible();
+  expect(screen.queryByRole('group', { name: 'Player 2' })).toBeNull();
+});

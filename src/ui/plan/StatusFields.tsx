@@ -29,8 +29,8 @@ export interface StatusFieldsProps {
 
 // TODO(P2-349) #ws:ui-nesting #type:ui #needs:prototype — жетоны статуса раскрываются внутри строки записи (5 уровней); отдельное меню на месте списка, как Strategy и Adjustment
 /**
- * The status turn: the tokens taken this round, the points each player gains with their running total, and what the
- * phase brings: the action card drawn (81.3), whichever it is, has a button of its own.
+ * The status turn of a player: the tokens taken this round, the points that player gains with their running total, and
+ * what the phase brings: the action card drawn (81.3), whichever it is, has a button of its own.
  */
 export function StatusFields({ turn, pack, view, end, warnings, onChange }: StatusFieldsProps) {
   const { t } = useTranslation();
@@ -38,9 +38,8 @@ export function StatusFields({ turn, pack, view, end, warnings, onChange }: Stat
   if (!status) return null;
   // Two tokens, and what the player's components make of them (Versatile, Hyper Metabolism, a note named in «Used»).
   const free = statusTokensFreeOfTurn(view.table, view.board, pack, turn);
-  // The player of the turn first, then the others by seat, as the table lists them.
-  const seated = view.table.players.filter(p => p.seat <= 8).sort((a, b) => a.seat - b.seat);
-  const players = [...seated.filter(p => p.id === turn.player), ...seated.filter(p => p.id !== turn.player)];
+  // Each player has a status turn of their own, so a turn enters its own player's points and nobody's twice.
+  const players = view.table.players.filter(p => p.id === turn.player);
   return (
     <>
       <TokenTiles
