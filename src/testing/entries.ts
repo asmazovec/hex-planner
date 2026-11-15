@@ -14,7 +14,7 @@ export function addEntry(roundNo: number, body: EntryBody, phase: Phase, owner?:
   return useGame.getState().addTurn(roundNo, turn, parentId);
 }
 
-export const addStatusEntry = (roundNo: number): string => useGame.getState().addStatusTurn(roundNo);
+export const addStatusEntry = (roundNo: number): string => useGame.getState().addStatusTurn(roundNo, useGame.getState().saved!.table.viewer);
 
 export function updateEntry(id: string, patch: Partial<EntryBody>): void {
   const saved = useGame.getState().saved;

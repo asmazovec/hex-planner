@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { holdingsOf, upgradesOf } from '../../domain/holdings';
-import { countChangeEffect, listPlayers, maxPlayers, MIN_PLAYERS, opponentHoldings } from '../../game/edit/table';
+import { boardHoldings, countChangeEffect, maxPlayers, MIN_PLAYERS, seatedPlayers } from '../../game/edit/table';
 import type { UnitId, UpgradeId } from '../../domain/types';
 import type { PlayerId } from '../../game/types';
 import { useGame } from '../../state/gameStore';
@@ -13,7 +13,7 @@ import { ConfirmBar } from '../primitives/ConfirmBar';
 import { playerStyle } from '../primitives/player';
 import type { SeatDrag } from './useSeatDrag';
 
-type Asked = { kind: 'add' } | { kind: 'remove'; opponent: number };
+type Asked = { kind: 'add' } | { kind: 'remove'; player: PlayerId };
 
 export interface PlayerListProps {
   /** Highlights from the seat map beside the list; the list works without one. */
@@ -22,15 +22,18 @@ export interface PlayerListProps {
   live?: { upgraded: Record<PlayerId, UpgradeId[]>; structures?: Record<PlayerId, { docks: number; pds: number }>; locked: Record<PlayerId, Partial<Record<UnitId, number>>>; points: Record<PlayerId, number> };
 }
 
-/** The players of the open game, or of the draft before a game starts: one card each, everything visible, my faction first. */
+/**
+ * The players of the open game, or of the draft before a game starts: one card each by seat, every card the same. One of
+ * them is marked as the one at the tablet; before the game starts the mark is a choice among the cards.
+ */
 export function PlayerList({ drag, live }: PlayerListProps) {
   const { t } = useTranslation();
   const saved = useGame(s => s.saved ?? s.draftSaved);
   const { table } = saved;
   const setFaction = useGame(s => s.setFaction);
-  const setOpponent = useGame(s => s.setOpponent);
-  const addOpponent = useGame(s => s.addOpponent);
-  const removeOpponent = useGame(s => s.removeOpponent);
+  const addPlayer = useGame(s => s.addPlayer);
+  const removePlayer = useGame(s => s.removePlayer);
+  const setViewer = useGame(s => s.setViewer);
   const setStartHolding = useGame(s => s.setStartHolding);
   const started = useGame(s => s.saved !== null);
   const pack = usePack(table.expansions);
@@ -42,33 +45,32 @@ export function PlayerList({ drag, live }: PlayerListProps) {
   const [fresh, setFresh] = useState<number | null>(null);
   const listRef = useRef<HTMLElement>(null);
 
-  /** The players, the viewer first. */
-  const players = listPlayers(table).map(p => ({ ...p, vp: saved.start.points[p.id] ?? 0 }));
+  const players = seatedPlayers(table).map(p => ({ ...p, vp: saved.start.points[p.id] ?? 0 }));
   const count = players.length;
   const max = maxPlayers(pack);
 
   const add = () => {
-    addOpponent();
+    addPlayer();
     const now = useGame.getState();
-    setFresh(listPlayers((now.saved ?? now.draftSaved).table).at(-1)?.color ?? null);
+    setFresh(seatedPlayers((now.saved ?? now.draftSaved).table).at(-1)?.color ?? null);
     setAsked(null);
   };
   useEffect(() => {
     if (fresh !== null) listRef.current?.scrollTo?.({ top: 1e6, behavior: 'smooth' });
   }, [fresh]);
-  const remove = (opponent: number) => {
-    removeOpponent(opponent);
+  const remove = (player: PlayerId) => {
+    removePlayer(player);
     setAsked(null);
   };
   const effectOf = (next: Asked) => ({
     ...countChangeEffect(table, next.kind === 'add' ? count + 1 : count - 1, pack),
-    held: next.kind === 'remove' ? opponentHoldings(saved.start, players[next.opponent + 1].id) : { units: 0, planets: 0 },
+    held: next.kind === 'remove' ? boardHoldings(saved.start, next.player) : { units: 0, planets: 0 },
   });
   const ask = (next: Asked) => {
     const { filled, held } = effectOf(next);
     if (filled > 0 || held.units > 0 || held.planets > 0) setAsked(next);
     else if (next.kind === 'add') add();
-    else remove(next.opponent);
+    else remove(next.player);
   };
   const confirmBar = (next: Asked) => {
     const { filled, lost, held } = effectOf(next);
@@ -78,7 +80,7 @@ export function PlayerList({ drag, live }: PlayerListProps) {
     return (
       <ConfirmBar
         className="player-confirm" text={texts.join(' ')} yes={t('players.confirmYes')} no={t('players.cancel')}
-        onYes={() => (next.kind === 'add' ? add() : remove(next.opponent))} onNo={() => setAsked(null)}
+        onYes={() => (next.kind === 'add' ? add() : remove(next.player))} onNo={() => setAsked(null)}
       />
     );
   };
@@ -94,36 +96,48 @@ export function PlayerList({ drag, live }: PlayerListProps) {
         const faction = pack.factions[player.faction];
         const taken = new Set(players.filter((_, i) => i !== index).map(p => p.faction));
         const classes = ['player-card'];
-        if (index === 0) classes.push('own');
+        const atTablet = player.id === table.viewer;
+        const who = t('players.player', { n: player.seat });
+        if (atTablet) classes.push('own');
         if (player.color === fresh) classes.push('fresh');
         if (drag?.lifted === index) classes.push('lifted');
         const badge = ['player-badge'];
         if (drag?.picked === index) badge.push('picked');
         if (drag?.bumped.includes(player.color)) badge.push('bump');
-        const opponent = index - 1;
+        const leaving = asked?.kind === 'remove' && asked.player === player.id;
         return (
           <article
-            key={player.color} role="group" aria-label={t('players.player', { n: index + 1 })} className={classes.join(' ')}
+            key={player.color} role="group" aria-label={who} className={classes.join(' ')}
             style={playerStyle('--player', player.color)}
           >
             <div className="player-row">
-              <div className={badge.join(' ')} onAnimationEnd={drag?.clearBump}>{index + 1}</div>
+              <div className={badge.join(' ')} onAnimationEnd={drag?.clearBump}>{player.seat}</div>
               <div className="player-name">
-                <div className="player-role">{t(index === 0 ? 'players.me' : 'players.opponent')}</div>
+                <div className="player-role">{who}</div>
                 {live ? <div className="fac fac-fixed">{faction?.name ?? player.faction}</div> : (
                   <FactionPicker
-                    label={t(index === 0 ? 'players.me' : 'players.opponent')} value={player.faction} factions={factions} taken={taken} clearable={!(index === 0 && started)}
-                    onPick={id => (index === 0 ? setFaction(id) : setOpponent(opponent, { faction: id }))}
+                    label={t('players.factionOf', { n: player.seat })} value={player.faction} factions={factions} taken={taken}
+                    // The plans are those of the player at the tablet, so that one keeps a faction once the game has begun.
+                    clearable={!(atTablet && started)} onPick={id => setFaction(player.id, id)}
                   />
                 )}
               </div>
               {live && <div className="player-vp">{t('players.points')} <b>{live.points[player.id] ?? player.vp}</b></div>}
+              {/* Who sits at the tablet: a choice among the cards until the game starts, a mark on one card after. */}
+              {started || live
+                ? (atTablet ? <span className="chip fix on">{t('players.tablet')}</span> : <span />)
+                : (
+                  <button
+                    type="button" role="radio" className="chip" aria-checked={atTablet} aria-label={t('players.tabletOf', { n: player.seat })}
+                    onClick={() => setViewer(player.id)}
+                  >{t('players.tablet')}</button>
+                )}
               {/* The question stands in for the cross that asked it. */}
-              {index === 0 || live || (asked?.kind === 'remove' && asked.opponent === opponent) ? <span /> : (
-                <HexRemove label={t('players.remove')} disabled={count <= MIN_PLAYERS} onClick={() => ask({ kind: 'remove', opponent })} />
+              {live || leaving ? <span /> : (
+                <HexRemove label={t('players.removeOf', { n: player.seat })} disabled={count <= MIN_PLAYERS} onClick={() => ask({ kind: 'remove', player: player.id })} />
               )}
             </div>
-            {asked?.kind === 'remove' && asked.opponent === opponent && confirmBar(asked)}
+            {leaving && asked && confirmBar(asked)}
             {faction && (
               <FactionCard
                 faction={faction} pack={pack} expansions={table.expansions}
@@ -141,7 +155,7 @@ export function PlayerList({ drag, live }: PlayerListProps) {
       })}
       {asked?.kind === 'add' && confirmBar(asked)}
       {count < max && !live && !started && asked?.kind !== 'add' && (
-        <button type="button" className="add-opponent" onClick={() => ask({ kind: 'add' })}>{t('players.add')}</button>
+        <button type="button" className="add-player" onClick={() => ask({ kind: 'add' })}>{t('players.add')}</button>
       )}
     </section>
   );

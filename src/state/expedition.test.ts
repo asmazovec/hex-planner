@@ -34,7 +34,7 @@ describe('expedition parts belong to players of the table', () => {
 
   test('a part stays with its player when other players trade seats', () => {
     const taken = withSlice(fresh(), 'tg3', 'p3');
-    // The second and the fourth player of the list trade seats: the third one keeps both the seat and the part.
-    expect(swapSeats(taken, 1, 3).start.expedition.slices).toEqual({ tg3: 'p3' });
+    // The second and the fourth player trade seats: the third one keeps both the seat and the part.
+    expect(swapSeats(taken, 'p2', 'p4').start.expedition.slices).toEqual({ tg3: 'p3' });
   });
 });

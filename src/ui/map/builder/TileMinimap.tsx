@@ -5,7 +5,7 @@ import { HEX_INNER } from '../../../domain/hexLayout';
 import { rotateLanes } from '../../../domain/lanes';
 import { duplicateTiles, seatSlots, slotsFor } from '../../../domain/mapBuilder';
 import { MECATOL_PLANETS } from '../../../domain/mecatol';
-import { freeSlots, listPlayers, seatedCount } from '../../../game/edit/table';
+import { freeSlots, seatedCount, seatedPlayers } from '../../../game/edit/table';
 import type { SavedGame } from '../../../game/save';
 import type { DataPack, TileDef } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
@@ -56,7 +56,7 @@ export function TileMinimap({ saved, pack, drag, ghostRef, locked = false }: Til
   const setTile = useGame(s => s.setTile);
   const [selected, setSelected] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const players = listPlayers(table);
+  const players = seatedPlayers(table);
   const slots = slotsFor(playerCount, pack, table.layout);
   const seats = seatSlots(playerCount, pack, table.layout);
   const free = new Set(freeSlots(table, pack));
@@ -150,7 +150,7 @@ export function TileMinimap({ saved, pack, drag, ghostRef, locked = false }: Til
           const { x, y } = centreOf(key);
           const faction = pack.factions[player.faction];
           const classes = ['seat-token'];
-          if (index === 0) classes.push('seat-token-me');
+          if (player.id === table.viewer) classes.push('seat-token-me');
           if (locked) classes.push('seat-token-locked');
           if (drag.picked === index) classes.push('picked');
           if (drag.lifted !== null) classes.push('target');
@@ -192,9 +192,9 @@ export function TileMinimap({ saved, pack, drag, ghostRef, locked = false }: Til
         <div ref={ghostRef} className="seat-ghost">
           {dragged && drag.lifted !== null && (
             <>
-              <PlayerDot color={dragged.color} className="seat-ghost-badge">{drag.lifted + 1}</PlayerDot>
+              <PlayerDot color={dragged.color} className="seat-ghost-badge">{dragged.seat}</PlayerDot>
               <span>
-                <small>{t(drag.lifted === 0 ? 'players.me' : 'players.opponent')}</small>
+                <small>{t('players.player', { n: dragged.seat })}</small>
                 <b>{nameOf(dragged.faction)}</b>
               </span>
             </>

@@ -13,7 +13,7 @@ import { tableOfGame } from '../../testing/projection';
 import { useGame } from '../../state/gameStore';
 import { ComponentPicker } from './ComponentPicker';
 import { searchComponents } from './useComponentSearch';
-import { gameNow } from '../../testing/store';
+import { gameNow, opponentAt } from '../../testing/store';
 
 const pack = loadPack(['pok']);
 
@@ -116,7 +116,7 @@ test('what is held stands first, and the rest says it is not held, when somethin
 });
 
 test('the notes I hold of other players stand first when something is played, each with its owner; my own are offered after them', async () => {
-  useGame.getState().setOpponent(0, { faction: 'hacan' });
+  useGame.getState().setFaction(opponentAt(0), 'hacan');
   const rival = gameNow()!.opponents[0].id;
   const held = [`promissory:convoys@${rival}`, `promissory:<color>_ta@${rival}`];
   render(<ComponentPicker kinds={['promissory']} owned={new Set(held)} prefer="owned" table={now()} player={now().viewer} onPick={() => undefined} onClose={() => undefined} />);

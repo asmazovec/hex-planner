@@ -2,7 +2,8 @@
  * Edits of the table of a saved game before it starts, and of the players while it is open: the name, the tiles of the
  * map, the players and their factions, the seats, the layout, the map string and the expansions, and the making of a new
  * game. Each takes the saved game and hands back the same one when nothing changed. Pinned 1:1 against the edits of the
- * old game (`table.test.ts`). A player's id is `p<seat>`; an edit that moves the seats renames the player where the start and
+ * old game where it still makes the same (`table.test.ts`). Every edit names a player by id and treats all players alike;
+ * the one at the tablet is a mark on one of them (`setViewer`). A player's id is `p<seat>`; an edit that moves the seats renames the player where the start and
  * the plans name them: as a player, and as the address of a promissory note.
  */
 import { loadPack } from '../../data/loadPack';
@@ -12,13 +13,14 @@ import { defaultLayout, slotKeyOf, templateOf } from '../../domain/layouts';
 import { moveToTemplate, seatSlots, slotsFor, templateFor } from '../../domain/mapBuilder';
 import { makeId, timeIdMaker, type IdMaker } from '../../domain/newGame';
 import { startStructures } from '../../domain/startStructures';
-import { heldCards, splitStartUnits, type HomeNote } from '../../domain/strategy';
+import { heldCards, type HomeNote } from '../../domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
 import type { DataPack, ExpansionId, MapLayout, StartHoldings } from '../../domain/types';
 import { SAVED_FORMAT, type SavedGame, type StartEdits } from '../save';
-import { emptyRound, type Round } from '../round';
+import { emptyRound, NO_PICKS, type Round } from '../round';
+import { homeOf, sheetUnitsOf } from '../setup';
 import type { Action, Turn } from '../actions';
-import type { Player, PlayerId, Slot, Table, TileRef } from '../types';
+import type { Player, PlayerId, Slot, Table, TileRef, UnitCounts } from '../types';
 import { withFractureTiles, withHeld } from './start';
 
 /** The seats from here on are players written for by hand who are not at the table (see `tableOf`). */
@@ -49,7 +51,8 @@ export function withTile(saved: SavedGame, slot: Slot, tile: TileRef | null): Sa
   const next = { ...map };
   if (tile === null) delete next[slot];
   else next[slot] = tile;
-  return { ...saved, table: { ...saved.table, map: next } };
+  // A home tile set elsewhere takes the fleet written at the home with it.
+  return settled(saved, { ...saved, table: { ...saved.table, map: next } });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -195,7 +198,49 @@ function slotsMoved(saved: SavedGame, to: (slot: Slot) => Slot): SavedGame {
   };
 }
 
-/** The Fracture's systems take other slots when it moves, and what the game says about them follows; then its tiles follow its seat. */
+/** Unit counts with `units` added (`sign` 1) or taken off (-1); a count never goes below zero, and an empty one is not kept. */
+function shifted(now: UnitCounts | undefined, units: UnitCounts, sign: 1 | -1): UnitCounts {
+  const next: Record<string, number> = { ...now };
+  for (const [unit, n] of Object.entries(units)) {
+    const count = (next[unit] ?? 0) + sign * (n ?? 0);
+    if (count > 0) next[unit] = count; else delete next[unit];
+  }
+  return next as UnitCounts;
+}
+
+/** The units of a player at a place, changed by `units`; a player with nothing there, and a place with no one, go. */
+function unitsShifted(record: StartEdits['units'], place: string | undefined, player: PlayerId, units: UnitCounts, sign: 1 | -1): StartEdits['units'] {
+  if (place === undefined || Object.keys(units).length === 0) return record;
+  const { [player]: was, ...others } = record[place] ?? {};
+  const next = shifted(was, units, sign);
+  const here = Object.keys(next).length > 0 ? { ...others, [player]: next } : others;
+  const { [place]: old, ...rest } = record;
+  void old;
+  return Object.keys(here).length > 0 ? { ...rest, [place]: here } : rest;
+}
+
+/**
+ * The units written in the space of each player's home system, in the system that is the player's home at the new table:
+ * when the count of players or the layout moves the homes, or two players trade seats, a fleet stays at its home. A
+ * player is the same one at both tables by colour; `units` name the players as the new table does.
+ */
+function fleetsAtHome(old: Table, next: Table, units: StartEdits['units'], pack: DataPack): StartEdits['units'] {
+  const moves = real(next).flatMap(after => {
+    const before = real(old).find(p => p.color === after.color);
+    const from = before && homeOf(old, before, pack)?.slot;
+    const to = homeOf(next, after, pack)?.slot;
+    const fleet = from === undefined ? undefined : units[from]?.[after.id];
+    return from !== undefined && to !== undefined && from !== to && fleet ? [{ player: after.id, from, to, fleet }] : [];
+  });
+  // Every fleet lifts off before any lands: two players who trade seats land in each other's old system.
+  const lifted = moves.reduce((record, { player, from, fleet }) => unitsShifted(record, from, player, fleet, -1), units);
+  return moves.reduce((record, { player, to, fleet }) => unitsShifted(record, to, player, fleet, 1), lifted);
+}
+
+/**
+ * The Fracture's systems take other slots when it moves, and what the game says about them follows; then the fleets
+ * written at the players' homes follow the homes, and the Fracture's tiles follow its seat.
+ */
 function settled(before: SavedGame, next: SavedGame): SavedGame {
   if (next === before) return before;
   const pack = loadPack(before.table.expansions);
@@ -205,7 +250,9 @@ function settled(before: SavedGame, next: SavedGame): SavedGame {
   const old = place(before);
   const now = place(next);
   const moved = new Map(Object.keys(old).filter(id => now[id] && now[id] !== old[id]).map(id => [old[id], now[id]]));
-  return withFractureTiles(moved.size === 0 ? next : slotsMoved(next, slot => moved.get(slot) ?? slot));
+  const followed = moved.size === 0 ? next : slotsMoved(next, slot => moved.get(slot) ?? slot);
+  const units = followed.start.placed ? fleetsAtHome(before.table, followed.table, followed.start.units, loadPack(followed.table.expansions)) : followed.start.units;
+  return withFractureTiles(units === followed.start.units ? followed : { ...followed, start: { ...followed.start, units } });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -269,21 +316,24 @@ function mapFor(table: Table, players: Player[], layout: MapLayout, pack: DataPa
 }
 
 /**
- * The saved game with another list of players, mine first: the layout follows the count, the map follows both, the ids
- * follow the seats. A player not at the table yet is under any id not in the table, which `start` may already name.
+ * The saved game with another list of players: the layout follows the count, the map follows both, the ids follow the
+ * seats, and the players stand in the order of the seats. A player not at the table yet is under any id not in the
+ * table, which `start` may already name. The one at the tablet stays who they were; when they are not in the list, it is
+ * the first player by seat.
  */
 function seatedAs(saved: SavedGame, list: Player[], start: StartEdits = saved.start): SavedGame {
   const { table } = saved;
   const pack = loadPack(table.expansions);
   const count = list.length;
+  const bySeat = [...list].sort((a, b) => a.seat - b.seat);
   const layout = count === real(table).length ? table.layout : layoutForCount(table, count, pack);
-  const map = mapFor(table, list, layout, pack);
-  const ids = new Map(list.map(p => [p.id, idOfSeat(p.seat)]));
+  const map = mapFor(table, bySeat, layout, pack);
+  const ids = new Map(bySeat.map(p => [p.id, idOfSeat(p.seat)]));
   const strays = table.players.filter(p => p.seat >= GHOST_SEAT);
   const rename = changes(ids);
-  const viewer = ids.get(list[0].id)!;
+  const viewer = ids.get(table.viewer) ?? idOfSeat(bySeat[0].seat);
   const fracture = start.fracture.seat !== null && start.fracture.seat > count ? { ...start.fracture, seat: null } : start.fracture;
-  const players = [...list.map(p => ({ ...p, id: ids.get(p.id)! })), ...strays];
+  const players = [...bySeat.map(p => ({ ...p, id: ids.get(p.id)! })), ...strays];
   const moved: SavedGame = {
     ...saved,
     table: { ...table, layout, map, players, viewer },
@@ -295,19 +345,68 @@ function seatedAs(saved: SavedGame, list: Player[], start: StartEdits = saved.st
   return mapRounds(moved, round => ({ ...round, picks: Object.fromEntries(Object.entries(round.picks).map(([player, picks]) => [player, { ...picks, held: heldCards(picks, count) }])) }));
 }
 
-/** The players of the table, mine first. */
-export const listPlayers = (table: Table): Player[] => {
-  const me = table.players.find(p => p.id === table.viewer);
-  return [...(me ? [me] : []), ...real(table).filter(p => p !== me)];
-};
-const listOf = (saved: SavedGame): Player[] => listPlayers(saved.table);
+/** The players at the table by seat: the seated ones, not those written for by hand. */
+export const seatedPlayers = (table: Table): Player[] => real(table).sort((a, b) => a.seat - b.seat);
+const listOf = (saved: SavedGame): Player[] => seatedPlayers(saved.table);
+
+// ---------------------------------------------------------------------------------------------------------------------
+// What a faction sheet places, written into the start for a player and taken off it again.
+
+const homePlanets = (faction: string, pack: DataPack): string[] =>
+  pack.tiles[pack.factions[faction]?.homeTile ?? '']?.planetIds ?? [];
+
+/**
+ * The start with a player's faction sheet written into it: the fleet in the home system, the ground forces on its first
+ * planet, the structures of the sheet and the home planets as theirs. The one path by which a sheet reaches the board,
+ * the same for every player.
+ */
+function withSheet(saved: SavedGame, player: PlayerId): SavedGame {
+  const pack = loadPack(saved.table.expansions);
+  const row = saved.table.players.find(p => p.id === player);
+  const sheet = row && sheetUnitsOf(saved.table, row, pack);
+  if (!row || !sheet) return saved;
+  const { start } = saved;
+  const begin = startStructures(row.faction, pack);
+  return {
+    ...saved,
+    start: {
+      ...start,
+      units: unitsShifted(start.units, sheet.slot, player, sheet.space, 1),
+      ground: unitsShifted(start.ground, sheet.planet, player, sheet.ground, 1),
+      control: { ...start.control, ...Object.fromEntries(homePlanets(row.faction, pack).map(planet => [planet, player])) },
+      docks: [...start.docks, ...begin.docks.filter(id => !start.docks.includes(id))],
+      pds: { ...start.pds, ...begin.pds },
+    },
+  };
+}
+
+/** The start with what a player's faction sheet placed taken off again: its units where they stand, and the home planets with their structures. */
+function withoutSheet(saved: SavedGame, player: PlayerId): SavedGame {
+  const pack = loadPack(saved.table.expansions);
+  const row = saved.table.players.find(p => p.id === player);
+  const sheet = row && sheetUnitsOf(saved.table, row, pack);
+  if (!row || !sheet) return saved;
+  const { start } = saved;
+  const homes = homePlanets(row.faction, pack);
+  return {
+    ...saved,
+    start: {
+      ...start,
+      units: unitsShifted(start.units, sheet.slot, player, sheet.space, -1),
+      ground: unitsShifted(start.ground, sheet.planet, player, sheet.ground, -1),
+      control: Object.fromEntries(Object.entries(start.control).filter(([id]) => !homes.includes(id))),
+      docks: start.docks.filter(id => !homes.includes(id)),
+      pds: Object.fromEntries(Object.entries(start.pds).filter(([id]) => !homes.includes(id))),
+    },
+  };
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Players.
 
 const emptySetup = (): Player['setup'] => ({});
 
-/** A new opponent takes the last seat and the first free colour. The maximum of the pack stops it. */
+/** A new player takes the last seat and the first free colour. The maximum of the pack stops it. */
 export function addPlayer(saved: SavedGame): SavedGame {
   const pack = loadPack(saved.table.expansions);
   const players = listOf(saved);
@@ -326,12 +425,21 @@ export function addPlayer(saved: SavedGame): SavedGame {
   return settled(saved, seatedAs(saved, [...players, fresh], start));
 }
 
-/** Removes a player and what they hold on the map by list position; later seats shift down. My faction (position 0) stays, and so do the last three players. */
-export function removePlayer(saved: SavedGame, index: number): SavedGame {
+/** The rounds keep the strategy cards of the player at the tablet: each round that keeps none for `player` begins to. */
+function withCardsKept(saved: SavedGame, player: PlayerId): SavedGame {
+  if (saved.plans.every(plan => plan.rounds.every(round => player in round.picks))) return saved;
+  return mapRounds(saved, round => (player in round.picks ? round : { ...round, picks: { ...round.picks, [player]: NO_PICKS } }));
+}
+
+/**
+ * Removes a player and what they hold on the map; later seats shift down. Any player may leave, the one at the tablet
+ * too (the first of the rest by seat sits at it then); the last three stay.
+ */
+export function removePlayer(saved: SavedGame, player: PlayerId): SavedGame {
   const players = listOf(saved);
-  const leaving = players[index];
-  if (index === 0 || !leaving || players.length <= MIN_PLAYERS) return saved;
-  const rest = players.filter((_, i) => i !== index).map(p => (p.seat > leaving.seat ? { ...p, seat: p.seat - 1 } : p));
+  const leaving = players.find(p => p.id === player);
+  if (!leaving || players.length <= MIN_PLAYERS) return saved;
+  const rest = players.filter(p => p !== leaving).map(p => (p.seat > leaving.seat ? { ...p, seat: p.seat - 1 } : p));
   const { start } = saved;
   const planets = Object.keys(start.control).filter(id => start.control[id] === leaving.id);
   const without = (record: StartEdits['units']): StartEdits['units'] => Object.fromEntries(Object.entries(record).flatMap(([place, byOwner]) => {
@@ -345,7 +453,7 @@ export function removePlayer(saved: SavedGame, index: number): SavedGame {
   const cleared: SavedGame = {
     ...saved,
     start: {
-      ...start, points, sheetUnits: start.sheetUnits.filter(id => id !== leaving.id),
+      ...start, points,
       // The notes of the player who leaves go with them, whoever held them (69.7).
       holdings: Object.fromEntries(Object.entries(held).map(([id, theirs]) => [id, withoutNotesOf(theirs, leaving.id)])),
       units: without(start.units), ground: without(start.ground),
@@ -354,41 +462,54 @@ export function removePlayer(saved: SavedGame, index: number): SavedGame {
       pds: Object.fromEntries(Object.entries(start.pds).filter(([id]) => !planets.includes(id))),
     },
   };
-  return settled(saved, seatedAs(withoutPlayerInPlans(cleared, leaving), rest));
+  const seated = seatedAs(withoutPlayerInPlans(cleared, leaving), rest);
+  return settled(saved, withCardsKept(seated, seated.table.viewer));
 }
 
-const homePlanets = (faction: string, pack: DataPack): string[] =>
-  pack.tiles[pack.factions[faction]?.homeTile ?? '']?.planetIds ?? [];
-
-/** Sets a player's faction by list position; for my faction, control and the dock move to the new home as well. */
-export function setFaction(saved: SavedGame, index: number, faction: string): SavedGame {
+/**
+ * Sets a player's faction: the home tile, the starting technologies and the notes follow it. Once the sheets are written
+ * down (`placed`), what the old faction's sheet placed comes off and the new one's is written, for any player alike.
+ */
+export function setFaction(saved: SavedGame, player: PlayerId, faction: string): SavedGame {
   const pack = loadPack(saved.table.expansions);
-  const players = listOf(saved);
-  const player = players[index];
-  if (!player || player.faction === faction) return saved;
-  const seated = seatedAs(saved, players.map((p, i) => (i === index ? { ...p, faction } : p)));
-  // The starting technologies follow the faction, for me and for an opponent alike.
-  const begins = startForFaction(saved.start.holdings[player.id], player.faction, faction, pack, player.id);
-  const next = withHeld(seated, player.id, begins);
-  if (index !== 0) return settled(saved, next);
-  const old = homePlanets(players[0].faction, pack);
-  const fresh = homePlanets(faction, pack);
-  const begin = startStructures(faction, pack);
-  const control: Record<string, PlayerId> = { ...next.start.control };
-  for (const id of old) delete control[id];
-  for (const id of fresh) control[id] = next.table.viewer;
-  const pds = { ...Object.fromEntries(Object.entries(next.start.pds).filter(([id]) => !old.includes(id))), ...begin.pds };
-  return settled(saved, { ...next, start: { ...next.start, control, docks: [...next.start.docks.filter(id => !old.includes(id)), ...begin.docks], pds } });
+  const row = listOf(saved).find(p => p.id === player);
+  if (!row || row.faction === faction) return saved;
+  // The old sheet comes off while its home still stands on the map.
+  const lifted = saved.start.placed ? withoutSheet(saved, player) : saved;
+  const seated = seatedAs(lifted, listOf(lifted).map(p => (p.id === player ? { ...p, faction } : p)));
+  const begins = startForFaction(lifted.start.holdings[player], row.faction, faction, pack, player);
+  const next = withHeld(seated, player, begins);
+  return settled(saved, next.start.placed ? withSheet(next, player) : next);
 }
 
-/** Two players trade seats by list position; their own home tiles trade with them. */
-export function swapSeats(saved: SavedGame, a: number, b: number): SavedGame {
+/** Two players trade seats, and with the seats their ids; their own home tiles trade with them. */
+export function swapSeats(saved: SavedGame, a: PlayerId, b: PlayerId): SavedGame {
   const players = listOf(saved);
-  if (a === b || !players[a] || !players[b]) return saved;
-  return settled(saved, seatedAs(saved, players.map((p, i) => {
-    if (i === a) return { ...p, seat: players[b].seat };
-    return i === b ? { ...p, seat: players[a].seat } : p;
+  const [first, second] = [players.find(p => p.id === a), players.find(p => p.id === b)];
+  if (a === b || !first || !second) return saved;
+  return settled(saved, seatedAs(saved, players.map(p => {
+    if (p === first) return { ...p, seat: second.seat };
+    return p === second ? { ...p, seat: first.seat } : p;
   })));
+}
+
+/**
+ * The player at the tablet: a mark on one of the equal players, whose eyes the screens look through and whose strategy
+ * cards the plan keeps. A player not at the table, or the one who has it already, changes nothing.
+ */
+export function setViewer(saved: SavedGame, player: PlayerId): SavedGame {
+  const { table } = saved;
+  if (table.viewer === player || !real(table).some(p => p.id === player)) return saved;
+  const was = table.viewer;
+  // The cards the one who had the tablet chose stay theirs; a round where they chose none keeps none for them.
+  const unkept = mapRounds({ ...saved, table: { ...table, viewer: player } }, round => {
+    const picks = round.picks[was];
+    if (!picks || picks.strategyCard !== null || picks.backupCard !== null) return round;
+    const { [was]: gone, ...rest } = round.picks;
+    void gone;
+    return { ...round, picks: rest };
+  });
+  return withCardsKept(unkept, player);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -461,46 +582,39 @@ export function addExpansion(saved: SavedGame, id: ExpansionId): SavedGame {
 // ---------------------------------------------------------------------------------------------------------------------
 // A new game, and a draft under other expansions.
 
-/** A game with every seat taken by the opponents to be, the map as the template fixes it, and one plan with its first round. */
+/**
+ * A game being set up: every seat taken by a player with no faction yet, the map as the template fixes it, one plan with
+ * its first round, and the first seat at the tablet. `faction` seats that faction at the first seat, by the edit that
+ * seats any (`setFaction`). No sheet is written yet: that is `startedGame`.
+ */
 export function createSaved(
-  input: { expansions: ExpansionId[]; playerCount: number; faction: string; layout?: MapLayout },
+  input: { expansions: ExpansionId[]; playerCount: number; faction?: string; layout?: MapLayout },
   pack: DataPack,
   newId: IdMaker = timeIdMaker,
 ): SavedGame {
-  const faction = pack.factions[input.faction];
   const layout = input.layout ?? defaultLayout(input.playerCount, pack);
   const template = templateOf(input.playerCount, pack, layout);
   const map: Record<string, string> = {};
   for (const slot of template?.slots ?? []) if (slot.fixed) map[slotKeyOf(slot.q, slot.r)] = slot.fixed;
-  const firstSeat = seatSlots(input.playerCount, pack, template?.layout ?? layout)[0];
-  if (faction && firstSeat && !map[firstSeat]) map[firstSeat] = faction.gateTile ?? faction.homeTile;
-  const structures = startStructures(input.faction, pack);
   const planId = makeId('plan', newId);
   const gameId = makeId('game', newId);
-  const first = startForFaction({ promissory: genericNotes(pack, 'p1') }, '', input.faction, pack, 'p1');
-  const players: Player[] = [
-    { id: 'p1', faction: input.faction, seat: 1, color: 1, setup: first.technologies?.length ? { technologies: [...first.technologies] } : {} },
-    ...Array.from({ length: Math.max(0, input.playerCount - 1) }, (_, i): Player => ({ id: idOfSeat(i + 2), faction: '', seat: i + 2, color: i + 2, setup: {} })),
-  ];
-  const control: Record<string, PlayerId> = {};
-  for (const planetId of pack.tiles[faction?.homeTile ?? '']?.planetIds ?? []) control[planetId] = 'p1';
-  return {
+  const players: Player[] = Array.from({ length: input.playerCount }, (_, i): Player => ({ id: idOfSeat(i + 1), faction: '', seat: i + 1, color: i + 1, setup: {} }));
+  const viewer = idOfSeat(1);
+  const blank: SavedGame = {
     id: gameId, format: SAVED_FORMAT, schemaVersion: 1, dataVersion: pack.version,
-    table: { id: gameId, name: '', expansions: [...input.expansions], layout: template?.layout ?? layout, map, players, viewer: 'p1' },
+    table: { id: gameId, name: '', expansions: [...input.expansions], layout: template?.layout ?? layout, map, players, viewer },
     start: {
       points: Object.fromEntries(players.map(p => [p.id, 0])),
-      holdings: {
-        p1: first,
-        ...Object.fromEntries(players.slice(1).map(p => [p.id, { promissory: genericNotes(pack, p.id) } as StartHoldings])),
-      },
-      // The sheet places the fleet of the player whose game it is; the others are written when the game begins (`startedGame`).
-      sheetUnits: ['p1'], units: {}, ground: {}, control, docks: structures.docks, pds: structures.pds,
+      // Each player begins with the generic notes of their colour (69).
+      holdings: Object.fromEntries(players.map(p => [p.id, { promissory: genericNotes(pack, p.id) } as StartHoldings])),
+      placed: false, units: {}, ground: {}, control: {}, docks: [], pds: {},
       expedition: { slices: {}, thundersEdgeSystem: null }, fracture: { active: false, ingress: [], seat: null },
     },
-    // The plan keeps the strategy cards of the player whose plan it is.
-    plans: [{ id: planId, name: 'Plan 1', rounds: [emptyRound(1, ['p1'])] }],
+    // The plan keeps the strategy cards of the player at the tablet.
+    plans: [{ id: planId, name: 'Plan 1', rounds: [emptyRound(1, [viewer])] }],
     activePlanId: planId,
   };
+  return input.faction ? setFaction(blank, viewer, input.faction) : blank;
 }
 
 /** The tiles of `from` put back in the free slots that are empty, when the pack still has them. */
@@ -516,65 +630,36 @@ function withPlacedTiles(saved: SavedGame, from: Table['map']): SavedGame {
 
 /**
  * A game not started yet, under another set of expansions: factions outside the set are cleared, players beyond its
- * maximum leave from the end of the list, and the seats of the rest close up in order. Placed tiles the pack still has stay.
+ * maximum leave from the last seats (the first seat sits at the tablet if the one who did has left), and the seats of
+ * the rest stay as they are. Placed tiles the pack still has stay.
  */
 export function draftWithExpansions(draft: SavedGame, expansions: ExpansionId[], newId: IdMaker = timeIdMaker): SavedGame {
   const pack = loadPack(expansions);
   const kept = listOf(draft).slice(0, maxPlayers(pack));
-  const order = [...kept].sort((a, b) => a.seat - b.seat);
   const layout = templateFor(kept.length, draft.table.layout, pack) ? draft.table.layout : undefined;
-  const blank = createSaved({ expansions, playerCount: kept.length, faction: '', layout }, pack, newId);
-  // The players keep their ids, so the notes of the blank game are dealt again, to them.
-  const players: Player[] = kept.map(p => ({ ...p, seat: order.indexOf(p) + 1, faction: '', setup: {} }));
-  const ids = new Map(players.map(p => [p.id, idOfSeat(p.seat)]));
-  const seated = players.map(p => ({ ...p, id: ids.get(p.id)! }));
-  const start: StartEdits = {
-    ...blank.start, sheetUnits: [ids.get(players[0].id)!],
-    points: Object.fromEntries(players.map(p => [ids.get(p.id)!, draft.start.points[p.id] ?? 0])),
-    holdings: {
-      [ids.get(players[0].id)!]: renamed(blank.start.holdings.p1, new Map([['p1', ids.get(players[0].id)!]])),
-      ...Object.fromEntries(players.slice(1).map(p => [ids.get(p.id)!, { promissory: genericNotes(pack, ids.get(p.id)!) } as StartHoldings])),
-    },
-  };
-  const empty: SavedGame = {
+  const blank = createSaved({ expansions, playerCount: kept.length, layout }, pack, newId);
+  // The seats are the first ones, so the ids stay, and the notes of the blank game are dealt to the same players.
+  const players: Player[] = kept.map(p => ({ ...p, faction: '', setup: {} }));
+  const viewer = players.some(p => p.id === draft.table.viewer) ? draft.table.viewer : blank.table.viewer;
+  const empty: SavedGame = setViewer({
     ...blank, id: draft.id,
-    table: { ...blank.table, id: draft.id, players: seated, viewer: seated[0].id },
-    start,
-  };
-  const named = kept.reduce<SavedGame>((game, player, index) => (pack.factions[player.faction] ? setFaction(game, index, player.faction) : game), empty);
+    table: { ...blank.table, id: draft.id, players },
+    start: { ...blank.start, points: Object.fromEntries(players.map(p => [p.id, draft.start.points[p.id] ?? 0])) },
+  }, viewer);
+  const named = kept.reduce<SavedGame>((game, player) => (pack.factions[player.faction] ? setFaction(game, player.id, player.faction) : game), empty);
   return withPlacedTiles(named, draft.table.map);
 }
 
 /**
- * A game begins: every player whose units the sheet does not place itself (`sheetUnits`) stands at their seat with their
- * faction's start units, and their home planets are theirs. Their placements are written, because the Setup mode of the
- * big hex edits them as they stand (a fleet taken off, a dock moved) and a placement a sheet alone gave could not be taken off.
+ * A game begins: every player stands at their home with what their faction sheet gives (the fleet, the ground forces,
+ * the structures), and their home planets are theirs. All of it is written into the start, the same way for every
+ * player, because the Setup mode of the big hex edits it as it stands (a fleet taken off, a dock moved). A game whose
+ * sheets are written already stays as it is.
  */
 export function startedGame(draft: SavedGame): SavedGame {
-  const { table } = draft;
-  const pack = loadPack(table.expansions);
-  const slots = seatSlots(real(table).length, pack, table.layout);
-  const start = real(table).filter(p => !draft.start.sheetUnits.includes(p.id)).sort((a, b) => listOf(draft).indexOf(a) - listOf(draft).indexOf(b)).reduce<StartEdits>((next, { id, faction, seat }) => {
-    const def = pack.factions[faction];
-    const slot = slots[seat - 1];
-    if (!def || !slot) return next;
-    const homes = pack.tiles[def.homeTile]?.planetIds ?? [];
-    const onMap = [def.homeTile, def.gateTile].includes(table.map[slot]?.split('@')[0]);
-    const [home] = homes;
-    const split = splitStartUnits(def.startUnits, onMap ? home : undefined, pack);
-    return {
-      ...next,
-      units: { ...next.units, [slot]: { ...next.units[slot], [id]: split.space } },
-      ...(onMap ? {
-        ground: home === undefined || Object.keys(split.ground).length === 0 ? next.ground : { ...next.ground, [home]: { ...next.ground[home], [id]: split.ground } },
-        // The structures of the sheet stand on the first home planet (see startStructures).
-        docks: home === undefined || !(def.startStructures?.spacedock) || next.docks.includes(home) ? next.docks : [...next.docks, home],
-        pds: home === undefined || !(def.startStructures?.pds) ? next.pds : { ...next.pds, [home]: def.startStructures.pds },
-        control: { ...next.control, ...Object.fromEntries(homes.map(planet => [planet, id])) },
-      } : {}),
-    };
-  }, draft.start);
-  return { ...draft, start };
+  if (draft.start.placed) return draft;
+  const begun: SavedGame = { ...draft, start: { ...draft.start, placed: true } };
+  return listOf(begun).reduce<SavedGame>((next, player) => withSheet(next, player.id), begun);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -611,21 +696,21 @@ export function tilesLostByLayout(saved: SavedGame, layout: MapLayout, pack: Dat
   return Object.entries(table.map).filter(([slot, tile]) => !own.has(slot) && oldFixed.get(slot) !== tile && kept[slot] !== tile).length;
 }
 
-/** Whether the game is set up to play: every opponent has a faction and every free slot holds a tile. */
+/** Whether the game is set up to play: every player has a faction and every free slot holds a tile. */
 export const readyToPlay = (table: Table, pack: DataPack): boolean =>
-  real(table).filter(p => p.id !== table.viewer).every(p => p.faction !== '') && emptySlots(table, pack).length === 0;
+  real(table).every(p => p.faction !== '') && emptySlots(table, pack).length === 0;
 
-/** What the game screen says about the homes: a seat holding another faction's home system, or my seat holding nothing. */
+/** What the game screen says about the homes: a seat holding another faction's home system, or the seat of a player with a faction holding nothing. */
 export function homeNotes(table: Table, pack: DataPack): HomeNote[] {
   const slots = seatSlots(real(table).length, pack, table.layout);
   const onMap = (tile: string | undefined) => tile !== undefined && Object.values(table.map).some(id => id.split('@')[0] === tile);
   const notes: HomeNote[] = [];
-  for (const player of listPlayers(table)) {
+  for (const player of seatedPlayers(table)) {
     const def = pack.factions[player.faction];
     if (!def || onMap(def.homeTile) || onMap(def.gateTile)) continue;
     const tile = table.map[slots[player.seat - 1]]?.split('@')[0];
     if (tile === undefined) {
-      if (player.id === table.viewer) notes.push({ kind: 'noHome', seat: player.seat });
+      notes.push({ kind: 'noHome', seat: player.seat });
       continue;
     }
     if (pack.tiles[tile]?.kind !== 'home') continue;
@@ -645,8 +730,8 @@ export function countChangeEffect(table: Table, count: number, pack: DataPack): 
   return { filled: tiles.length, lost: tiles.filter(slot => map[slot] !== table.map[slot]).length };
 }
 
-/** What a player has put on the board by hand, which leaving the table takes away: the units and the planets under their control. */
-export function opponentHoldings(start: StartEdits, player: PlayerId): { units: number; planets: number } {
+/** What a player has on the board at the start, which leaving the table takes away: the units and the planets under their control. */
+export function boardHoldings(start: StartEdits, player: PlayerId): { units: number; planets: number } {
   const units = [...Object.values(start.units), ...Object.values(start.ground)]
     .flatMap(byOwner => Object.values(byOwner[player] ?? {}))
     .reduce<number>((sum, n) => sum + (n ?? 0), 0);

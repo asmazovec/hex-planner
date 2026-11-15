@@ -32,9 +32,9 @@ describe('the start of the game', () => {
   test('the store writes setup edits over the saved game, not through the old game', () => {
     const store = files['./gameStore.ts'];
     const names = [
-      'setEnemyUnits', 'setEnemyGround', 'setPlanetControl', 'setDock', 'setPds', 'setStartHolding', 'setLeader', 'setSlice', 'setThundersEdge',
-      'setFractureActive', 'setFractureSeat', 'toggleIngress', 'setName', 'setTile', 'setMap', 'setLayout', 'setOpponent', 'addOpponent',
-      'removeOpponent', 'setFaction', 'addExpansion', 'setDraftExpansions',
+      'setUnits', 'setGround', 'setPlanetControl', 'setDock', 'setPds', 'setStartHolding', 'setLeader', 'setSlice', 'setThundersEdge',
+      'setFractureActive', 'setFractureSeat', 'toggleIngress', 'setName', 'setTile', 'setMap', 'setLayout', 'addPlayer', 'removePlayer',
+      'setFaction', 'setViewer', 'swapSeats', 'addExpansion', 'setDraftExpansions',
     ];
     for (const name of names) {
       const line = store.split('\n').find(l => l.trimStart().startsWith(`${name}:`)) ?? '';

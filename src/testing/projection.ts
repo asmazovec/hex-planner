@@ -14,7 +14,8 @@ import { timeline as kernelTimeline, type Filter, type Frame as KernelFrame, typ
 import type { Board, Table } from '../game/types';
 import type { Round as KernelRound } from '../game/round';
 import { waiveBoard } from '../game/resolve/waive';
-import { originOf, savedFor } from './legacySave';
+import { loadPack } from '../data/loadPack';
+import { originOf, savedFor, savedOf } from './legacySave';
 import type { SavedGame } from '../game/save';
 import { checkSystemOf } from '../domain/replay/transport';
 import type { Turn } from '../game/actions';
@@ -77,7 +78,7 @@ function setupOf(game: Game, pack: DataPack): Setup {
     ? setup.saved.table === saved.table && setup.saved.start === saved.start
     : !saved && !setup.saved && sameSetup(setup.game, game));
   if (kept) return setup!;
-  setup = { game, ...(saved ? { saved } : {}), pack, table: tableOf(game), start: startBoard(saved ?? savedFor(game), pack) };
+  setup = { game, ...(saved ? { saved } : {}), pack, table: tableOf(game), start: startBoard(saved ?? (pack === loadPack(game.expansions) ? savedFor(game) : savedOf(game, pack)), pack) };
   return setup;
 }
 

@@ -19,7 +19,7 @@ import { reloaded } from '../../testing/legacySave';
 import { App } from '../App';
 import { PlanScreen } from './PlanScreen';
 import type { Move } from '../plan/tactical';
-import { gameNow, seedGame } from '../../testing/store';
+import { gameNow, seedGame, opponentAt, viewerNow } from '../../testing/store';
 
 const pack = loadPack(['pok']);
 const HOME = '1,0';
@@ -356,7 +356,7 @@ describe('a route of drags and taps', () => {
 describe('an opponent in the plan', () => {
   const noPay = { planets: [], tradeGoods: 0 };
   const rival = () => game().opponents[0];
-  beforeEach(() => useGame.getState().setOpponent(0, { faction: 'sol' }));
+  beforeEach(() => useGame.getState().setFaction(opponentAt(0), 'sol'));
   const whose = () => within(screen.getByRole('group', { name: 'Whose action' }));
 
   test('the choice of whose action comes first, and the entry then belongs to them', async () => {
@@ -369,7 +369,7 @@ describe('an opponent in the plan', () => {
   });
 
   test('with many players a rival takes three letters, the colour is the edge of the cell and the full name stays for the reader', () => {
-    useGame.getState().setOpponent(1, { faction: 'hacan' });
+    useGame.getState().setFaction(opponentAt(1), 'hacan');
     render(<PlanScreen />);
     const hacan = whose().getByRole('button', { name: 'Hacan' });
     expect(hacan).toHaveTextContent(/^Hac$/);
@@ -381,7 +381,7 @@ describe('an opponent in the plan', () => {
 
   test('with few players a rival keeps the whole name', () => {
     useGame.getState().newGame({ expansions: ['pok'], playerCount: 4, faction: 'arborec' }, pack);
-    useGame.getState().setOpponent(0, { faction: 'hacan' });
+    useGame.getState().setFaction(opponentAt(0), 'hacan');
     render(<PlanScreen />);
     expect(whose().getByRole('button', { name: 'Hacan' })).toHaveTextContent(/^Hacan$/);
   });
@@ -415,7 +415,7 @@ describe('an opponent in the plan', () => {
   });
 
   test('their units move on the map, and their route wears their colour', () => {
-    useGame.getState().setEnemyUnits(HOME, rival().id, { cruiser: 2 });
+    useGame.getState().setUnits(HOME, rival().id, { cruiser: 2 });
     edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { cruiser: 1 } }], landings: [], production: {}, payment: noPay }, 'action', rival().id);
     render(<PlanScreen />);
     expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: /Cruiser ×1/ })).toBeInTheDocument();
@@ -434,7 +434,7 @@ describe('an opponent in the plan', () => {
   });
 
   test('the number of their action on the map wears their colour, and mine stays as it was', () => {
-    useGame.getState().setEnemyUnits(HOME, rival().id, { cruiser: 1 });
+    useGame.getState().setUnits(HOME, rival().id, { cruiser: 1 });
     edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { cruiser: 1 } }], landings: [], production: {}, payment: noPay }, 'action', rival().id);
     edits.addEntry(1, { type: 'tactical', systemId: WAY, moves: [{ from: HOME, units: { carrier: 1 } }], landings: [], production: {}, payment: noPay }, 'action');
     render(<PlanScreen />);
@@ -445,7 +445,7 @@ describe('an opponent in the plan', () => {
   });
 
   test('in their battle a loss is theirs, mine stay out of reach', async () => {
-    useGame.getState().setEnemyUnits(TARGET, rival().id, { cruiser: 2 });
+    useGame.getState().setUnits(TARGET, rival().id, { cruiser: 2 });
     edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { fighter: 1 } } } }, 'strategy');
     const id = edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: noPay }, 'action', rival().id);
     render(<PlanScreen />);
@@ -639,7 +639,7 @@ test('landing puts ground units on a planet and changes its control', async () =
 
 test('a planet of the landing shows its picture, name and state, and who stands there', async () => {
   edits.addEntry(1, { type: 'adjustment', label: '', delta: { ground: { quann: { mech: 1 } } } }, 'strategy');
-  useGame.getState().setEnemyGround('quann', gameNow()!.opponents[0].id, { infantry: 2 });
+  useGame.getState().setGround('quann', gameNow()!.opponents[0].id, { infantry: 2 });
   await chooseSystem();
   await addRouteByTaps(HOME, TARGET);
   await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
@@ -982,7 +982,7 @@ test('production without a dock warns once something is built, and still works',
 
 test('a merged entry names its system and opens the big hex in its own mode', async () => {
   edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { carrier: 1 } } } }, 'strategy');
-  useGame.getState().changeAdjustment(1, { kind: 'losses', systemId: TARGET, unit: 'carrier', planetId: null, amount: -1 });
+  useGame.getState().changeAdjustment(1, { kind: 'losses', systemId: TARGET, unit: 'carrier', planetId: null, amount: -1 }, viewerNow());
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Edit: Losses · Quann' }));
   expect(screen.getByRole('button', { name: 'Battle' })).toHaveAttribute('aria-pressed', 'true');
@@ -1200,7 +1200,7 @@ describe('leaving', () => {
 
   test('a change of round during the reading closes it and clears the highlight', async () => {
     edits.addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
-    useGame.getState().addRound();
+    useGame.getState().addRound(viewerNow());
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: 'Round 1' }));
     await userEvent.click(screen.getByRole('button', { name: /^Tactical action · Quann/ }));
@@ -1407,7 +1407,7 @@ test('the status section makes one entry of tokens and points, and the menu has 
 });
 
 test('status points: every player in a stepper with a running total, in the summary and the players panel', async () => {
-  useGame.getState().setOpponent(0, { faction: 'sol' });
+  useGame.getState().setFaction(opponentAt(0), 'sol');
   render(<PlanScreen />);
   await userEvent.click(phase('Status').getByRole('button', { name: 'Tokens and points' }));
   const row = within(screen.getByRole('listitem', { name: 'Tokens and points' }));
@@ -1731,7 +1731,7 @@ test('the players button opens the same list of cards as a panel, and closes it'
   expect(screen.queryByRole('group', { name: 'Player 1' })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Players' }));
   expect(screen.getAllByRole('group', { name: /^Player \d/ })).toHaveLength(6);
-  expect(within(screen.getByRole('group', { name: 'Player 1' })).getByText('My faction')).toBeInTheDocument();
+  expect(within(screen.getByRole('group', { name: 'Player 1' })).getByText('At the tablet')).toBeInTheDocument();
   await userEvent.click(screen.getByTestId('drawer-scrim'));
   expect(screen.queryByRole('group', { name: 'Player 1' })).toBeNull();
 });
@@ -1788,7 +1788,7 @@ describe('the drawers', () => {
 });
 
 test('reading a setup entry lights its system, and closing it puts the light out', async () => {
-  useGame.getState().changeAdjustment(1, { kind: 'setup', systemId: TARGET, unit: 'cruiser', planetId: null, amount: 1 });
+  useGame.getState().changeAdjustment(1, { kind: 'setup', systemId: TARGET, unit: 'cruiser', planetId: null, amount: 1 }, viewerNow());
   render(<PlanScreen />);
   const label = screen.getByRole('button', { name: /^Setup/ });
   expect(tile(TARGET)).not.toHaveClass('tile-active');
@@ -1876,8 +1876,8 @@ describe('one slot of the panel, one head for every editor', () => {
 });
 
 test('the Diplomacy primary puts every other player\'s command token on the chosen system of the map (#7)', () => {
-  useGame.getState().setStrategyCard(1, 2);
-  useGame.getState().setStrategyCard(1, 2);
+  useGame.getState().setStrategyCard(1, viewerNow(), 2);
+  useGame.getState().setStrategyCard(1, viewerNow(), 2);
   edits.addEntry(1, { type: 'strategic', card: 2, effects: { systemId: HOME } }, 'action');
   render(<PlanScreen />);
   expect(within(tile(HOME) as HTMLElement).getAllByRole('img', { name: /Command token of/ })).toHaveLength(game().opponents.length);
@@ -1963,7 +1963,7 @@ describe('the acts of a turn in its editor', () => {
   });
 
   test('the strategy editor names its own part by the card and its ability; a secondary keeps the common part with what it took, without the acts of a turn', async () => {
-    useGame.getState().setStrategyCard(1, 1);
+    useGame.getState().setStrategyCard(1, viewerNow(), 1);
     edits.addEntry(1, { type: 'strategic', card: 1 }, 'action');
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: /^Edit: / }));

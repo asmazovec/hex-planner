@@ -99,7 +99,7 @@ const table = z.object({
 const start = z.object({
   points: z.record(z.string(), z.number()),
   holdings: z.record(z.string(), startHoldings),
-  sheetUnits: z.array(z.string()),
+  placed: z.boolean(),
   units: z.record(z.string(), z.record(z.string(), unitCounts)),
   ground: z.record(z.string(), z.record(z.string(), unitCounts)),
   control: z.record(z.string(), z.string()),
@@ -132,7 +132,7 @@ export const savedSchema = z.object({
   if (!saved.table.players.some(p => p.id === saved.table.viewer)) ctx.addIssue({ code: 'custom', path: ['table', 'viewer'], message: 'the viewer is not a player' });
 }) satisfies z.ZodType<SavedGame>;
 
-/** The number of the format in a mark like `ti4-planner/4`; null for anything else. */
+/** The number of the format in a mark like `ti4-planner/5`; null for anything else. */
 function formatNumber(mark: unknown): number | null {
   const [name] = SAVE_FORMAT.split('/');
   const found = typeof mark === 'string' && mark.startsWith(`${name}/`) ? /^\d+$/.exec(mark.slice(name.length + 1)) : null;

@@ -15,7 +15,7 @@ import { componentsOf, textOf } from '../../domain/components';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
-import { gameNow } from '../../testing/store';
+import { gameNow, opponentAt, viewerNow } from '../../testing/store';
 
 /** The interface of these tests is English, and so are the texts of the pack. */
 const pack = loadPack(['pok'], 'en');
@@ -29,7 +29,7 @@ beforeEach(() => {
   setLanguage('en');
   document.elementFromPoint = () => null;
   useGame.getState().newGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
-  useGame.getState().setOpponent(0, { faction: 'hacan' });
+  useGame.getState().setFaction(opponentAt(0), 'hacan');
 });
 
 type Group = 'Technologies' | 'Cards' | 'Faction' | 'Relics' | 'Objectives & laws';
@@ -390,8 +390,8 @@ describe('the right drawer and the map', () => {
   });
 
   test('it closes when a strategy card asks the map for a system', async () => {
-    useGame.getState().setStrategyCard(1, 2);
-    useGame.getState().setStrategyCard(1, 2);
+    useGame.getState().setStrategyCard(1, viewerNow(), 2);
+    useGame.getState().setStrategyCard(1, viewerNow(), 2);
     render(<PlanScreen />);
     await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
     await userEvent.click(screen.getByRole('button', { name: 'Strategy' }));

@@ -15,6 +15,13 @@ const SHARE_LINK = 'src/domain/shareLink.ts';
 const ME_IN_LINK = /query\.(?:get|set)\('me'/g;
 /** A list of "the others" beside the viewer, as a field of a type or of a value. */
 const OPPONENTS = /\bopponents\??\s*:/;
+/**
+ * The set-up of the table and the store treat every player alike: nothing in their code (comments apart) is named after
+ * "opponents" or "enemies", whether a function, a method, a field or a string.
+ */
+const OTHERS = /\w*(?:[oO]pponent|[eE]nemy|[eE]nemies)\w*/g;
+const EQUAL_PLAYERS = /^src\/(?:game\/edit|state)\//;
+const withoutComments = (text: string): string => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
 
 
 const files = import.meta.glob<string>(
@@ -50,5 +57,11 @@ describe('the application does not know the old model', () => {
 
   test('no non-test source file keeps "the opponents" as a field beside the viewer', () => {
     expect(offenders(text => OPPONENTS.test(text))).toEqual([]);
+  });
+
+  test('the set-up of the table and the store name nothing after opponents or enemies: the players are equal', () => {
+    const found = Object.entries(files).filter(([path]) => EQUAL_PLAYERS.test(named(path)))
+      .flatMap(([path, text]) => [...new Set(withoutComments(text).match(OTHERS) ?? [])].map(word => `${named(path)}: ${word}`)).sort();
+    expect(found).toEqual([]);
   });
 });

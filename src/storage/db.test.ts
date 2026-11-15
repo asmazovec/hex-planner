@@ -96,7 +96,7 @@ test('a new game is saved with the format mark and the current schema', async ()
   await saveGame(game);
   const raw = await loadRawGame(game.id) as { game: Record<string, unknown> };
   expect(raw.game.format).toBe(SAVE_FORMAT);
-  expect(raw.game.format).toBe('ti4-planner/4');
+  expect(raw.game.format).toBe('ti4-planner/5');
   expect(raw.game.schemaVersion).toBe(CURRENT_SCHEMA);
   expect(CURRENT_SCHEMA).toBe(1);
 });

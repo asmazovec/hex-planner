@@ -5,6 +5,7 @@ import { textOf } from '../../domain/components';
 import { cardsHeld } from '../../domain/strategy';
 import type { ExpansionId } from '../../domain/types';
 import type { Picks } from '../../game/round';
+import type { PlayerId } from '../../game/types';
 import { useGame } from '../../state/gameStore';
 import { usePack } from '../common/usePack';
 import { SectionTitle } from '../primitives/SectionTitle';
@@ -13,8 +14,9 @@ import { CardGrid } from './blocks/CardGrid';
 export interface StrategyCardsProps {
   expansions: ExpansionId[];
   playerCount: number;
-  /** The number of the round, and the cards of the player whose plan it is in it. */
+  /** The number of the round, the player whose cards these are, and that player's cards in it. */
   round: number;
+  player: PlayerId;
   picks: Picks;
 }
 
@@ -24,7 +26,7 @@ export interface StrategyCardsProps {
  * the main one, then clear it. A tap outside this block ends the look, so the count starts over from the first tap.
  * With 3 or 4 players two cards are held, so the backup is the second card.
  */
-export function StrategyCards({ expansions, playerCount, round, picks }: StrategyCardsProps) {
+export function StrategyCards({ expansions, playerCount, round, player, picks }: StrategyCardsProps) {
   const { t } = useTranslation();
   const setStrategyCard = useGame(s => s.setStrategyCard);
   /** The card being looked at, which further taps change. */
@@ -47,7 +49,7 @@ export function StrategyCards({ expansions, playerCount, round, picks }: Strateg
       setShown(initiative);
       return;
     }
-    setStrategyCard(round, initiative);
+    setStrategyCard(round, player, initiative);
     if (picks.strategyCard === initiative) setShown(null);
   };
   const named = (initiative: number | null) => {

@@ -17,7 +17,7 @@ import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { HexStage, type HexStageProps } from './HexStage';
 import { viewOf } from '../../testing/legacyMap';
-import { gameNow } from '../../../testing/store';
+import { gameNow, opponentAt, viewerNow } from '../../../testing/store';
 
 /** The interface of these tests is English, and so are the texts of the packs. */
 const pack = loadPack(['pok'], 'en');
@@ -451,7 +451,7 @@ describe('battle', () => {
 
   test('only the players with units or structures in the system get a strip; one whose units were all lost keeps it', async () => {
     addMine({ carrier: 1 });
-    store().setEnemyUnits(SLOT, opponent(1), { cruiser: 1 });
+    store().setUnits(SLOT, opponent(1), { cruiser: 1 });
     open({ initialMode: 'battle' });
     const strips = () => screen.getAllByRole('group', { name: /^Losses,/ }).map(g => g.getAttribute('aria-label'));
     expect(strips()).toEqual(['Losses, mine', 'Losses, Player 3']);
@@ -488,8 +488,8 @@ describe('battle', () => {
   });
 
   test('an enemy loss edits their units and goes to their own strip; the strip gives it back', async () => {
-    store().setEnemyUnits(SLOT, opponent(0), { cruiser: 2 });
-    store().setEnemyUnits(SLOT, opponent(1), { cruiser: 1 });
+    store().setUnits(SLOT, opponent(0), { cruiser: 2 });
+    store().setUnits(SLOT, opponent(1), { cruiser: 1 });
     open({ initialMode: 'battle' });
     await tap('Cruiser ×2 (Player 2)');
     expect(game().enemyUnits[SLOT][opponent(0)]).toEqual({ cruiser: 1 });
@@ -616,8 +616,8 @@ describe('build', () => {
   });
 
   test('a price follows my upgrade and the faction of the chosen owner', async () => {
-    store().setFaction('muaat');
-    store().setOpponent(0, { faction: 'sol' });
+    store().setFaction(viewerNow(), 'muaat');
+    store().setFaction(opponentAt(0), 'sol');
     open({ initialMode: 'build' });
     const warsun = () => within(screen.getByRole('button', { name: 'War Sun' }));
     expect(warsun().getByText('12')).toBeVisible();
@@ -630,7 +630,7 @@ describe('build', () => {
   });
 
   test('enemy purchases edit their units and can be taken back, old ones cannot', async () => {
-    store().setEnemyUnits(SLOT, opponent(0), { cruiser: 1 });
+    store().setUnits(SLOT, opponent(0), { cruiser: 1 });
     const { container } = open({ initialMode: 'build' });
     await tap('Cruiser ×1 (Player 2)');
     expect(game().enemyUnits[SLOT][opponent(0)]).toEqual({ cruiser: 1 });
@@ -762,7 +762,7 @@ describe('fix round 1', () => {
 
   test('a token that arrives by a later tactical entry really goes when tapped', async () => {
     edits.addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: '0,1', units: { carrier: 1 } } } }, 'strategy');
-    store().changeAdjustment(1, { kind: 'setup', systemId: SLOT, unit: 'cruiser', planetId: null, amount: 1 });
+    store().changeAdjustment(1, { kind: 'setup', systemId: SLOT, unit: 'cruiser', planetId: null, amount: 1 }, viewerNow());
     edits.addEntry(1, { type: 'tactical', systemId: SLOT, moves: [{ from: '0,1', units: { carrier: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
     open();
     await tap('Carrier ×1');
@@ -828,14 +828,14 @@ describe('fix round 1', () => {
   });
 
   test('enemy ground units left in the system are still removed from there', async () => {
-    store().setEnemyUnits(SLOT, opponent(0), { infantry: 1 });
+    store().setUnits(SLOT, opponent(0), { infantry: 1 });
     open();
     await tap('Infantry ×1 (Player 2)');
     expect(game().enemyUnits[SLOT]).toBeUndefined();
   });
 
   test('the price follows the level at that entry', async () => {
-    store().setFaction('muaat');
+    store().setFaction(viewerNow(), 'muaat');
     const id = addTactical();
     edits.addEntry(1, { type: 'secondary', effects: { researched: ['technology:pws2'] } }, 'action');
     open({ initialMode: 'build', tacticalId: id });
@@ -851,7 +851,7 @@ describe('fix round 1', () => {
   });
 
   test('without a tactical entry the price is that of the forecast', () => {
-    store().setFaction('muaat');
+    store().setFaction(viewerNow(), 'muaat');
     edits.addEntry(1, { type: 'secondary', effects: { researched: ['technology:pws2'] } }, 'action');
     open({ initialMode: 'build' });
     expect(within(screen.getByRole('button', { name: 'War Sun' })).getByText('10')).toBeVisible();

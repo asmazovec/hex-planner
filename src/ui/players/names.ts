@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next';
 import { loadPack } from '../../data/loadPack';
 import type { DataPack } from '../../domain/types';
-import { listPlayers } from '../../game/edit/table';
+import { seatedPlayers } from '../../game/edit/table';
 import type { PlayerId, Table } from '../../game/types';
 
 /** Where the rule below would pick the wrong word. */
@@ -33,19 +33,18 @@ export const playerName = (pack: DataPack, factionId: string, n: number, t: TFun
   pack.factions[factionId]?.name ?? t('players.player', { n });
 
 /**
- * The players of a table other than the viewer by seat, as the screens list them: the player id, the colour, the
- * faction, the seat and the name, the faction or the player number when none is set (the number counts the list, the viewer first).
+ * The players of a table other than `player` by seat, as the screens list them beside that one: the player id, the
+ * colour, the faction, the seat and the name, the faction or the player number (the seat) when none is set.
  */
-export function opponentsBySeat(table: Table, pack: DataPack, t: TFunction): { id: PlayerId; color: number; faction: string; seat: number; name: string }[] {
-  return listPlayers(table).slice(1)
-    .map((p, index) => ({ id: p.id, color: p.color, faction: p.faction, seat: p.seat, name: playerName(pack, p.faction, index + 2, t) }))
-    .sort((a, b) => a.seat - b.seat);
+export function othersBySeat(table: Table, player: PlayerId, pack: DataPack, t: TFunction): { id: PlayerId; color: number; faction: string; seat: number; name: string }[] {
+  return seatedPlayers(table).filter(p => p.id !== player)
+    .map(p => ({ id: p.id, color: p.color, faction: p.faction, seat: p.seat, name: playerName(pack, p.faction, p.seat, t) }));
 }
 
 /** How the interface names a player of a table: the faction, or the player number (the seat) when no faction is set. */
 export const nameOfPlayer = (table: Table, pack: DataPack, id: string, t: TFunction): string => {
   const player = table.players.find(p => p.id === id);
-  return player ? playerName(pack, player.faction, player.seat, t) : t('players.opponent');
+  return player ? playerName(pack, player.faction, player.seat, t) : t('players.someone');
 };
 
 /** How a narrow place names a player of the table: the short name of the faction, or the player number. */

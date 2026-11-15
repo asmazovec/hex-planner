@@ -23,7 +23,7 @@ import { useGame } from '../../../state/gameStore';
 import { TransactionStep } from '../editors/TransactionStep';
 import { TurnActs } from './TurnActs';
 import { actsProps, transactionProps } from '../../testing/turnProps';
-import { gameNow } from '../../../testing/store';
+import { gameNow, opponentAt } from '../../../testing/store';
 
 const pack = loadPack(['pok', 'te']);
 afterEach(cleanup);
@@ -187,8 +187,8 @@ test('in the turn of an opponent the transaction step lists every other player o
 });
 
 test('the players of a transaction are named as everywhere, by the short name of the faction, in the step and in its line', async () => {
-  useGame.getState().setOpponent(0, { faction: 'hacan' });
-  useGame.getState().setOpponent(1, { faction: 'letnev' });
+  useGame.getState().setFaction(opponentAt(0), 'hacan');
+  useGame.getState().setFaction(opponentAt(1), 'letnev');
   const game = gameNow()!;
   const act: Act = { kind: 'transaction', with: game.opponents[0].id, give: {}, get: {} };
   const { unmount } = render(<TransactionStep {...transactionProps(viewOf(game, boardOf(game), pack), pack, act, "me", undefined, vi.fn())} view={viewOf(game, boardOf(game), pack)} pack={pack} warnings={[]} onBack={vi.fn()} onRemove={vi.fn()}/>);
@@ -226,7 +226,7 @@ test('«+ Component» offers first the notes of the side that gets them: mine am
 });
 
 test('a note got from a rival says whose it is, in the choice, in its text and once chosen; a search finds it among what they hold', async () => {
-  useGame.getState().setOpponent(0, { faction: 'hacan' });
+  useGame.getState().setFaction(opponentAt(0), 'hacan');
   const game = gameNow()!;
   const rival = game.opponents[0].id;
   const theirs = `promissory:<color>_ta@${rival}`;
@@ -249,7 +249,7 @@ test('a note got from a rival says whose it is, in the choice, in its text and o
 });
 
 test('in a rival\'s turn the note the rival gives is still marked as theirs, and mine as mine', async () => {
-  useGame.getState().setOpponent(0, { faction: 'hacan' });
+  useGame.getState().setFaction(opponentAt(0), 'hacan');
   const game = gameNow()!;
   const rival = game.opponents[0].id;
   const act: Act = { kind: 'transaction', with: 'me', give: { components: [`promissory:<color>_ta@${rival}`] }, get: { components: ['promissory:<color>_ta@me'] } };

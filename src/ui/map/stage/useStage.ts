@@ -24,7 +24,7 @@ import { tileStacks } from '../../../game/tile';
 import { placesOf, type WarningPlace } from '../../feedback/warningPlaces';
 import { tableColours } from '../../units/sprites';
 import { UNIT_ORDER } from '../../units/unitOrder';
-import { opponentsBySeat } from '../../players/names';
+import { othersBySeat } from '../../players/names';
 import type { UnitDraftItem } from '../../units/UnitDraft';
 import type { BoughtUnit, PurchaseTarget } from './purchases';
 import { isStructure, priceText, type ShopItem } from './UnitShop';
@@ -105,7 +105,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const mine: PlayerId = ownerGiven ?? (turnById(tacticalId) ?? turnById(adjustmentId))?.player ?? table.viewer;
   const side = only ? mine : chosenSide ?? mine;
   const colours = tableColours(table);
-  const seated = opponentsBySeat(table, pack, t);
+  const seated = othersBySeat(table, table.viewer, pack, t);
   const actor = mine;
   const faction = table.players.find(p => p.id === actor)?.faction ?? '';
   /** Who controls the planet on the board, or nobody. */
@@ -128,7 +128,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const change = (kind: 'setup' | 'losses', unit: UnitId, planetId: string | null, amount: number) => {
     if (kind === 'losses' && fightingFor) editTurn(fightingFor.id, turn => withLoss(turn, unit, planetId, amount));
     else if (kind === 'setup' && adjusting && (adjusting.action.kind === 'correction' || adjusting.action.kind === 'agenda')) setup.adjustSetup(adjusting.id, adjusting.action.delta, slot, unit, planetId, amount);
-    else setup.changeAdjustment(roundNo, { kind, systemId: slot, unit, planetId, amount });
+    else setup.changeAdjustment(roundNo, { kind, systemId: slot, unit, planetId, amount }, table.viewer);
   };
   const changeStructure = (kind: StructureKind, planetId: string, amount: 1 | -1) => setup.changeStructure(pack, kind, planetId, amount);
 
@@ -145,7 +145,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     change: (unit, planetId, amount) => {
       const held = produced.some(p => p.unit === unit && p.planetId === planetId);
       if (tactical && beforeTactical && (amount > 0 || held)) changeProduction(tactical, unit, planetId, amount);
-      else setup.changeAdjustment(roundNo, { kind: 'build', systemId: slot, unit, planetId, amount });
+      else setup.changeAdjustment(roundNo, { kind: 'build', systemId: slot, unit, planetId, amount }, table.viewer);
     },
   };
   const keyOfBought = ({ unit, planetId }: BoughtUnit): string => {

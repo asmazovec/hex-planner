@@ -317,7 +317,7 @@ export type { LeaderState } from './shelf';
 export type StartHoldings = Partial<Pick<Shelf, 'technologies' | 'hand' | 'relics' | 'promissory' | 'leaders' | 'breakthrough' | 'scored' | 'secrets' | 'found'>>;
 
 /** The mark of a save this app reads. A save without it comes from an earlier version and is not read. */
-export const SAVE_FORMAT = 'ti4-planner/4';
+export const SAVE_FORMAT = 'ti4-planner/5';
 
 
 /** Every warning the replay can give; the rule registry (src/domain/rules/registry.ts) maps each to its rules and step. */

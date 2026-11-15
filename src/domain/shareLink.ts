@@ -1,4 +1,4 @@
-import { createSaved, MIN_PLAYERS, maxPlayers, setFaction, swapSeats, withName } from '../game/edit/table';
+import { createSaved, MIN_PLAYERS, maxPlayers, setFaction, setViewer, withName } from '../game/edit/table';
 import type { SavedGame } from '../game/save';
 import type { Table } from '../game/types';
 import { LAYOUT_ORDER, templateOf } from './layouts';
@@ -29,7 +29,7 @@ export interface ShareParams {
   layout?: MapLayout;
   /** Factions by seat as the link writes them, from seat 1; an empty string is a seat with no faction chosen. */
   factions?: string[];
-  /** The seat of the one who opens the link. */
+  /** The seat of the player at the tablet, the one who opens the link. */
   me?: number;
   /** A map string, as Milty Draft writes it. */
   map?: string;
@@ -67,13 +67,13 @@ export function draftFromShare(share: ShareParams, base: SavedGame, packOf: (exp
   const count = Math.min(maxPlayers(pack), Math.max(MIN_PLAYERS, share.factions?.length ?? realPlayers(base.table).length));
   const parsed = share.map ? parseMapString(share.map, count, pack) : null;
   const layout = share.layout ?? parsed?.layout ?? (share.factions || share.expansions ? undefined : base.table.layout);
-  const blank = createSaved({ expansions, playerCount: count, faction: '', layout }, pack);
+  const blank = createSaved({ expansions, playerCount: count, layout }, pack);
 
-  const seated = share.me && share.me <= count ? swapSeats(blank, 0, realPlayers(blank.table).findIndex(p => p.seat === share.me)) : blank;
+  const atSeat = (game: SavedGame, seat: number) => realPlayers(game.table).find(p => p.seat === seat)?.id ?? '';
+  const seated = share.me && share.me <= count ? setViewer(blank, atSeat(blank, share.me)) : blank;
   const named = (share.factions ?? []).slice(0, count).reduce<SavedGame>((game, faction, i) => {
-    const index = realPlayers(game.table).findIndex(p => p.seat === i + 1);
     const id = factionOf(faction, pack);
-    return id ? setFaction(game, index, id) : game;
+    return id ? setFaction(game, atSeat(game, i + 1), id) : game;
   }, seated);
 
   if (!parsed) return withName(named, share.name ?? '');

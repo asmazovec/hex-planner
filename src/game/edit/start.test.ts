@@ -12,7 +12,7 @@ import { gameOf, savedOf } from '../../testing/legacySave';
 import { playerOfLegacy, toTable } from '../../testing/old/game/keys';
 import type { SavedGame } from '../save';
 import {
-  enemyChangeOf, startingPdsOf, structureAtStart, withControl, withDock, withFractureActive, withFractureSeat, withGroundAt, withIngressToggled, withLeader, withPds, withSlice,
+  placedChangeOf, startingPdsOf, structureAtStart, withControl, withDock, withFractureActive, withFractureSeat, withGroundAt, withIngressToggled, withLeader, withPds, withSlice,
   withStartHolding, withThundersEdge, withUnitsAt,
 } from './start';
 
@@ -119,7 +119,7 @@ describe('expedition and the Fracture', () => {
 });
 
 describe('what the big hex asks of the start, against the old questions', () => {
-  test('enemyChangeOf is enemyChange, in space and on a planet, adding and removing', () => {
+  test('placedChangeOf is enemyChange, in space and on a planet, adding and removing', () => {
     const game: Game = { ...base(), map: { ...base().map, '1,0': '25' } };
     const planet = pack.tiles['25'].planetIds[0];
     game.enemyUnits = { '1,0': { [opp]: { cruiser: 1 } } };
@@ -127,7 +127,7 @@ describe('what the big hex asks of the start, against the old questions', () => 
     const saved = savedOf(game);
     const who = kid(saved, opp);
     for (const [unit, at, amount] of [['cruiser', null, 1], ['cruiser', null, -1], ['infantry', planet, 1], ['infantry', planet, -1], ['mech', planet, -1], ['mech', planet, 1]] as const) {
-      expect(enemyChangeOf(saved, '1,0', who, unit, at, amount), `${unit} ${at} ${amount}`).toEqual(enemyChange(game, '1,0', opp, unit, at, amount));
+      expect(placedChangeOf(saved, '1,0', who, unit, at, amount), `${unit} ${at} ${amount}`).toEqual(enemyChange(game, '1,0', opp, unit, at, amount));
     }
   });
 

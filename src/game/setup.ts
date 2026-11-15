@@ -12,7 +12,7 @@ import { emptyBoard, START_POOLS } from './board';
 import type { Cause, GameEvent } from './events';
 import type { StartHoldings } from '../domain/types';
 import type { SavedGame } from './save';
-import type { Board, DataPack, Player, PlanetId, PlayerId, Slot, Table } from './types';
+import type { Board, DataPack, Player, PlanetId, PlayerId, Slot, Table, UnitCounts } from './types';
 
 const SETUP: Cause = { step: 'setup' };
 /** The ability that purges its player's own Alliance note at setup. */
@@ -54,12 +54,26 @@ function leaderEvents(table: Table, player: Player, pack: DataPack): GameEvent[]
   }));
 }
 
+/**
+ * The units a faction sheet places for a player: the fleet in the space of the home system, the ground forces on its
+ * first planet. One reading for every player: of the board of a table alone (`setup`) and of the start written down
+ * when a game begins (`startedGame`).
+ */
+export function sheetUnitsOf(table: Table, player: Player, pack: DataPack): { slot: Slot; space: UnitCounts; planet: PlanetId | undefined; ground: UnitCounts } | undefined {
+  const def = pack.factions[player.faction];
+  const home = homeOf(table, player, pack);
+  if (!def || !home) return undefined;
+  const [planet] = home.planets;
+  const split = splitStartUnits(def.startUnits, planet, pack);
+  return { slot: home.slot, space: split.space, planet, ground: planet === undefined ? {} : split.ground };
+}
+
 function sheetEvents(table: Table, player: Player, pack: DataPack): GameEvent[] {
   const def = pack.factions[player.faction];
   const home = homeOf(table, player, pack);
-  if (!def || !home) return [];
+  const split = sheetUnitsOf(table, player, pack);
+  if (!def || !home || !split) return [];
   const [first] = home.planets;
-  const split = splitStartUnits(def.startUnits, first, pack);
   const events: GameEvent[] = home.planets.map(planet => ({ type: 'PlanetGained', player: player.id, planet, cause: SETUP }));
   if (Object.keys(split.space).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { slot: home.slot }, units: split.space, cause: SETUP });
   if (first !== undefined && Object.keys(split.ground).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { planet: first }, units: split.ground, cause: SETUP });
@@ -80,7 +94,7 @@ export function setup(table: Table, pack: DataPack): GameEvent[] {
 export const initialBoard = (table: Table, pack: DataPack): Board => applyAll(emptyBoard(table), setup(table, pack));
 
 // ---------------------------------------------------------------------------------------------------------------------
-// The board a saved game begins with: the sheets of the players the start lists, then what `StartEdits` holds.
+// The board a saved game begins with: what `StartEdits` holds, for every player alike.
 
 /** The planets of a faction's own home tile that the tile at its seat does not hold: nothing on the map stands for them. */
 function absentHomes(table: Table, player: Player, pack: DataPack): string[] {
@@ -113,10 +127,10 @@ function heldEvents(player: Player, start: StartHoldings | undefined, pack: Data
 }
 
 /**
- * The board a saved game begins with. The faction sheet places the fleet of each player the start lists in
- * `sheetUnits`; what the start writes (`StartEdits`: units, ground forces, planets, docks and PDS, by hand and, when
- * the game begins, from the sheets by `startedGame`) stands as written. Shelf, points, structures, the expedition and
- * the Fracture are the start's too; the players' homes are theirs from the first. Nothing here asks who looks at the table.
+ * The board a saved game begins with: what the start writes (`StartEdits`: units, ground forces, planets, docks and
+ * PDS, from the sheets of all the players when the game begins, by `startedGame`, and by hand after that) stands as
+ * written, for every player alike. Shelf, points, the expedition and the Fracture are the start's too; the players'
+ * homes are theirs from the first. Nothing here asks who looks at the table, and nothing here reads a faction sheet.
  */
 export function startBoard(saved: SavedGame, pack: DataPack): Board {
   const { table, start } = saved;
@@ -124,10 +138,8 @@ export function startBoard(saved: SavedGame, pack: DataPack): Board {
   const homes: Record<PlanetId, PlayerId> = {};
   const firsts: Record<PlayerId, PlanetId | undefined> = {};
   const absent: Record<PlayerId, string[]> = {};
-  const fromSheet = new Set(start.sheetUnits);
-  // Those the sheets place come first: a home two players would both claim is theirs.
-  const sheetFirst = [...table.players].sort((a, b) => Number(fromSheet.has(b.id)) - Number(fromSheet.has(a.id)));
-  for (const player of sheetFirst) {
+  // A home two players would both claim is the one's who comes first at the table.
+  for (const player of table.players) {
     events.push(...tokenEvents(player));
     const home = homeOf(table, player, pack);
     absent[player.id] = absentHomes(table, player, pack);
@@ -136,11 +148,6 @@ export function startBoard(saved: SavedGame, pack: DataPack): Board {
     const planets = home?.planets ?? (def ? pack.tiles[def.homeTile]?.planetIds ?? [] : []);
     firsts[player.id] = planets[0];
     for (const planet of planets) homes[planet] ??= player.id;
-    if (fromSheet.has(player.id) && def && home) {
-      const split = splitStartUnits(def.startUnits, home.planets[0], pack);
-      if (Object.keys(split.space).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { slot: home.slot }, units: split.space, cause: SETUP });
-      if (home.planets[0] !== undefined && Object.keys(split.ground).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { planet: home.planets[0] }, units: split.ground, cause: SETUP });
-    }
   }
   // Who holds what planet: the start's word, else the home it is; the planets of a home the map has no place for are nobody's.
   const owner: Record<PlanetId, PlayerId> = { ...homes, ...start.control };
@@ -155,10 +162,8 @@ export function startBoard(saved: SavedGame, pack: DataPack): Board {
     if (Object.keys(structures).length > 0) events.push({ type: 'StructurePlaced', player, at: { planet }, structures, cause: SETUP });
   }
   for (const player of table.players) {
-    if (!fromSheet.has(player.id)) {
-      for (const [slot, byPlayer] of Object.entries(start.units)) if (Object.keys(byPlayer[player.id] ?? {}).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { slot }, units: byPlayer[player.id], cause: SETUP });
-      for (const [planet, byPlayer] of Object.entries(start.ground)) if (Object.keys(byPlayer[player.id] ?? {}).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { planet }, units: byPlayer[player.id], cause: SETUP });
-    }
+    for (const [slot, byPlayer] of Object.entries(start.units)) if (Object.keys(byPlayer[player.id] ?? {}).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { slot }, units: byPlayer[player.id], cause: SETUP });
+    for (const [planet, byPlayer] of Object.entries(start.ground)) if (Object.keys(byPlayer[player.id] ?? {}).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { planet }, units: byPlayer[player.id], cause: SETUP });
     const points = start.points[player.id] ?? 0;
     if (points !== 0) events.push({ type: 'PointsChanged', player: player.id, delta: points, cause: SETUP });
     events.push(...heldEvents(player, start.holdings[player.id], pack));

@@ -40,7 +40,7 @@ import type { MapPan } from '../map/edgePan';
 import { useArrowDrag } from '../map/useArrowDrag';
 import type { ActionType } from '../plan/ActionMenu';
 import { ActionMenu } from '../plan/ActionMenu';
-import { opponentsBySeat, playerName, shortName } from '../players/names';
+import { othersBySeat, playerName, shortName } from '../players/names';
 import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
 import { ExpeditionEditor } from '../plan/editors/ExpeditionEditor';
 import { TransactionStep } from '../plan/editors/TransactionStep';
@@ -698,7 +698,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           onSelectRound={number => { closePanels(); setRoundNo(number); }}
           onAddRound={() => {
             closePanels();
-            addRound();
+            addRound(planTable.viewer);
             setRoundNo(Math.max(...plan.rounds.map(r => r.number)) + 1);
           }}
           onDeleteRound={() => { closePanels(); deleteRound(round.number); }}
@@ -793,7 +793,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
                   openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} onShow={onShowEntry}
                   onStatusAdded={id => update(state => ({ ...state, openId: id }))} onAddAgenda={onAddAgenda}
                   onDone={done => { if (done.action.kind === 'tactical' && done.action.movement.some(f => hasUnits(f.units))) flight.start(done.id, shownFilter); }}
-                  strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={saved.table.expansions} playerCount={planTable.players.filter(p => p.seat < 100).length} round={round.number} picks={picksOf(round, planTable.viewer)} />}
+                  strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={saved.table.expansions} playerCount={planTable.players.filter(p => p.seat < 100).length} round={round.number} player={planTable.viewer} picks={picksOf(round, planTable.viewer)} />}
                   addAction={(
                     <ActionMenu
                       onPick={onPick}
@@ -803,7 +803,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
                           chosen={value => (value === null ? !actor : actor === value)} onPick={value => setActingAs(value)}
                           options={[
                             { value: null, label: t('plan.mine'), color: planTable.players.find(p => p.id === planTable.viewer)?.color ?? 1 },
-                            ...opponentsBySeat(planTable, pack, t).map(o => {
+                            ...othersBySeat(planTable, planTable.viewer, pack, t).map(o => {
                               const name = shortName(pack, o.faction, t('players.player', { n: o.seat }));
                               return { value: o.id, label: name, color: o.color, tag: playerTag(name, Boolean(pack.factions[o.faction]), o.seat) };
                             }),

@@ -14,7 +14,7 @@ import { project } from '../testing/old/domain/project';
 import type { Game } from '../testing/old/domain/types';
 import { listGames, loadGame, saveGame } from '../storage/db';
 import { flushSaves, useGame } from './gameStore';
-import { draftNow, gameNow, seedGame } from '../testing/store';
+import { draftNow, gameNow, seedGame, opponentAt, playerAt, viewerNow } from '../testing/store';
 
 const pack = loadPack(['pok']);
 const act = () => useGame.getState();
@@ -33,13 +33,13 @@ beforeEach(() => {
 
 describe('gameStore', () => {
   test('цикл карты: запасная, основная, снято', () => {
-    act().setStrategyCard(1, 6); expect(round()).toMatchObject({ strategyCard: null, backupCard: 6 });
-    act().setStrategyCard(1, 6); expect(round()).toMatchObject({ strategyCard: 6, backupCard: null });
-    act().setStrategyCard(1, 6); expect(round()).toMatchObject({ strategyCard: null, backupCard: null });
+    act().setStrategyCard(1, viewerNow(), 6); expect(round()).toMatchObject({ strategyCard: null, backupCard: 6 });
+    act().setStrategyCard(1, viewerNow(), 6); expect(round()).toMatchObject({ strategyCard: 6, backupCard: null });
+    act().setStrategyCard(1, viewerNow(), 6); expect(round()).toMatchObject({ strategyCard: null, backupCard: null });
   });
 
   test('запись статуса одна на раунд: повторный вызов возвращает её же', () => {
-    act().addRound();
+    act().addRound(viewerNow());
     const id = edits.addStatusEntry(1);
     expect(round().entries).toEqual([expect.objectContaining({ id, type: 'statusTokens', phase: 'status', tactic: 0, fleet: 0, strategy: 0 })]);
     const before = game();
@@ -102,7 +102,7 @@ describe('gameStore', () => {
 
   test('canUndo ложно после новой партии, история ограничена 50 состояниями', () => {
     expect(act().canUndo).toBe(false);
-    for (let i = 0; i < 60; i++) act().addRound();
+    for (let i = 0; i < 60; i++) act().addRound(viewerNow());
     let steps = 0;
     while (act().canUndo) { act().undo(); steps++; }
     expect(steps).toBe(50);
@@ -140,10 +140,10 @@ describe('gameStore', () => {
     act().setTile('1,0', '25'); expect(game().map['1,0']).toBe('25');
     act().setTile('1,0', null); expect(game().map['1,0']).toBeUndefined();
     const [a, b] = game().opponents.map(o => o.id);
-    act().setEnemyUnits('1,0', a, { cruiser: 2 }); expect(game().enemyUnits['1,0']).toEqual({ [a]: { cruiser: 2 } });
-    act().setEnemyUnits('1,0', b, { cruiser: 1 }); expect(game().enemyUnits['1,0']).toEqual({ [a]: { cruiser: 2 }, [b]: { cruiser: 1 } });
-    act().setEnemyUnits('1,0', a, {}); expect(game().enemyUnits['1,0']).toEqual({ [b]: { cruiser: 1 } });
-    act().setEnemyUnits('1,0', b, {}); expect(game().enemyUnits['1,0']).toBeUndefined();
+    act().setUnits('1,0', a, { cruiser: 2 }); expect(game().enemyUnits['1,0']).toEqual({ [a]: { cruiser: 2 } });
+    act().setUnits('1,0', b, { cruiser: 1 }); expect(game().enemyUnits['1,0']).toEqual({ [a]: { cruiser: 2 }, [b]: { cruiser: 1 } });
+    act().setUnits('1,0', a, {}); expect(game().enemyUnits['1,0']).toEqual({ [b]: { cruiser: 1 } });
+    act().setUnits('1,0', b, {}); expect(game().enemyUnits['1,0']).toBeUndefined();
     act().setPlanetControl('p', b); expect(game().planetControl.p).toBe('enemy'); expect(game().planetOwner.p).toBe(b);
     act().setPlanetControl('p', a); expect(game().planetControl.p).toBe('enemy'); expect(game().planetOwner.p).toBe(a);
     act().setPlanetControl('p', me()); expect(game().planetControl.p).toBe('me'); expect(game().planetOwner.p).toBeUndefined();
@@ -151,7 +151,7 @@ describe('gameStore', () => {
     expect(game().planetControl.p).toBeUndefined(); expect(game().planetOwner.p).toBeUndefined();
     act().setDock('p', true); expect(game().docks).toContain('p');
     act().setDock('p', false); expect(game().docks).not.toContain('p');
-    act().setOpponent(0, { faction: 'hacan' }); expect(game().opponents[0].faction).toBe('hacan');
+    act().setFaction(opponentAt(0), 'hacan'); expect(game().opponents[0].faction).toBe('hacan');
     act().setSlice('res5', 'p2'); expect(game().expedition.slices.res5).toBe('other');
     act().setThundersEdge('1,0'); expect(game().expedition.thundersEdgeSystem).toBe('1,0');
     act().setFractureActive(true); expect(game().fracture.active).toBe(true);
@@ -160,17 +160,17 @@ describe('gameStore', () => {
   });
 
   test('автосохранение вызывается после действия', async () => {
-    act().addRound();
+    act().addRound(viewerNow());
     await vi.waitFor(() => expect(saveGame).toHaveBeenLastCalledWith(act().saved));
   });
 
   test('автосохранение: сбой записи выставляет saveError и не теряет состояние', async () => {
     vi.mocked(saveGame).mockRejectedValue(new Error('quota'));
-    act().addRound();
+    act().addRound(viewerNow());
     await vi.waitFor(() => expect(act().saveError).not.toBeNull());
     expect(plan().rounds).toHaveLength(2);
     vi.mocked(saveGame).mockResolvedValue(undefined);
-    act().addRound();
+    act().addRound(viewerNow());
     await vi.waitFor(() => expect(act().saveError).toBeNull());
     expect(plan().rounds).toHaveLength(3);
   });
@@ -178,7 +178,7 @@ describe('gameStore', () => {
   test('openGame загружает партию и сбрасывает историю', async () => {
     const other = structuredClone(act().saved!);
     vi.mocked(loadGame).mockResolvedValue(other);
-    act().addRound();
+    act().addRound(viewerNow());
     await act().openGame('x');
     expect(loadGame).toHaveBeenCalledWith('x');
     expect(act().saved).toEqual(other);
@@ -279,9 +279,9 @@ describe('действия без изменений', () => {
   test('неизвестный id и то же значение не создают шаг отмены и не сохраняют', async () => {
     const id = edits.addEntry(1, { type: 'pass' }, 'action');
     edits.setEntryStatus(id, 'done');
-    act().setOpponent(0, { faction: 'hacan' });
+    act().setFaction(opponentAt(0), 'hacan');
     const opponent = game().opponents[0].id;
-    act().setEnemyUnits('1,0', opponent, { cruiser: 2 });
+    act().setUnits('1,0', opponent, { cruiser: 2 });
     act().setPlanetControl('p', opponent);
     const before = game();
     await vi.waitFor(() => expect(saveGame).toHaveBeenLastCalledWith(act().saved));
@@ -293,21 +293,21 @@ describe('действия без изменений', () => {
       () => edits.setEntryStatus('nope', 'done'),
       () => edits.setEntryStatus(id, 'done'),
       () => edits.moveEntry(id, 'action', 0),
-      () => act().setStrategyCard(99, 3),
+      () => act().setStrategyCard(99, viewerNow(), 3),
       () => act().renamePlan(plan().name),
       () => act().setFractureActive(false),
       () => act().setTile('9,9', null),
-      () => act().setEnemyUnits('9,9', opponent, {}),
+      () => act().setUnits('9,9', opponent, {}),
       () => act().setPlanetControl('nope', null),
       () => act().setPlanetControl('p', opponent),
       () => act().setSlice('res5', null),
       () => act().setDock('nope', false),
       () => act().setDock(game().docks[0], true),
       () => act().setThundersEdge(null),
-      () => act().setOpponent(99, { faction: 'sol' }),
-      () => act().setOpponent(0, { faction: 'hacan' }),
-      () => act().setEnemyUnits('1,0', opponent, { cruiser: 2 }),
-      () => act().setEnemyUnits('1,0', opponent, { cruiser: 2, fighter: 0 }),
+      () => act().setFaction(opponentAt(99), 'sol'),
+      () => act().setFaction(opponentAt(0), 'hacan'),
+      () => act().setUnits('1,0', opponent, { cruiser: 2 }),
+      () => act().setUnits('1,0', opponent, { cruiser: 2, fighter: 0 }),
       () => act().setActivePlan(game().activePlanId),
     ];
     for (const run of noops) {
@@ -403,12 +403,64 @@ describe('players', () => {
   test('edits go to the draft while no game is open, without saving or undo', () => {
     useGame.getState().closeGame();
     const before = draftNow().opponents.length;
-    useGame.getState().addOpponent();
+    useGame.getState().addPlayer();
     expect(draftNow().opponents).toHaveLength(before + 1);
     expect(gameNow()).toBeNull();
     expect(useGame.getState().canUndo).toBe(false);
-    useGame.getState().removeOpponent(before);
+    useGame.getState().removePlayer(opponentAt(before));
     expect(draftNow().opponents).toHaveLength(before);
+  });
+
+  test('the tablet is a mark on a player: it moves before the game starts, the game starts with its player, and then it stays', () => {
+    const store = () => useGame.getState();
+    store().closeGame();
+    store().setFaction('p1', 'sol');
+    store().setFaction('p3', 'hacan');
+    store().setViewer('p3');
+    expect(store().draftSaved.table.viewer).toBe('p3');
+    store().setFaction('p3', '');
+    store().startGame();
+    // No faction at the tablet: nothing starts, though the first seat has one.
+    expect(store().saved).toBeNull();
+    store().setFaction('p3', 'hacan');
+    store().startGame();
+    const begun = store().saved!;
+    expect(begun.table.viewer).toBe('p3');
+    expect(begun.start.placed).toBe(true);
+    // Every player with a faction stands at home, the one at the tablet like the rest.
+    expect(Object.values(begun.start.units).flatMap(byPlayer => Object.keys(byPlayer)).sort()).toEqual(['p1', 'p3']);
+    store().setViewer('p1');
+    expect(store().saved).toBe(begun);
+    expect(store().canUndo).toBe(false);
+  });
+
+  test('any player leaves through the store, the one at the tablet too, in one undo step', () => {
+    open();
+    const store = () => useGame.getState();
+    store().setFaction('p2', 'hacan');
+    const before = store().saved!;
+    store().removePlayer('p1');
+    const after = store().saved!;
+    expect(after.table.players.map(p => [p.id, p.faction])).toEqual([['p1', 'hacan'], ['p2', ''], ['p3', '']]);
+    expect(after.table.viewer).toBe('p1');
+    store().removePlayer('p2');
+    expect(store().saved).toBe(after);
+    store().undo();
+    expect(store().saved).toBe(before);
+  });
+
+  test('a faction set for any player of a game that began places that player\'s sheet', () => {
+    open();
+    const store = () => useGame.getState();
+    const sheetOf = (player: string) => Object.values(store().saved!.start.units).flatMap(byPlayer => Object.keys(byPlayer)).filter(id => id === player).length;
+    expect(sheetOf('p1')).toBe(1);
+    expect(sheetOf('p3')).toBe(0);
+    store().setFaction('p3', 'hacan');
+    expect(sheetOf('p3')).toBe(1);
+    expect(Object.values(store().saved!.start.control).filter(owner => owner === 'p3').length).toBeGreaterThan(0);
+    store().setFaction('p3', '');
+    expect(sheetOf('p3')).toBe(0);
+    expect(Object.values(store().saved!.start.control)).not.toContain('p3');
   });
 
   test('a draft without my faction does not start', () => {
@@ -433,7 +485,7 @@ describe('players', () => {
 
   test('starting turns the draft into the game and leaves a fresh draft', () => {
     useGame.getState().closeGame();
-    useGame.getState().setFaction('sol');
+    useGame.getState().setFaction(viewerNow(), 'sol');
     const draft = draftNow();
     useGame.getState().startGame();
     expect(gameNow()!.id).toBe(draft.id);
@@ -444,7 +496,7 @@ describe('players', () => {
 
   test('in an open game the player actions can be undone and the starting points count in the projection', () => {
     open();
-    useGame.getState().addOpponent();
+    useGame.getState().addPlayer();
     expect(gameNow()!.playerCount).toBe(5);
     useGame.getState().undo();
     expect(gameNow()!.playerCount).toBe(4);
@@ -454,11 +506,11 @@ describe('players', () => {
 
   test('an opponent faction goes through the home tile rule, and in a started game the seats stay', () => {
     open();
-    useGame.getState().setOpponent(0, { faction: 'hacan' });
+    useGame.getState().setFaction(opponentAt(0), 'hacan');
     const slots = seatSlots(4, pok, gameNow()!.layout);
     expect(gameNow()!.map[slots[1]]).toBe('16');
     const before = gameNow();
-    useGame.getState().swapSeats(1, 2);
+    useGame.getState().swapSeats(playerAt(1), playerAt(2));
     expect(gameNow()).toBe(before);
   });
 });
@@ -495,11 +547,11 @@ describe('addExpansion', () => {
 describe('removing an opponent in a game', () => {
   test('units, planets and owners go in one undo step', () => {
     const [a, b] = game().opponents.map(o => o.id);
-    act().setEnemyUnits('1,0', a, { cruiser: 2 });
-    act().setEnemyUnits('1,0', b, { fighter: 1 });
+    act().setUnits('1,0', a, { cruiser: 2 });
+    act().setUnits('1,0', b, { fighter: 1 });
     act().setPlanetControl('p', a);
     const before = game();
-    act().removeOpponent(0);
+    act().removePlayer(opponentAt(0));
     // The one who stays moves up a seat, and a player's id is that of the seat.
     expect(game().enemyUnits).toEqual({ '1,0': { [game().opponents[0].id]: { fighter: 1 } } });
     expect(game().planetControl.p).toBeUndefined();
@@ -582,7 +634,7 @@ describe("Thunder's Edge turned on in a game in progress", () => {
     const theirs = game().start.opponents[id];
     const count = game().opponents.length;
     act().setStartHolding(id, 'technology:ff2', true);
-    act().removeOpponent(0);
+    act().removePlayer(opponentAt(0));
     // The next player takes the seat and its id: nobody holds what the one who left had.
     expect(Object.keys(game().start.opponents)).toHaveLength(count - 1);
     expect(Object.values(game().start.opponents).some(held => held.technologies?.includes('technology:ff2'))).toBe(false);
@@ -602,10 +654,10 @@ describe("Thunder's Edge turned on in a game in progress", () => {
 
 describe('merged adjustments and structures', () => {
   const lose = (unit: 'carrier' | 'infantry', amount: number, planetId: string | null = null) =>
-    act().changeAdjustment(1, { kind: 'losses', systemId: '1,0', unit, planetId, amount });
+    act().changeAdjustment(1, { kind: 'losses', systemId: '1,0', unit, planetId, amount }, viewerNow());
 
   test('each tap is one undo step, and undo brings the entry back', () => {
-    act().changeAdjustment(1, { kind: 'setup', systemId: '1,0', unit: 'carrier', planetId: null, amount: 1 });
+    act().changeAdjustment(1, { kind: 'setup', systemId: '1,0', unit: 'carrier', planetId: null, amount: 1 }, viewerNow());
     lose('carrier', -1);
     lose('carrier', 1);
     expect(round().entries).toHaveLength(1);
@@ -636,7 +688,7 @@ describe('merged adjustments and structures', () => {
   test('a PDS on Mecatol Rex follows the planet to Thunder\'s Edge, and so does a loss recorded there', () => {
     const start = { ...game().pds };
     act().setPds('mr', 1);
-    act().changeAdjustment(1, { kind: 'setup', systemId: '0,0', unit: 'infantry', planetId: 'mr', amount: 1 });
+    act().changeAdjustment(1, { kind: 'setup', systemId: '0,0', unit: 'infantry', planetId: 'mr', amount: 1 }, viewerNow());
     act().addExpansion('te');
     expect(game().pds).toEqual({ ...start, mrte: 1 });
     expect(round().entries[0]).toMatchObject({ delta: { ground: { mrte: { infantry: 1 } } } });
@@ -648,7 +700,7 @@ describe('merged adjustments and structures', () => {
     act().setPlanetControl('p', first.id);
     act().setPds('p', 1);
     act().setPds('q', 1);
-    act().removeOpponent(0);
+    act().removePlayer(opponentAt(0));
     expect(game().pds).toEqual({ ...start, q: 1 });
   });
 });
@@ -656,22 +708,22 @@ describe('merged adjustments and structures', () => {
 describe('enemy ground units by planet', () => {
   test('they are set with undo, and nothing left leaves no record', () => {
     const [{ id }] = game().opponents;
-    act().setEnemyGround('p', id, { infantry: 2 });
+    act().setGround('p', id, { infantry: 2 });
     expect(game().enemyGround).toEqual({ p: { [id]: { infantry: 2 } } });
-    act().setEnemyGround('p', id, {});
+    act().setGround('p', id, {});
     expect(game().enemyGround).toEqual({});
     act().undo();
     expect(game().enemyGround).toEqual({ p: { [id]: { infantry: 2 } } });
   });
 
   test('the same counts leave no undo step', () => {
-    act().setEnemyGround('p', game().opponents[0].id, {});
+    act().setGround('p', game().opponents[0].id, {});
     expect(act().canUndo).toBe(false);
   });
 
   test('on Mecatol Rex they follow the planet, and so does production on it', () => {
     const [{ id }] = game().opponents;
-    act().setEnemyGround('mr', id, { mech: 1 });
+    act().setGround('mr', id, { mech: 1 });
     edits.addEntry(1, { type: 'tactical', systemId: '0,0', moves: [], landings: [], production: { infantry: 1 }, payment: { planets: [], tradeGoods: 0 }, productionGround: { mr: { infantry: 1 } } }, 'action');
     act().addExpansion('te');
     expect(game().enemyGround).toEqual({ mrte: { [id]: { mech: 1 } } });
@@ -680,10 +732,10 @@ describe('enemy ground units by planet', () => {
 
   test('an opponent who leaves takes them along, and they count as holdings', () => {
     const [{ id }, other] = game().opponents;
-    act().setEnemyGround('p', id, { infantry: 2 });
-    act().setEnemyGround('p', other.id, { mech: 1 });
+    act().setGround('p', id, { infantry: 2 });
+    act().setGround('p', other.id, { mech: 1 });
     expect(opponentHoldings(game(), id).units).toBe(2);
-    act().removeOpponent(0);
+    act().removePlayer(opponentAt(0));
     expect(game().enemyGround).toEqual({ p: { [game().opponents[0].id]: { mech: 1 } } });
   });
 });
@@ -710,7 +762,7 @@ describe('the store holds the saved game', () => {
   });
 
   test('an edit of one round keeps the other rounds as they were', () => {
-    act().addRound();
+    act().addRound(viewerNow());
     const second = rounds()[1];
     act().addTurn(1, pass());
     expect(rounds()[1]).toBe(second);

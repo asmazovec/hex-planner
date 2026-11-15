@@ -198,7 +198,7 @@ export function EntryList({
             </ul>
             {phase === 'action' && addAction && <div className="phase-add">{addAction}</div>}
             {phase === 'status' && !inPhase.some(e => e.action.kind === 'status') && (
-              <button type="button" onClick={() => onStatusAdded?.(addStatusTurn(roundNo))}>{t('plan.entries.statusTokens')}</button>
+              <button type="button" onClick={() => onStatusAdded?.(addStatusTurn(roundNo, end.table.viewer))}>{t('plan.entries.statusTokens')}</button>
             )}
             {/* Each agenda of the phase is an entry of its own: the button stays for the next one. */}
             {phase === 'agenda' && onAddAgenda && <button type="button" onClick={onAddAgenda}>{t('plan.agenda.add')}</button>}

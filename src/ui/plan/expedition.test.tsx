@@ -15,7 +15,7 @@ import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
-import { gameNow } from '../../testing/store';
+import { gameNow, viewerNow } from '../../testing/store';
 
 const pack = loadPack(['pok', 'te']);
 const SLICES = EXPEDITION_SLICES.map(s => s.id);
@@ -249,7 +249,7 @@ test('marking keeps the panel away for many taps; the tools button brings it bac
 });
 
 test('a change of round closes the panel, like the other panels', async () => {
-  useGame.getState().addRound();
+  useGame.getState().addRound(viewerNow());
   await openPanel();
   expect(screen.getByRole('button', { name: /^Thunder's Edge · / })).toHaveAttribute('aria-pressed', 'true');
   await userEvent.click(screen.getByRole('button', { name: 'Round 1' }));

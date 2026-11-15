@@ -17,7 +17,7 @@ import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
 import { FactionCard } from './FactionCard';
 import { ShipStats } from './ShipStats';
-import { gameNow } from '../../testing/store';
+import { gameNow, opponentAt } from '../../testing/store';
 
 /** The interface of these tests is Russian, and so are the texts of the packs. */
 const pack = loadPack(['pok', 'te'], 'ru');
@@ -114,7 +114,7 @@ describe('the players panel of the plan screen', () => {
 
   test('it is a reference: no way to change a faction, add or remove a player, or toggle a ship', async () => {
     startPlan();
-    act(() => useGame.getState().setOpponent(0, { faction: 'sol' }));
+    act(() => useGame.getState().setFaction(opponentAt(0), 'sol'));
     await openPlayers();
     expect(screen.queryByRole('combobox')).toBeNull();
     expect(within(cardOf(2)).getByText(/Federation of Sol/)).toBeInTheDocument();

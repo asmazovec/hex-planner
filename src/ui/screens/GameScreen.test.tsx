@@ -12,7 +12,7 @@ import { deleteGame, listGames, saveGame } from '../../storage/db';
 import { sampleGame } from '../../testing/fixture';
 import { exportGame } from '../../storage/transfer';
 import { GameScreen } from './GameScreen';
-import { draftNow, gameNow, seedDraft, seedGame } from '../../testing/store';
+import { draftNow, gameNow, seedDraft, seedGame, viewerNow } from '../../testing/store';
 
 afterEach(cleanup);
 
@@ -27,7 +27,8 @@ beforeEach(async () => {
 
 const cards = () => screen.getAllByRole('group', { name: /^Player \d/ });
 const card = (n: number) => screen.getByRole('group', { name: `Player ${n}` });
-const factionOf = (n: number) => within(card(n)).getByRole('button', { name: /^(My faction|Opponent)$/ });
+const factionOf = (n: number) => within(card(n)).getByRole('button', { name: `Player ${n} faction` });
+const tablet = (n: number) => within(card(n)).getByRole('radio', { name: `At the tablet: player ${n}` });
 const option = (faction: string) => document.querySelector<HTMLButtonElement>(`[data-faction="${faction}"]`)!;
 const token = (n: number) => screen.getByRole('button', { name: new RegExp(`^Player ${n},`) });
 const pick = async (n: number, faction: string) => {
@@ -36,11 +37,10 @@ const pick = async (n: number, faction: string) => {
 };
 const startOpen = (playerCount = 4, faction = 'sol') =>
   useGame.getState().newGame({ expansions: ['pok', 'te'], playerCount, faction }, loadPack(['pok', 'te']));
+/** The seat of each player in the order they first sat (a player keeps their colour for good). */
 const seats = () => {
-  const game = gameNow();
-  const draft = draftNow();
-  const g = game ?? draft;
-  return [g.seat, ...g.opponents.map(o => o.seat)];
+  const state = useGame.getState();
+  return [...(state.saved ?? state.draftSaved).table.players].sort((a, b) => a.color - b.color).map(p => p.seat);
 };
 
 let under: Element | null = null;
@@ -56,29 +56,72 @@ function drag(from: number, to: number) {
   return () => act(() => { window.dispatchEvent(new PointerEvent('pointerup', { clientX: 60, clientY: 60 })); });
 }
 
-test('the draft is a list of cards: my faction first, opponents after, no count field', () => {
+test('the draft is a list of cards by seat, every card the same, no count field', () => {
   render(<GameScreen />);
   expect(cards()).toHaveLength(6);
-  expect(within(card(1)).getByText('My faction')).toBeInTheDocument();
-  expect(within(card(2)).getByText('Opponent')).toBeInTheDocument();
+  for (const n of [1, 2, 6]) {
+    expect(factionOf(n)).toBeInTheDocument();
+    expect(tablet(n)).toBeInTheDocument();
+    expect(within(card(n)).getByRole('button', { name: `Remove player ${n}` })).toBeInTheDocument();
+  }
   expect(screen.getByText('6 of 8')).toBeInTheDocument();
   expect(screen.queryByLabelText(/players/i)).toBeNull();
 });
 
 test('adding and removing change the cards, within 3 to 8', async () => {
   render(<GameScreen />);
-  await userEvent.click(screen.getByRole('button', { name: /Add opponent/ }));
-  await userEvent.click(screen.getByRole('button', { name: /Add opponent/ }));
+  await userEvent.click(screen.getByRole('button', { name: /Add player/ }));
+  await userEvent.click(screen.getByRole('button', { name: /Add player/ }));
   expect(cards()).toHaveLength(8);
-  expect(screen.queryByRole('button', { name: /Add opponent/ })).toBeNull();
-  for (let i = 0; i < 5; i++) await userEvent.click(within(cards().at(-1)!).getByRole('button', { name: 'Remove opponent' }));
+  expect(screen.queryByRole('button', { name: /Add player/ })).toBeNull();
+  for (let i = 0; i < 5; i++) await userEvent.click(within(cards().at(-1)!).getByRole('button', { name: /^Remove player/ }));
   expect(cards()).toHaveLength(3);
-  expect(within(card(3)).getByRole('button', { name: 'Remove opponent' })).toBeDisabled();
+  expect(within(card(3)).getByRole('button', { name: /^Remove player/ })).toBeDisabled();
 });
 
-test('my faction has no remove button', () => {
+test('one card is marked as the one at the tablet, and the mark is a choice among the cards', async () => {
   render(<GameScreen />);
-  expect(within(card(1)).queryByRole('button', { name: 'Remove opponent' })).toBeNull();
+  expect(tablet(1)).toBeChecked();
+  expect(tablet(3)).not.toBeChecked();
+  await userEvent.click(tablet(3));
+  expect(tablet(3)).toBeChecked();
+  expect(tablet(1)).not.toBeChecked();
+  expect(useGame.getState().draftSaved.table.viewer).toBe('p3');
+  expect(card(3)).toHaveClass('own');
+  expect(token(3)).toHaveClass('seat-token-me');
+  expect(token(1)).not.toHaveClass('seat-token-me');
+});
+
+test('the start waits for the faction of the one at the tablet, whoever that is', async () => {
+  render(<GameScreen />);
+  await pick(1, 'sol');
+  expect(screen.getByRole('button', { name: 'Start game' })).toBeEnabled();
+  await userEvent.click(tablet(2));
+  expect(screen.getByRole('button', { name: 'Start game' })).toBeDisabled();
+  await pick(2, 'hacan');
+  await userEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  expect(gameNow()!.faction).toBe('hacan');
+  expect(gameNow()!.seat).toBe(2);
+});
+
+test('the player at the tablet can be removed like any other: the first of the rest sits at it', async () => {
+  render(<GameScreen />);
+  await pick(1, 'sol');
+  await pick(2, 'hacan');
+  await userEvent.click(within(card(1)).getByRole('button', { name: 'Remove player 1' }));
+  expect(cards()).toHaveLength(5);
+  expect(factionOf(1)).toHaveTextContent('Hacan');
+  expect(tablet(1)).toBeChecked();
+});
+
+test('once the game has begun the mark only shows: it stands on one card and is no choice', () => {
+  startOpen();
+  render(<GameScreen />);
+  expect(screen.queryAllByRole('radio', { name: /^At the tablet/ })).toEqual([]);
+  expect(within(card(1)).getByText('At the tablet')).toBeInTheDocument();
+  expect(within(card(2)).queryByText('At the tablet')).toBeNull();
+  useGame.getState().setViewer('p2');
+  expect(gameNow()!.seat).toBe(1);
 });
 
 test('a card shows faction data only after the choice, with no extra tap', async () => {
@@ -105,13 +148,13 @@ test('only starting information: no points on the cards', () => {
   expect(screen.queryByRole('button', { name: /points/i })).toBeNull();
 });
 
-test('the start button waits for my faction, then starts with the list as set', async () => {
+test('the start button waits for a faction at the tablet, then starts with the list as set', async () => {
   render(<GameScreen />);
   expect(screen.getByRole('button', { name: 'Start game' })).toBeDisabled();
   expect(gameNow()).toBeNull();
   await pick(1, 'sol');
   await pick(2, 'hacan');
-  await userEvent.click(within(cards().at(-1)!).getByRole('button', { name: 'Remove opponent' }));
+  await userEvent.click(within(cards().at(-1)!).getByRole('button', { name: /^Remove player/ }));
   drag(1, 3)();
   await userEvent.click(screen.getByRole('button', { name: 'Start game' }));
   const game = gameNow()!;
@@ -119,7 +162,7 @@ test('the start button waits for my faction, then starts with the list as set', 
   expect(game.expansions).toEqual(['pok', 'te']);
   expect(game.playerCount).toBe(5);
   expect(game.seat).toBe(3);
-  expect(game.opponents[0].faction).toBe('hacan');
+  expect(game.opponents.find(o => o.seat === 2)?.faction).toBe('hacan');
   expect(game.map[seatSlots(5, loadPack(['pok', 'te']), game.layout)[2]]).toBe('1');
   expect(game.dataVersion).toBe(loadPack(['pok', 'te']).version);
 });
@@ -159,7 +202,7 @@ test('without Prophecy of Kings the list stops at six', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Prophecy of Kings' }));
   await userEvent.click(screen.getByRole('button', { name: "Thunder's Edge" }));
   expect(screen.getByText('6 of 6')).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: /Add opponent/ })).toBeNull();
+  expect(screen.queryByRole('button', { name: /Add player/ })).toBeNull();
 });
 
 test('a started game shows its expansions but does not change them', () => {
@@ -272,13 +315,13 @@ test('removing an opponent on a filled map asks first, and cancel changes nothin
   startOpen(6);
   useGame.getState().setTile('1,0', '30');
   render(<GameScreen />);
-  await userEvent.click(within(card(6)).getByRole('button', { name: 'Remove opponent' }));
+  await userEvent.click(within(card(6)).getByRole('button', { name: /^Remove player/ }));
   expect(gameNow()!.playerCount).toBe(6);
   expect(screen.getByText(/Tiles on the map: 1, of them leaving: 0/)).toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(gameNow()!.playerCount).toBe(6);
   expect(screen.queryByText(/Tiles on the map/)).toBeNull();
-  await userEvent.click(within(card(6)).getByRole('button', { name: 'Remove opponent' }));
+  await userEvent.click(within(card(6)).getByRole('button', { name: /^Remove player/ }));
   await userEvent.click(screen.getByRole('button', { name: 'Change' }));
   expect(gameNow()!.playerCount).toBe(5);
   expect(gameNow()!.map['1,0']).toBe('30');
@@ -287,24 +330,24 @@ test('removing an opponent on a filled map asks first, and cancel changes nothin
 test('removing an opponent who has units or planets says so, and only then asks', async () => {
   startOpen(6);
   const [first, second] = gameNow()!.opponents.map(o => o.id);
-  useGame.getState().setEnemyUnits('1,0', first, { cruiser: 2 });
-  useGame.getState().setEnemyUnits('0,1', first, { fighter: 1 });
+  useGame.getState().setUnits('1,0', first, { cruiser: 2 });
+  useGame.getState().setUnits('0,1', first, { fighter: 1 });
   useGame.getState().setPlanetControl('arc', first);
   render(<GameScreen />);
-  await userEvent.click(within(card(2)).getByRole('button', { name: 'Remove opponent' }));
+  await userEvent.click(within(card(2)).getByRole('button', { name: /^Remove player/ }));
   expect(gameNow()!.playerCount).toBe(6);
   expect(screen.getByText(/Units on the map: 3, planets: 1/)).toBeInTheDocument();
   expect(screen.queryByText(/Tiles on the map/)).toBeNull();
-  expect(within(card(2)).queryByRole('button', { name: 'Remove opponent' })).toBeNull();
+  expect(within(card(2)).queryByRole('button', { name: /^Remove player/ })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(gameNow()!.enemyUnits['1,0']).toEqual({ [first]: { cruiser: 2 } });
   const factions = gameNow()!.opponents.map(o => o.faction);
-  await userEvent.click(within(card(3)).getByRole('button', { name: 'Remove opponent' }));
+  await userEvent.click(within(card(3)).getByRole('button', { name: /^Remove player/ }));
   // The second opponent is gone: the others close up, and a player's id is that of the seat.
   expect(gameNow()!.opponents.map(o => o.faction)).toEqual(factions.filter((_, i) => i !== 1));
   void second;
   expect(screen.queryByText(/Units on the map/)).toBeNull();
-  await userEvent.click(within(card(2)).getByRole('button', { name: 'Remove opponent' }));
+  await userEvent.click(within(card(2)).getByRole('button', { name: /^Remove player/ }));
   await userEvent.click(screen.getByRole('button', { name: 'Change' }));
   const game = gameNow()!;
   expect(game.opponents).toHaveLength(3);
@@ -319,13 +362,13 @@ test('adding on a filled map asks first too; a map with only home tiles does not
   seedGame(null);
   seedDraft(draft);
   render(<GameScreen />);
-  await userEvent.click(screen.getByRole('button', { name: /Add opponent/ }));
+  await userEvent.click(screen.getByRole('button', { name: /Add player/ }));
   expect(draftNow().playerCount).toBe(5);
   act(() => seedDraft({ ...draftNow(), map: { ...draftNow().map, '1,0': '30' } }));
-  await userEvent.click(screen.getByRole('button', { name: /Add opponent/ }));
+  await userEvent.click(screen.getByRole('button', { name: /Add player/ }));
   expect(draftNow().playerCount).toBe(5);
   // The question stands in for the button that asked it.
-  expect(screen.queryByRole('button', { name: /Add opponent/ })).toBeNull();
+  expect(screen.queryByRole('button', { name: /Add player/ })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Change' }));
   expect(draftNow().playerCount).toBe(6);
 });
@@ -355,7 +398,7 @@ test('the layout of a started game is shown and no longer changes', () => {
 
 test('the layout can be chosen before the start as well', async () => {
   render(<GameScreen />);
-  for (let i = 0; i < 2; i++) await userEvent.click(within(cards().at(-1)!).getByRole('button', { name: 'Remove opponent' }));
+  for (let i = 0; i < 2; i++) await userEvent.click(within(cards().at(-1)!).getByRole('button', { name: /^Remove player/ }));
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
   expect(draftNow().layout).toBe('hyperlanes');
 });
@@ -458,14 +501,14 @@ describe('a link to a game', () => {
     const { unmount } = render(<GameScreen />);
     await userEvent.type(screen.getByRole('textbox', { name: 'Game name' }), 'Friday{Enter}');
     expect(draftNow().name).toBe('Friday');
-    expect(screen.getByRole('button', { name: /Add opponent/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: /Add player/ })).toBeVisible();
     unmount();
-    store().setFaction('arborec');
+    store().setFaction(viewerNow(), 'arborec');
     store().startGame();
     expect(gameNow()?.name).toBe('Friday');
     render(<GameScreen />);
     expect(screen.getByRole('textbox', { name: 'Game name' })).toBeDisabled();
-    expect(screen.queryByRole('button', { name: /Add opponent/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Add player/ })).toBeNull();
     await flushSaves();
     expect((await listGames()).find(g => g.id === gameNow()?.id)?.name).toBe('Friday');
   });

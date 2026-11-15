@@ -8,7 +8,7 @@ import { setLanguage } from '../i18n';
 import { useGame } from '../state/gameStore';
 import { App } from './App';
 import { lastView } from './common/preferences';
-import { gameNow, seedGame } from '../testing/store';
+import { gameNow, seedGame, viewerNow } from '../testing/store';
 
 const pack = loadPack(['pok']);
 
@@ -18,8 +18,8 @@ beforeEach(() => {
   localStorage.removeItem('ti4.view');
   useGame.getState().closeGame();
   useGame.getState().newGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, pack);
-  useGame.getState().addRound();
-  useGame.getState().addRound();
+  useGame.getState().addRound(viewerNow());
+  useGame.getState().addRound(viewerNow());
 });
 
 const shownScreen = () => document.querySelector('main')!.getAttribute('data-screen');

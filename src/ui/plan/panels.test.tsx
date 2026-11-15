@@ -23,7 +23,7 @@ import { PlanTabs, planDisplayName } from './PlanTabs';
 import { StrategyCards } from './StrategyCards';
 import { SummaryBar } from './SummaryBar';
 import { WarningText } from '../feedback/WarningText';
-import { gameNow, useOldGame } from '../../testing/store';
+import { gameNow, useOldGame, viewerNow } from '../../testing/store';
 
 const pack = loadPack(['pok', 'te']);
 
@@ -119,8 +119,8 @@ test('the primary and the secondary ability stand as separate blocks, each with 
 });
 
 test('a held card tapped after looking at another only shows its details again', async () => {
-  useGame.getState().setStrategyCard(1, 5);
-  useGame.getState().setStrategyCard(1, 5);
+  useGame.getState().setStrategyCard(1, viewerNow(), 5);
+  useGame.getState().setStrategyCard(1, viewerNow(), 5);
   render(<StrategyCardsLive />);
   await userEvent.click(screen.getByRole('button', { name: /Imperial/ }));
   await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
@@ -131,8 +131,8 @@ test('a held card tapped after looking at another only shows its details again',
 });
 
 test('without a look at another card the details are of the main card, and the first tap on it changes nothing', async () => {
-  useGame.getState().setStrategyCard(1, 5);
-  useGame.getState().setStrategyCard(1, 5);
+  useGame.getState().setStrategyCard(1, viewerNow(), 5);
+  useGame.getState().setStrategyCard(1, viewerNow(), 5);
   render(<StrategyCardsLive />);
   expect(screen.getByRole('group', { name: 'Trade' })).toBeVisible();
   expect(screen.getByRole('button', { name: /Trade/ })).not.toHaveAttribute('aria-current');
@@ -144,8 +144,8 @@ test('without a look at another card the details are of the main card, and the f
 });
 
 test('a tap outside the strategy block closes the look at a card, back to the main one, and the count starts over', async () => {
-  useGame.getState().setStrategyCard(1, 5);
-  useGame.getState().setStrategyCard(1, 5);
+  useGame.getState().setStrategyCard(1, viewerNow(), 5);
+  useGame.getState().setStrategyCard(1, viewerNow(), 5);
   render(<><StrategyCardsLive /><button type="button">Elsewhere</button></>);
   await userEvent.click(screen.getByRole('button', { name: /Imperial/ }));
   expect(screen.getByRole('group', { name: 'Imperial' })).toBeVisible();
@@ -167,7 +167,7 @@ test('a tap outside the strategy block closes the look at a card, back to the ma
 });
 
 test('with no main card there is nothing to show until a card is tapped, and a tap outside hides it again', async () => {
-  useGame.getState().setStrategyCard(1, 2);
+  useGame.getState().setStrategyCard(1, viewerNow(), 2);
   render(<><StrategyCardsLive /><button type="button">Elsewhere</button></>);
   expect(document.querySelector('.card-details')).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
@@ -186,9 +186,9 @@ test('another card shows its own details; a card without a change has no mark', 
 });
 
 test('the choice of the round is in view without opening anything', () => {
-  useGame.getState().setStrategyCard(1, 5);
-  useGame.getState().setStrategyCard(1, 5);
-  useGame.getState().setStrategyCard(1, 2);
+  useGame.getState().setStrategyCard(1, viewerNow(), 5);
+  useGame.getState().setStrategyCard(1, viewerNow(), 5);
+  useGame.getState().setStrategyCard(1, viewerNow(), 2);
   render(<StrategyCardsLive />);
   expect(screen.getByText('Main: 5 Trade · Backup: 2 Diplomacy')).toBeVisible();
   expect(grid()).toHaveLength(8);
@@ -208,7 +208,7 @@ function StrategyCardsLive({ playerCount = 6 }: { playerCount?: number }) {
   const live = useOldGame()!;
   const round = live.plans[0].rounds[0];
   // The cards of an old round are mine; the component takes them as the picks of the player whose plan it is.
-  return <StrategyCards expansions={live.expansions} playerCount={playerCount} round={round.number} picks={{ strategyCard: round.strategyCard, backupCard: round.backupCard, held: [] }} />;
+  return <StrategyCards expansions={live.expansions} playerCount={playerCount} round={round.number} player={viewerNow()} picks={{ strategyCard: round.strategyCard, backupCard: round.backupCard, held: [] }} />;
 }
 
 test('the menu holds one item for a strategy card', async () => {
@@ -369,7 +369,7 @@ test('a plan and a round can be deleted, the last of each stays, and undo brings
   act(() => useGame.getState().undo());
   expect(game().plans).toHaveLength(2);
   await userEvent.click(screen.getByRole('button', { name: 'Add round' }).parentElement!.querySelector('button')!);
-  act(() => { useGame.getState().addRound(); useGame.getState().addRound(); });
+  act(() => { useGame.getState().addRound(viewerNow()); useGame.getState().addRound(viewerNow()); });
   edits.addEntry(3, { type: 'pass' }, 'action');
   await userEvent.click(screen.getByRole('button', { name: 'Delete round 1' }));
   const { rounds } = game().plans.find(p => p.id === game().activePlanId)!;

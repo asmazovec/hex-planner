@@ -56,14 +56,14 @@ const sameCounts = (a: Map<string, number>, b: Map<string, number>): boolean =>
  * A tap on the board. The replay stops a stack at nothing, so a removal written before the unit arrives would do nothing
  * while the hex shows the end of the round. Such a removal moves the turn to the end of the first phase where it counts: a
  * place counts only if the board then differs by the tapped unit alone. With no such place the removal gets a turn of its
- * own at the end of the action phase. `rounds` are the rounds of the plan, `start` the board the plan begins from.
+ * own at the end of the action phase. `rounds` are the rounds of the plan, `start` the board the plan begins from,
+ * `viewer` the player whose units the tap changes.
  */
 export function changeOnBoard(
-  table: Table, start: Board, pack: DataPack, rounds: Round[], roundNo: number, change: MergedChange, newId: () => string,
+  table: Table, start: Board, pack: DataPack, rounds: Round[], roundNo: number, change: MergedChange, newId: () => string, viewer: PlayerId,
 ): Round | undefined {
   const round = rounds.find(r => r.number === roundNo);
   if (!round) return undefined;
-  const viewer = table.viewer;
   const edited = changeMerged(round, change, newId, viewer);
   if (change.amount >= 0) return edited;
   const { kind, systemId, unit, planetId } = change;

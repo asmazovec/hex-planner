@@ -7,7 +7,7 @@ import { setLanguage } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
 import { deleteGame, listGames, loadGame } from '../../storage/db';
 import { ShareConflict } from './ShareConflict';
-import { draftNow, gameNow, seedGame } from '../../testing/store';
+import { draftNow, gameNow, seedGame, opponentAt } from '../../testing/store';
 
 const store = () => useGame.getState();
 const LINK = '?name=Friday&exp=pok&factions=sol,arborec,hacan&map=25+26';
@@ -16,8 +16,8 @@ const pack = loadPack(['pok']);
 async function savedNamed(name: string) {
   store().newGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, pack);
   store().setName(name);
-  store().setOpponent(0, { faction: 'arborec' });
-  store().setOpponent(1, { faction: 'hacan' });
+  store().setFaction(opponentAt(0), 'arborec');
+  store().setFaction(opponentAt(1), 'hacan');
   store().setTile('0,-1', '25');
   store().setTile('1,-1', '26');
   await flushSaves();

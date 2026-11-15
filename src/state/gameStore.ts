@@ -24,8 +24,8 @@ import {
   withFractureTiles, withStartHolding, withThundersEdge, withUnitsAt,
 } from '../game/edit/start';
 import {
-  addExpansion, addPlayer, changeLayout, createSaved, draftWithExpansions, removePlayer, setFaction, startedGame, swapSeats, withMap, withName,
-  withTile,
+  addExpansion, addPlayer, changeLayout, createSaved, draftWithExpansions, removePlayer, seatedCount, setFaction, setViewer, startedGame, swapSeats, withMap,
+  withName, withTile,
 } from '../game/edit/table';
 import { forgetTimelines, startOfSaved } from './projection';
 
@@ -41,7 +41,6 @@ function mapSame<T>(items: T[], edit: (item: T) => T): T[] {
 }
 
 const activePlan = (saved: SavedGame): SavedPlan | undefined => saved.plans.find(p => p.id === saved.activePlanId);
-const seated = (saved: SavedGame): number => saved.table.players.filter(p => p.seat < 100).length;
 
 function editPlan(saved: SavedGame, edit: (plan: SavedPlan) => SavedPlan): SavedGame {
   const plans = mapSame(saved.plans, p => (p.id === saved.activePlanId ? edit(p) : p));
@@ -85,6 +84,7 @@ export interface GameStore {
   /** The open game crashed while drawn: it closes, stays saved as it was, and is marked as failed. */
   crashGame(error: string): void;
   canUndo: boolean;
+  /** A game begun at once, without the draft: `faction` sits at the first seat, which is the one at the tablet. */
   newGame(input: { expansions: ExpansionId[]; playerCount: number; faction: string }, pack: DataPack): void;
   /** A link names a save and disagrees with it; nothing changes until the player chooses. */
   linkConflict: { share: ShareParams; savedId: string; name: string; differences: ShareDifference[]; taken: string[] } | null;
@@ -98,27 +98,31 @@ export interface GameStore {
   /** Leaves the open game, which stays saved, for a new draft. */
   closeGame(): void;
   setDraftExpansions(expansions: ExpansionId[]): void;
-  addOpponent(): void;
-  /** Index among the opponents. */
-  removeOpponent(index: number): void;
-  setFaction(faction: string): void;
-  /** Positions in the list of players, my faction being 0. */
-  swapSeats(a: number, b: number): void;
+  /** The players are equal: each edit names one by id. A new player takes the last seat. */
+  addPlayer(): void;
+  /** Any player may leave; the tablet goes to the first of the rest by seat when its player does. The last three stay. */
+  removePlayer(player: PlayerId): void;
+  setFaction(player: PlayerId, faction: string): void;
+  /** Two players trade seats, and with them their ids; only before the game starts. */
+  swapSeats(a: PlayerId, b: PlayerId): void;
+  /** Who sits at the tablet: a mark on one of the players; only before the game starts. */
+  setViewer(player: PlayerId): void;
   /** Loads a saved game by id; an unknown id leaves the current game alone. */
   openGame(id: string): Promise<void>;
   /** Adds a turn to a round of the open plan (its `id` is replaced): into the actions of the card turn `parentId` when given (Warfare's free action). Returns its id. */
   addTurn(roundNo: number, turn: Turn, parentId?: string): string;
-  /** The round's one status turn: created on first use, its id afterwards. */
-  addStatusTurn(roundNo: number): string;
+  /** The round's one status turn: created on first use as `player`'s, its id afterwards. */
+  addStatusTurn(roundNo: number, player: PlayerId): string;
   /** Replaces a turn, or an action nested in one, by its changed self. */
   updateTurn(id: string, next: Turn): void;
   moveTurn(id: string, toPhase: Phase, toIndex: number): void;
   /** A card turn takes its nested actions with it. */
   removeTurn(id: string): void;
   setStatus(id: string, status: EntryStatus): void;
-  /** Backup, then primary, then removed. */
-  setStrategyCard(roundNo: number, initiative: number): void;
-  addRound(): void;
+  /** A strategy card of `player` in a round: backup, then primary, then removed. */
+  setStrategyCard(roundNo: number, player: PlayerId, initiative: number): void;
+  /** A round more, keeping the strategy cards of `planned`. */
+  addRound(planned: PlayerId): void;
   /** Later rounds take its number; the last round of a plan stays. */
   deleteRound(roundNo: number): void;
   copyPlan(): void;
@@ -134,21 +138,20 @@ export interface GameStore {
   setMap(map: Record<string, string>, layout?: MapLayout): void;
   /** Switches the map template; see `changeLayout`. */
   setLayout(layout: MapLayout): void;
-  setOpponent(index: number, patch: { faction: string }): void;
   /** Marks by hand what a player held when the plan begins, by component id; a unit upgrade is its technology. */
   setStartHolding(player: string, id: string, present: boolean): void;
   /** Marks by hand a leader's state when the plan begins; `null` locks it again. */
   setLeader(player: string, id: string, state: LeaderState | null): void;
-  /** The units of a player written by hand for the start, in a system's space and on a planet. */
-  setEnemyUnits(systemId: string, player: PlayerId, units: UnitCounts): void;
-  setEnemyGround(planetId: string, player: PlayerId, units: UnitCounts): void;
+  /** The units of a player written for the start, in a system's space and on a planet. */
+  setUnits(systemId: string, player: PlayerId, units: UnitCounts): void;
+  setGround(planetId: string, player: PlayerId, units: UnitCounts): void;
   /** `owner` is the player who controls the planet at the start, or null for a free planet. */
   setPlanetControl(planetId: string, owner: PlayerId | null): void;
   /** Marks whether a planet has a space dock. */
   setDock(planetId: string, present: boolean): void;
   setPds(planetId: string, count: number): void;
-  /** One tap on the big hex: edits the merged adjustment of that system and kind in the round. */
-  changeAdjustment(roundNo: number, change: MergedChange): void;
+  /** One tap on the big hex: edits the merged adjustment of `player`'s units of that system and kind in the round. */
+  changeAdjustment(roundNo: number, change: MergedChange, player: PlayerId): void;
   /** Who took an expedition part before the plan (null: free). */
   setSlice(id: string, owner: PlayerId | null): void;
   setThundersEdge(systemId: string | null): void;
@@ -161,7 +164,7 @@ export interface GameStore {
 
 const DRAFT_EXPANSIONS: ExpansionId[] = ['pok', 'te'];
 const newDraft = (expansions: ExpansionId[] = DRAFT_EXPANSIONS): SavedGame =>
-  createSaved({ expansions, playerCount: 6, faction: '' }, loadPack(expansions));
+  createSaved({ expansions, playerCount: 6 }, loadPack(expansions));
 
 export const useGame = create<GameStore>((set, get) => {
   const initialDraft = newDraft();
@@ -221,7 +224,7 @@ export const useGame = create<GameStore>((set, get) => {
 
     newGame: (input, pack) => {
       history.clear();
-      replace(createSaved(input, pack));
+      replace(startedGame(createSaved(input, pack)));
     },
     openShareLink: async search => {
       const share = readShareLink(search);
@@ -270,7 +273,7 @@ export const useGame = create<GameStore>((set, get) => {
       const { draftSaved } = get();
       if (!draftSaved.table.players.find(p => p.id === draftSaved.table.viewer)?.faction) return;
       history.clear();
-      // The opponents stand at their seats with what their sheets give, written in the save so the Setup mode can edit it.
+      // Every player stands at their home with what their sheet gives, written in the save so the Setup mode can edit it.
       replace(startedGame(draftSaved));
       setDraft(newDraft(draftSaved.table.expansions));
       set({ loadFailure: null });
@@ -281,11 +284,12 @@ export const useGame = create<GameStore>((set, get) => {
       set({ saved: null, canUndo: false });
     },
     setDraftExpansions: expansions => setDraft(draftWithExpansions(get().draftSaved, expansions)),
-    addOpponent: () => commitSetup(s => addPlayer(s)),
-    removeOpponent: index => commitSetup(s => removePlayer(s, index + 1)),
-    setFaction: faction => commitSetup(s => setFaction(s, 0, faction)),
-    // The seats are settled when the game starts: its units and plans stand on them.
+    addPlayer: () => commitSetup(s => addPlayer(s)),
+    removePlayer: player => commitSetup(s => removePlayer(s, player)),
+    setFaction: (player, faction) => commitSetup(s => setFaction(s, player, faction)),
+    // The seats are settled when the game starts: its units and plans stand on them. So is the tablet: the plans are its player's.
     swapSeats: (a, b) => { if (!get().saved) commitSetup(s => swapSeats(s, a, b)); },
+    setViewer: player => { if (!get().saved) commitSetup(s => setViewer(s, player)); },
     openGame: async id => {
       let saved: SavedGame;
       try {
@@ -321,19 +325,18 @@ export const useGame = create<GameStore>((set, get) => {
       commit(s => editRound(s, roundNo, r => withTurnAdded(r, { ...turn, id }, parentId)));
       return id;
     },
-    addStatusTurn: roundNo => {
+    addStatusTurn: (roundNo, player) => {
       const round = activePlan(get().saved!)?.rounds.find(r => r.number === roundNo);
       return round?.turns.find(t => t.action.kind === 'status')?.id
-        ?? get().addTurn(roundNo, { id: '', player: get().saved!.table.viewer, status: 'planned', phase: 'status', action: { kind: 'status', tactic: 0, fleet: 0, strategy: 0 }, acts: [], used: [] });
+        ?? get().addTurn(roundNo, { id: '', player, status: 'planned', phase: 'status', action: { kind: 'status', tactic: 0, fleet: 0, strategy: 0 }, acts: [], used: [] });
     },
     updateTurn: (id, next) => commit(s => editTurnRound(s, id, r => withTurnReplaced(r, id, next))),
     moveTurn: (id, toPhase, toIndex) => commit(s => editTurnRound(s, id, r => withTurnMoved(r, id, toPhase, toIndex))),
     removeTurn: id => commit(s => editTurnRound(s, id, r => withTurnRemoved(r, id))),
     setStatus: (id, status) => commit(s => editTurnRound(s, id, r => withTurnStatus(r, id, status))),
-    setStrategyCard: (roundNo, initiative) =>
-      // The plan keeps the strategy cards of the player whose plan it is: the viewer's.
-      commit(s => editRound(s, roundNo, r => withCardCycled(r, initiative, seated(s), s.table.viewer))),
-    addRound: () => commit(s => editPlan(s, plan => ({ ...plan, rounds: withRoundAdded(plan.rounds, [s.table.viewer]) }))),
+    setStrategyCard: (roundNo, player, initiative) =>
+      commit(s => editRound(s, roundNo, r => withCardCycled(r, initiative, seatedCount(s.table), player))),
+    addRound: planned => commit(s => editPlan(s, plan => ({ ...plan, rounds: withRoundAdded(plan.rounds, [planned]) }))),
     deleteRound: roundNo => commit(s => editPlan(s, plan => {
       const rounds = withoutRound(plan.rounds, roundNo);
       return rounds === plan.rounds ? plan : { ...plan, rounds };
@@ -367,21 +370,20 @@ export const useGame = create<GameStore>((set, get) => {
     setTile: (slotKey, tileId) => commitSetup(saved => withTile(saved, slotKey, tileId)),
     setMap: (map, layout) => commitSetup(saved => withMap(saved, map, layout)),
     setLayout: layout => commitSetup(saved => changeLayout(saved, layout)),
-    setOpponent: (index, { faction }) => commitSetup(saved => setFaction(saved, index + 1, faction)),
     setStartHolding: (player, id, present) => commit(s => withStartHolding(s, player, id, present)),
     setLeader: (player, id, state) => commit(s => withLeader(s, player, id, state)),
-    setEnemyUnits: (systemId, player, units) => commit(s => withUnitsAt(s, systemId, player, units)),
-    setEnemyGround: (planetId, player, units) => commit(s => withGroundAt(s, planetId, player, units)),
+    setUnits: (systemId, player, units) => commit(s => withUnitsAt(s, systemId, player, units)),
+    setGround: (planetId, player, units) => commit(s => withGroundAt(s, planetId, player, units)),
     setPlanetControl: (planetId, owner) => commit(s => withControl(s, planetId, owner)),
     setDock: (planetId, present) => commit(s => withDock(s, planetId, present)),
     setPds: (planetId, count) => commit(s => withPds(s, planetId, count)),
-    changeAdjustment: (roundNo, change) => commit(s => {
+    changeAdjustment: (roundNo, change, player) => commit(s => {
       const plan = activePlan(s);
       const round = plan?.rounds.find(r => r.number === roundNo);
       if (!plan || !round) return s;
       const pack = loadPack(s.table.expansions);
       const { table, start } = startOfSaved(s, pack);
-      const made = changeOnBoard(table, start, pack, plan.rounds, roundNo, change, newId);
+      const made = changeOnBoard(table, start, pack, plan.rounds, roundNo, change, newId, player);
       return !made || made === round ? s : editRound(s, roundNo, () => made);
     }),
     setSlice: (id, owner) => commit(s => withSlice(s, id, owner)),

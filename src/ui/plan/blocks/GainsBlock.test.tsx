@@ -24,7 +24,7 @@ import { PlanScreen } from '../../screens/PlanScreen';
 import { TurnEditor } from '../editors/TurnEditor';
 import { GainsBlock } from './GainsBlock';
 import { playProps, turnProps } from '../../testing/turnProps';
-import { gameNow } from '../../../testing/store';
+import { gameNow, viewerNow } from '../../../testing/store';
 
 const pack = loadPack(['pok']);
 const game = () => gameNow()!;
@@ -170,8 +170,8 @@ test('on the plan screen a turn keeps what it gained and the component it plays'
 });
 
 test('the Technology card researches through the choice of technologies and lists what it researched', async () => {
-  useGame.getState().setStrategyCard(1, 7);
-  useGame.getState().setStrategyCard(1, 7);
+  useGame.getState().setStrategyCard(1, viewerNow(), 7);
+  useGame.getState().setStrategyCard(1, viewerNow(), 7);
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
   await userEvent.click(screen.getByRole('button', { name: 'Strategy' }));

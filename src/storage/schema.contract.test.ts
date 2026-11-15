@@ -57,7 +57,7 @@ const holdings: Required<StartHoldings> = {
   breakthrough: 'exhausted', scored: ['publicObjective:a'], secrets: ['secretObjective:a'], found: ['exploration:a'],
 };
 const start: Required<StartEdits> = {
-  points: { p1: 1, p2: 2 }, holdings: { p1: holdings, p2: holdings }, sheetUnits: ['p1'], units: { '1,0': { p2: units } }, ground: { a: { p2: { infantry: 1 } } },
+  points: { p1: 1, p2: 2 }, holdings: { p1: holdings, p2: holdings }, placed: true, units: { '1,0': { p2: units } }, ground: { a: { p2: { infantry: 1 } } },
   control: { a: 'p2' }, docks: ['a'], pds: { a: 1 }, expedition: { slices: { slice: 'p2', free: null }, thundersEdgeSystem: '1,0' },
   fracture: { active: true, ingress: ['1,0'], seat: 2, tiles: { '9,9': 'fracture1' } },
 };

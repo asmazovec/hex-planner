@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { homeNotes, listPlayers } from '../../game/edit/table';
+import { homeNotes, seatedPlayers } from '../../game/edit/table';
 import type { ExpansionId } from '../../domain/types';
 import { currentLanguage, LANGUAGES, setLanguage } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
@@ -47,7 +47,7 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
   const openSaved = useGame(s => s.saved);
   const shared = useGame(s => s.saved ?? s.draftSaved);
   const { table } = shared;
-  const me = table.players.find(p => p.id === table.viewer);
+  const atTablet = table.players.find(p => p.id === table.viewer);
   const openGame = useGame(s => s.openGame);
   const startGame = useGame(s => s.startGame);
   const closeGame = useGame(s => s.closeGame);
@@ -66,8 +66,8 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
   const [linkCopied, setLinkCopied] = useState(false);
 
   const pack = usePack(table.expansions);
-  const players = listPlayers(table);
-  const { ghostRef, ...drag } = useSeatDrag(players, swapSeats);
+  const players = seatedPlayers(table);
+  const { ghostRef, ...drag } = useSeatDrag(players, (a, b) => swapSeats(players[a].id, players[b].id));
   const mapBlock = useRef<HTMLDivElement>(null);
   useEffect(() => { if (showMap) mapBlock.current?.scrollIntoView?.({ block: 'start' }); }, [showMap]);
 
@@ -162,8 +162,8 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
           <NoteField key={shared.id} label={t('game.name')} value={shared.name ?? ''} disabled={Boolean(open)} onCommit={setName} />
           {!open && (
             <div className="start-game">
-              <button type="button" className="primary" disabled={!me?.faction} onClick={startGame}>{t('players.begin')}</button>
-              {!me?.faction && <span className="players-hint">{t('players.needFaction')}</span>}
+              <button type="button" className="primary" disabled={!atTablet?.faction} onClick={startGame}>{t('players.begin')}</button>
+              {!atTablet?.faction && <span className="players-hint">{t('players.needFaction')}</span>}
             </div>
           )}
         </div>

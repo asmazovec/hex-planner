@@ -18,7 +18,7 @@ import type { Entry } from '../../../testing/old/domain/types';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { PlanScreen } from '../../screens/PlanScreen';
-import { gameNow } from '../../../testing/store';
+import { gameNow, opponentAt, viewerNow } from '../../../testing/store';
 
 const HOME = '1,0';
 const OTHER = '0,1';
@@ -58,8 +58,8 @@ const ability = (name: 'Primary' | 'Secondary') => button(new RegExp(`^${name}`)
 const primary = (card?: string) => {
   const mine = strategyCards(game().expansions).find(c => c.name === card);
   if (mine) {
-    store().setStrategyCard(1, mine.initiative);
-    store().setStrategyCard(1, mine.initiative);
+    store().setStrategyCard(1, viewerNow(), mine.initiative);
+    store().setStrategyCard(1, viewerNow(), mine.initiative);
   }
   return open(card);
 };
@@ -75,8 +75,8 @@ afterEach(cleanup);
 
 describe('opening', () => {
   test('one menu item: my card not played yet is chosen, once it is played nothing is', async () => {
-    store().setStrategyCard(1, 5);
-    store().setStrategyCard(1, 5);
+    store().setStrategyCard(1, viewerNow(), 5);
+    store().setStrategyCard(1, viewerNow(), 5);
     await primary();
     expect(cardEntry()).toMatchObject({ type: 'strategic', card: 5, phase: 'action' });
     expect(cards().getByRole('button', { name: /Trade/ })).toHaveAttribute('aria-pressed', 'true');
@@ -91,8 +91,8 @@ describe('opening', () => {
   });
 
   test('another player\'s card starts as the secondary for a token, its primary costs a token too and can be taken', async () => {
-    store().setStrategyCard(1, 5);
-    store().setStrategyCard(1, 5);
+    store().setStrategyCard(1, viewerNow(), 5);
+    store().setStrategyCard(1, viewerNow(), 5);
     await primary();
     await userEvent.click(cards().getByRole('button', { name: /Imperial/ }));
     expect(cardEntry()).toMatchObject({ type: 'secondary', card: 8 });
@@ -106,8 +106,8 @@ describe('opening', () => {
   });
 
   test('on my card the primary is free; playing it a second time warns and stays free', async () => {
-    store().setStrategyCard(1, 5);
-    store().setStrategyCard(1, 5);
+    store().setStrategyCard(1, viewerNow(), 5);
+    store().setStrategyCard(1, viewerNow(), 5);
     edits.addEntry(1, { type: 'strategic', card: 5 }, 'action');
     await primary();
     await userEvent.click(cards().getByRole('button', { name: /Trade/ }));
@@ -121,18 +121,18 @@ describe('opening', () => {
   });
 
   test('the pool follows the number of players: at 6 the backup is not mine, at 3 it is', async () => {
-    store().setStrategyCard(1, 5);
-    store().setStrategyCard(1, 5);
-    store().setStrategyCard(1, 2);
+    store().setStrategyCard(1, viewerNow(), 5);
+    store().setStrategyCard(1, viewerNow(), 5);
+    store().setStrategyCard(1, viewerNow(), 2);
     edits.addEntry(1, { type: 'strategic', card: 5 }, 'action');
     await primary();
     await userEvent.click(cards().getByRole('button', { name: /Diplomacy/ }));
     expect(ability('Primary')).toHaveTextContent('−1 strategy token');
     cleanup();
     start({ playerCount: 3 });
-    store().setStrategyCard(1, 5);
-    store().setStrategyCard(1, 5);
-    store().setStrategyCard(1, 2);
+    store().setStrategyCard(1, viewerNow(), 5);
+    store().setStrategyCard(1, viewerNow(), 5);
+    store().setStrategyCard(1, viewerNow(), 2);
     edits.addEntry(1, { type: 'strategic', card: 5 }, 'action');
     await primary();
     expect(entries()[1]).toMatchObject({ type: 'strategic', card: 2 });
@@ -172,9 +172,9 @@ describe('opening', () => {
 
   test('at 3 players the second primary takes the other planned card and warns about nothing', async () => {
     start({ playerCount: 3 });
-    store().setStrategyCard(1, 5);
-    store().setStrategyCard(1, 5);
-    store().setStrategyCard(1, 2);
+    store().setStrategyCard(1, viewerNow(), 5);
+    store().setStrategyCard(1, viewerNow(), 5);
+    store().setStrategyCard(1, viewerNow(), 2);
     edits.addEntry(1, { type: 'strategic', card: 5 }, 'action');
     render(<PlanScreen />);
     await click('Add action');
@@ -398,7 +398,7 @@ describe('Politics', () => {
   });
 
   test('with six players the choice stays one line: tags underlined in the colour, the name for the reader', async () => {
-    store().setOpponent(1, { faction: 'hacan' });
+    store().setFaction(opponentAt(1), 'hacan');
     await primary('Politics');
     const speaker = within(screen.getByRole('group', { name: 'The speaker passes to' }));
     const hacan = speaker.getByRole('button', { name: 'Hacan' });

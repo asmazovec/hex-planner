@@ -1,4 +1,8 @@
-/** The table edits against the old edits of `Game` they replace: the saved game each makes is the one the old edit makes. */
+/**
+ * The table edits against the old edits of `Game` they replace: the saved game each makes is the one the old edit makes,
+ * where the old model can say it. What the old model could not (any player leaving, the tablet moving, a sheet moving
+ * with any player's faction) is tested on the saved game itself.
+ */
 import { playerOfKey } from '../../testing/old/game/keys';
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
@@ -7,7 +11,7 @@ import { slotsFor } from '../../domain/mapBuilder';
 import { changeLayout as oldChangeLayout, emptySlots as oldEmptySlots, freeSlots as oldFreeSlots, mapIsEmpty as oldMapIsEmpty, readyToPlay as oldReady, tilesLostByLayout as oldLost } from '../../testing/old/domain/mapBuilder';
 import { withTeMecatol } from '../../testing/old/domain/mecatol';
 import { createGame } from '../../testing/old/domain/newGame';
-import { placeStartUnits, addPlayer as oldAdd, draftWithExpansions as oldDraft, removePlayer as oldRemove, setPlayerFaction as oldFaction, swapSeats as oldSwap, withSeatHomes } from '../../testing/old/domain/players';
+import { addPlayer as oldAdd, draftWithExpansions as oldDraft, removePlayer as oldRemove, setPlayerFaction as oldFaction, swapSeats as oldSwap, withSeatHomes } from '../../testing/old/domain/players';
 import { countChangeEffect as oldCount, opponentHoldings as oldHoldings } from '../../testing/old/domain/players';
 import { homeNotes as oldHomeNotes } from '../../testing/old/domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
@@ -17,14 +21,19 @@ import type { Entry, Game } from '../../testing/old/domain/types';
 import { gameOf, savedOf } from '../../testing/legacySave';
 import type { SavedGame } from '../save';
 import {
-  addExpansion, addPlayer, changeLayout, createSaved, draftWithExpansions, countChangeEffect, emptySlots, freeSlots, homeNotes, opponentHoldings, mapIsEmpty, readyToPlay, removePlayer, setFaction, startedGame, swapSeats, tilesLostByLayout, withMap, withName, withTile,
+  addExpansion, addPlayer, boardHoldings, changeLayout, createSaved, draftWithExpansions, countChangeEffect, emptySlots, freeSlots, homeNotes, mapIsEmpty, readyToPlay, removePlayer, seatedPlayers, setFaction, setViewer, startedGame, swapSeats, tilesLostByLayout, withMap, withName, withTile,
 } from './table';
+import { initialBoard, startBoard } from '../setup';
 import { withFractureActive, withFractureSeat } from './start';
 
 const pack = loadPack(['pok', 'te']);
 const counter = () => { let n = 0; return (prefix: string) => `${prefix}-${n++}`; };
 
-const normal = (s: SavedGame) => ({ ...s, plans: s.plans.map(p => ({ ...p, id: 'plan' })), activePlanId: 'plan' });
+/** The old game lists its players with mine first; the table of an edit keeps them by seat. */
+const bySeat = (s: SavedGame): SavedGame['table'] => ({ ...s.table, players: [...s.table.players].sort((a, b) => a.seat - b.seat) });
+const normal = (s: SavedGame) => ({ ...s, table: bySeat(s), plans: s.plans.map(p => ({ ...p, id: 'plan' })), activePlanId: 'plan' });
+/** The player an old edit names by its place in the old list (mine first, then the opponents). */
+const at = (s: SavedGame, index: number): string => s.table.players[index]?.id ?? '';
 const expectSame = (made: SavedGame, expected: SavedGame) => expect(normal(made)).toEqual(normal(expected));
 
 /** What the store did over the old game for a setup edit: the Fracture follows what the edit changed. */
@@ -104,9 +113,14 @@ describe('a new game', () => {
     [{ expansions: ['pok', 'te'] as ExpansionId[], playerCount: 5, faction: 'creuss' }],
     [{ expansions: [] as ExpansionId[], playerCount: 3, faction: 'hacan' }],
     [{ expansions: ['pok', 'te'] as ExpansionId[], playerCount: 8, faction: 'arborec', layout: 'alternate' as MapLayout }],
-  ])('%j is the saved game the old one makes', input => {
+  ])('%j, begun, is the saved game the old one makes', input => {
     const p = loadPack(input.expansions);
-    expect(createSaved(input, p, counter())).toEqual(savedOf(createGame(input, p, counter())));
+    expect(startedGame(createSaved(input, p, counter()))).toEqual(savedOf(createGame(input, p, counter())));
+  });
+  test('before it begins no sheet is written, for the player at the tablet no more than for the rest', () => {
+    const made = createSaved({ expansions: ['pok'], playerCount: 4, faction: 'sol' }, loadPack(['pok']), counter());
+    expect(made.start).toMatchObject({ placed: false, units: {}, ground: {}, control: {}, docks: [], pds: {} });
+    expect(made.table.viewer).toBe('p1');
   });
 });
 
@@ -128,32 +142,34 @@ describe('players', () => {
     const expected = savedOf(viaOld(g, x => oldRemove(x, index, pack)));
     const seated = new Set(expected.table.players.map(p => p.id));
     const kept = (turn: SavedGame['plans'][number]['rounds'][number]['turns'][number]) => ({ ...turn, acts: turn.acts.filter(act => act.kind !== 'transaction' || seated.has(act.with)) });
-    expectSame(removePlayer(savedOf(g), index), { ...expected, plans: expected.plans.map(plan => ({ ...plan, rounds: plan.rounds.map(round => ({ ...round, turns: round.turns.map(kept) })) })) });
+    expectSame(removePlayer(savedOf(g), at(savedOf(g), index)), { ...expected, plans: expected.plans.map(plan => ({ ...plan, rounds: plan.rounds.map(round => ({ ...round, turns: round.turns.map(kept) })) })) });
   });
-  test('my player and the last three stay', () => {
-    const s = savedOf(draft(4));
-    expect(removePlayer(s, 0)).toBe(s);
+  test('the last three stay, and a player not at the table changes nothing', () => {
     const three = savedOf(draft(3));
-    expect(removePlayer(three, 1)).toBe(three);
+    for (const { id } of three.table.players) expect(removePlayer(three, id)).toBe(three);
+    const s = savedOf(draft(4));
+    expect(removePlayer(s, 'p9')).toBe(s);
   });
-  test.each([0, 1, 2, 3])('a faction set for the player at %i, and cleared', index => {
+  test('the faction of the player at the tablet set, and cleared, as the old edit of my faction', () => {
     const g = draft(4);
     for (const faction of ['winnu', 'jolnar', 'creuss', '']) {
-      expectSame(setFaction(savedOf(g), index, faction), savedOf(viaOld(g, x => oldFaction(x, index, faction, pack))));
+      expectSame(setFaction(savedOf(g), at(savedOf(g), 0), faction), savedOf(viaOld(g, x => oldFaction(x, 0, faction, pack))));
     }
-    const same = savedOf(g);
-    expect(setFaction(same, index, g.opponents[index - 1]?.faction ?? g.faction)).toBe(same);
+  });
+  test.each([0, 1, 2, 3])('the faction a player has already changes nothing (player %i)', index => {
+    const same = savedOf(draft(4));
+    expect(setFaction(same, at(same, index), same.table.players[index].faction)).toBe(same);
   });
   test.each([[0, 1], [1, 3], [2, 0], [0, 3]])('seats %i and %i trade', (a, b) => {
     const g = draft(4);
-    expectSame(swapSeats(savedOf(g), a, b), savedOf(viaOld(g, x => oldSwap(x, a, b, pack))));
+    expectSame(swapSeats(savedOf(g), at(savedOf(g), a), at(savedOf(g), b)), savedOf(viaOld(g, x => oldSwap(x, a, b, pack))));
     const s = savedOf(g);
-    expect(swapSeats(s, a, a)).toBe(s);
+    expect(swapSeats(s, at(s, a), at(s, a))).toBe(s);
   });
   test('the Fracture seat goes with the count', () => {
     const g = viaOld({ ...draft(6), fracture: { active: true, ingress: [], seat: 6 } }, x => x);
     const g2 = { ...g };
-    expectSame(removePlayer(savedOf(g2), 5), savedOf(viaOld(g2, x => oldRemove(x, 5, pack))));
+    expectSame(removePlayer(savedOf(g2), at(savedOf(g2), 5)), savedOf(viaOld(g2, x => oldRemove(x, 5, pack))));
     void withFractureActive;
     void withFractureSeat;
   });
@@ -214,30 +230,116 @@ describe('expansions', () => {
     const g = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: '' }, pack, counter());
     let d = oldFaction(oldFaction(oldFaction(g, 0, 'sol', pack), 1, 'keleresa', pack), 3, 'hacan', pack);
     d = { ...d, map: { ...d.map, '1,-1': '26', '2,-1': '2000' } };
+    // The same draft made by the edits of the table: no sheet is written in it until it begins.
+    const made = [['p1', 'sol'], ['p2', 'keleresa'], ['p4', 'hacan']].reduce<SavedGame>((game, [player, faction]) => setFaction(game, player, faction), createSaved({ expansions: ['pok', 'te'], playerCount: 6 }, pack, counter()));
+    const draft: SavedGame = { ...made, table: { ...made.table, map: { ...made.table.map, '1,-1': '26', '2,-1': '2000' } } };
     for (const expansions of [['pok'], [], ['te', 'pok']] as ExpansionId[][]) {
       const old = oldDraft(d, expansions, loadPack(expansions));
-      expectSame(draftWithExpansions(savedOf(d), expansions), savedOf({ ...old, name: undefined } as Game));
+      const under = draftWithExpansions(draft, expansions);
+      expect(under.start).toMatchObject({ placed: false, units: {}, ground: {}, control: {}, docks: [], pds: {} });
+      // The old draft has my sheet written, as every old game has; the sheets apart, the two are the same.
+      const sheetless = (s: SavedGame): SavedGame => ({ ...s, start: { ...s.start, placed: false, units: {}, ground: {}, control: {}, docks: [], pds: {} } });
+      expectSame({ ...under, id: old.id }, sheetless(savedOf({ ...old, name: undefined } as Game)));
     }
     void gameOf;
   });
 });
 
-describe('the start of the game', () => {
-  const draft = (count: number, factions: string[], expansions: ExpansionId[] = ['pok', 'te']): Game => {
-    const p = loadPack(expansions);
-    let g = createGame({ expansions, playerCount: count, faction: '' }, p, counter());
-    factions.forEach((f, i) => { g = oldFaction(g, i, f, p); });
-    return g;
-  };
+describe('the players are equal', () => {
+  const gated = Object.values(pack.factions).find(f => f.gateTile !== undefined)!.id;
+  /** A game being set up by the edits of the table themselves: a faction at each seat, the first seat at the tablet. */
+  const seat = (factions: string[], expansions: ExpansionId[] = ['pok', 'te']): SavedGame =>
+    factions.reduce<SavedGame>((game, faction, i) => (faction ? setFaction(game, `p${i + 1}`, faction) : game), createSaved({ expansions, playerCount: factions.length }, loadPack(expansions), counter()));
+  const four = () => seat(['sol', 'hacan', 'arborec', 'mentak']);
+  const factionsOf = (s: SavedGame) => seatedPlayers(s.table).map(p => [p.id, p.faction]);
+  const onBoard = (s: SavedGame) => { const { systems, planets } = startBoard(s, loadPack(s.table.expansions)); return { systems, planets }; };
+  const bySheets = (s: SavedGame) => { const { systems, planets } = initialBoard(s.table, loadPack(s.table.expansions)); return { systems, planets }; };
+
+  test('any player may leave, the one at the tablet too: the first of the rest by seat sits at it', () => {
+    const left = removePlayer(four(), 'p1');
+    expect(factionsOf(left)).toEqual([['p1', 'hacan'], ['p2', 'arborec'], ['p3', 'mentak']]);
+    expect(left.table.viewer).toBe('p1');
+    // The plan keeps the cards of the one at the tablet.
+    expect(left.plans[0].rounds.map(round => Object.keys(round.picks))).toEqual([['p1']]);
+    const third = setViewer(four(), 'p3');
+    expect(removePlayer(third, 'p3').table.viewer).toBe('p1');
+  });
+
+  test('the tablet follows its player when a player before them leaves', () => {
+    const left = removePlayer(setViewer(four(), 'p3'), 'p2');
+    expect(left.table.viewer).toBe('p2');
+    expect(seatedPlayers(left.table).find(p => p.id === 'p2')?.faction).toBe('arborec');
+  });
+
+  test('the tablet is a mark on one player: it moves to any of them, and the plan keeps the cards of that one', () => {
+    const draft = four();
+    const moved = setViewer(draft, 'p3');
+    expect(moved.table.viewer).toBe('p3');
+    expect(moved.table.players).toEqual(draft.table.players);
+    expect(moved.start).toEqual(draft.start);
+    expect(moved.plans[0].rounds.map(round => Object.keys(round.picks))).toEqual([['p3']]);
+    expect(setViewer(moved, 'p3')).toBe(moved);
+    expect(setViewer(moved, 'p9')).toBe(moved);
+  });
+
+  test('the tablet stays with its player through a trade of seats', () => {
+    const traded = swapSeats(setViewer(four(), 'p3'), 'p3', 'p1');
+    expect(traded.table.viewer).toBe('p1');
+    expect(seatedPlayers(traded.table)[0].faction).toBe('arborec');
+  });
+
   test.each([
-    [4, ['sol', 'hacan', 'arborec', 'creuss']],
-    [6, ['sol', 'creuss', 'hacan', 'arborec', 'mentak', 'saar']],
-    [5, ['letnev', 'nekro', 'naalu', 'muaat', 'empyrean']],
-    [3, ['sol', '', 'yssaril']],
-    [8, ['sol', 'hacan', 'arborec', 'creuss', 'mentak', 'saar', 'winnu', 'yin']],
-  ])('%i players: the opponents stand at their seats as the old start places them', (count, factions) => {
-    const g = draft(count, factions);
-    expect(startedGame(savedOf(g))).toEqual(savedOf(placeStartUnits(g, pack)));
+    [['sol', 'hacan', 'arborec', 'mentak']],
+    [['sol', gated, 'hacan', 'arborec', 'mentak', 'saar']],
+    [['letnev', 'nekro', 'naalu', 'muaat', 'empyrean']],
+    [['sol', '', 'yssaril']],
+    [['sol', 'hacan', 'arborec', gated, 'mentak', 'saar', 'winnu', 'yin']],
+  ])('%j begin the same way: each stands at home with what the sheet gives, written into the start', factions => {
+    const draft = seat(factions);
+    expect(draft.start).toMatchObject({ placed: false, units: {}, ground: {}, control: {}, docks: [], pds: {} });
+    const begun = startedGame(draft);
+    expect(begun.start.placed).toBe(true);
+    expect(onBoard(begun)).toEqual(bySheets(begun));
+    expect(startedGame(begun)).toBe(begun);
+    // Who sits at the tablet changes nothing on the board.
+    expect(onBoard(startedGame(setViewer(draft, `p${factions.length}`)))).toEqual(onBoard(begun));
+  });
+
+  test.each(['p1', 'p2', 'p3', 'p4'])('a faction set for %s after the game began moves that player\'s sheet: the units, the structures and the home planets', player => {
+    const draft = four();
+    for (const faction of ['jolnar', gated, '']) {
+      const after = setFaction(startedGame(draft), player, faction);
+      const fresh = startedGame(setFaction(draft, player, faction));
+      expect(after.table, faction).toEqual(fresh.table);
+      // The order of the docks means nothing.
+      const sorted = (s: SavedGame) => ({ ...s.start, docks: [...s.start.docks].sort() });
+      expect(sorted(after), faction).toEqual(sorted(fresh));
+    }
+  });
+
+  test('what was written by hand beside the sheet stays when the faction changes', () => {
+    const begun = startedGame(four());
+    const home = Object.keys(begun.start.units).find(slot => begun.start.units[slot].p2)!;
+    const sheet = begun.start.units[home].p2;
+    const more: SavedGame = { ...begun, start: { ...begun.start, units: { ...begun.start.units, [home]: { p2: { ...sheet, warsun: 1 } } } } };
+    const changed = setFaction(more, 'p2', 'jolnar');
+    const fresh = startedGame(setFaction(four(), 'p2', 'jolnar'));
+    expect(changed.start.units[home].p2).toEqual({ ...fresh.start.units[home].p2, warsun: 1 });
+  });
+
+  test('a player leaves a game that began: the fleets of the rest stay at their homes, which move with the template', () => {
+    const begun = startedGame(seat(['sol', 'hacan', 'arborec', 'mentak', 'saar', 'winnu']));
+    for (const player of ['p1', 'p4']) {
+      const left = removePlayer(begun, player);
+      expect(onBoard(left), player).toEqual(bySheets(left));
+    }
+  });
+
+  test('ready to play: every player has a faction, the one at the tablet like the rest', () => {
+    const map = (s: SavedGame): SavedGame => ({ ...s, table: { ...s.table, map: { ...s.table.map, ...Object.fromEntries(freeSlots(s.table, pack).map(slot => [slot, '26'])) } } });
+    expect(readyToPlay(map(four()).table, pack)).toBe(true);
+    expect(readyToPlay(map(setFaction(four(), 'p3', '')).table, pack)).toBe(false);
+    expect(readyToPlay(map(setFaction(four(), 'p1', '')).table, pack)).toBe(false);
   });
 });
 
@@ -262,7 +364,7 @@ describe('what the map builder reads of the table, as the old builder reads it o
     expect(mapIsEmpty(saved.table, loadedPack)).toBe(oldMapIsEmpty(g, loadedPack));
     expect(readyToPlay(saved.table, loadedPack)).toBe(oldReady(g, loadedPack));
     for (const n of [count - 1, count + 1]) expect(countChangeEffect(saved.table, n, loadedPack)).toEqual(oldCount(g, n, loadedPack));
-    for (const o of g.opponents) expect(opponentHoldings(saved.start, playerOfKey(saved.table, o.id)!)).toEqual(oldHoldings(g, o.id));
+    for (const o of g.opponents) expect(boardHoldings(saved.start, playerOfKey(saved.table, o.id)!)).toEqual(oldHoldings(g, o.id));
     expect(homeNotes(saved.table, loadedPack)).toEqual(oldHomeNotes(g, loadedPack));
     for (const layout of LAYOUT_CHOICES[count] ?? []) expect(tilesLostByLayout(saved, layout, loadedPack)).toBe(oldLost(g, layout, loadedPack));
   });

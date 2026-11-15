@@ -70,8 +70,8 @@ export function addTurn(table: Table, roundNumber: number, kind: Exclude<NewActi
   return store.addTurn(roundNumber, turn);
 }
 
-/** The status turn of a round: the one it already has, or a new one with no tokens taken. */
-export const addStatusTurn = (roundNumber: number): string => useGame.getState().addStatusTurn(roundNumber);
+/** The status turn of a round: the one it already has, or a new one of `player` with no tokens taken. */
+export const addStatusTurn = (roundNumber: number, player: PlayerId): string => useGame.getState().addStatusTurn(roundNumber, player);
 
 /** Marks a turn done, planned again or cancelled. */
 export const setStatus = (turnId: string, status: EntryStatus): void => useGame.getState().setStatus(turnId, status);

@@ -11,6 +11,7 @@ import { setLanguage, currentLanguage } from '../i18n';
 import { saveGame } from '../storage/db';
 import { legacySampleGame, sampleGame } from '../testing/fixture';
 import { savedOf } from '../testing/legacySave';
+import { opponentAt } from '../testing/store';
 
 afterEach(cleanup);
 
@@ -48,7 +49,7 @@ test('the address of an open game is its link, it follows the game, and it clear
   expect(params().get('factions')).toBe(`${factionCode('sol')},-,-`);
   act(() => useGame.getState().setTile('0,-1', '25'));
   expect(params().get('map')?.split(' ')[0]).toBe('25');
-  act(() => useGame.getState().setOpponent(0, { faction: 'hacan' }));
+  act(() => useGame.getState().setFaction(opponentAt(0), 'hacan'));
   expect(params().get('factions')).toBe(`${factionCode('sol')},${factionCode('hacan')},-`);
   expect(window.history.length).toBe(entries);
   act(() => useGame.getState().closeGame());

@@ -70,7 +70,7 @@ test('a game from the first screen to an exported file, and back offline', async
   await test.step("start a game with Prophecy of Kings and Thunder's Edge", async () => {
     await expect(page.getByRole('button', { name: 'Prophecy of Kings' })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('button', { name: "Thunder's Edge" })).toHaveAttribute('aria-pressed', 'true');
-    await page.getByRole('button', { name: 'My faction', exact: true }).click();
+    await page.getByRole('button', { name: 'Player 1 faction', exact: true }).click();
     await page.getByRole('button', { name: 'The Argent Flight' }).click();
   });
 
@@ -205,7 +205,7 @@ test('a game from the first screen to an exported file, and back offline', async
     const file = testInfo.outputPath('game.json');
     await (await download).saveAs(file);
     const exported = JSON.parse(readFileSync(file, 'utf8')) as { format: string; table: { viewer: string; players: { id: string; faction: string }[] }; plans: { rounds: { turns: unknown[] }[] }[] };
-    expect(exported.format).toBe('ti4-planner/4');
+    expect(exported.format).toBe('ti4-planner/5');
     expect(exported.table.players.find(p => p.id === exported.table.viewer)?.faction).toBe('argent');
     expect(exported.plans[0].rounds[0].turns).toHaveLength(entryCount + 1);
 
@@ -230,7 +230,7 @@ test('a game from the first screen to an exported file, and back offline', async
 test('the tabs of the left drawers stay beside the map through the actions, and only a phone hides them with the map', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
   await page.goto('/');
-  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'Player 1 faction', exact: true }).click();
   await page.getByRole('button', { name: 'The Argent Flight' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
   await pasteMap(page);
@@ -283,7 +283,7 @@ test('the tabs of the left drawers stay beside the map through the actions, and 
 test('a route is drawn by a finger, tapped on, and drawn on again, and the panel adds and removes sources', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
   await page.goto('/');
-  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'Player 1 faction', exact: true }).click();
   await page.getByRole('button', { name: 'The Argent Flight' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
   await pasteMap(page);
@@ -338,7 +338,7 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
 test('a route is drawn from a system without ships, and left with nothing taken its row and its arrow fade away', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
   await page.goto('/');
-  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'Player 1 faction', exact: true }).click();
   await page.getByRole('button', { name: 'The Argent Flight' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
   await pasteMap(page);
@@ -393,7 +393,7 @@ test('a route is drawn from a system without ships, and left with nothing taken 
 async function startTactical(page: Page): Promise<void> {
   await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
   await page.goto('/');
-  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'Player 1 faction', exact: true }).click();
   await page.getByRole('button', { name: 'The Argent Flight' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
   await pasteMap(page);
@@ -566,7 +566,7 @@ test('a flight loops in the details by default, and with the setting off plays o
   };
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'Player 1 faction', exact: true }).click();
   await page.getByRole('button', { name: 'The Argent Flight' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
   await pasteMap(page);
@@ -629,7 +629,7 @@ test('a flight loops in the details by default, and with the setting off plays o
 test('a faction whose home is not on the pasted map starts at its seat and can send a route', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
   await page.goto('/');
-  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'Player 1 faction', exact: true }).click();
   await page.getByRole('button', { name: 'The Federation of Sol' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
   await pasteMap(page);
@@ -646,5 +646,5 @@ test('a faction whose home is not on the pasted map starts at its seat and can s
   await expect(page.getByText(`Flight ${HOME} → ${HOPE}`)).toBeVisible();
 
   await page.getByRole('button', { name: 'Game', exact: true }).click();
-  await expect(page.getByText('Seat 1 holds the home system of The Argent Flight, and your faction is The Federation of Sol.')).toBeVisible();
+  await expect(page.getByText('Seat 1 holds the home system of The Argent Flight, and the faction seated there is The Federation of Sol.')).toBeVisible();
 });

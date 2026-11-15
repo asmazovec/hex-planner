@@ -1,8 +1,7 @@
 /**
- * Edits of what the user places by hand before the plan (`StartEdits`): the units and planets of the other players,
- * docks and PDS, what the players hold, the state of their leaders, the expedition and the Fracture. Each takes the
- * saved game and hands back the same one when nothing changed. Pinned 1:1 against the edits of the old game
- * (`start.test.ts`).
+ * Edits of what stands before the plan (`StartEdits`), by hand: the units and planets of any player, docks and PDS,
+ * what the players hold, the state of their leaders, the expedition and the Fracture. Each takes the saved game and
+ * hands back the same one when nothing changed. Pinned 1:1 against the edits of the old game (`start.test.ts`).
  */
 import { loadPack } from '../../data/loadPack';
 import { noteAddress } from '../../domain/components';
@@ -201,11 +200,11 @@ export function withIngressToggled(saved: SavedGame, slot: Slot): SavedGame {
 }
 
 /**
- * One unit of another player set by hand, added or removed (the big hex in setup mode). Ground forces go by planet; a
- * removed one still listed with the system (as a start places them) comes off there. Returns the stack to write: on a
- * planet, or in the system's space.
+ * One unit of a player written in the start, added or removed by hand (the big hex in setup mode). Ground forces go by
+ * planet; a removed one still listed with the system comes off there. Returns the stack to write: on a planet, or in the
+ * system's space.
  */
-export function enemyChangeOf(
+export function placedChangeOf(
   saved: SavedGame, slot: Slot, player: PlayerId, unit: string, planetId: PlanetId | null, amount: number,
 ): { planetId: PlanetId; units: UnitCounts } | { slot: Slot; units: UnitCounts } {
   const shifted = (units: UnitCounts): UnitCounts => {
