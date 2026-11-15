@@ -1,3 +1,4 @@
+import { emptyRound, picksOf } from '../../game/round';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { emptySlots } from '../../game/edit/table';
@@ -214,7 +215,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const actor = planTable.players.some(p => p.id === actingAs && p.id !== planTable.viewer && p.seat < 100) ? actingAs ?? undefined : undefined;
   /** Whose action stands in an editor now; a new tactical action is the card's owner's or the one it is added for. */
   const handOwner: PlayerId | undefined = picking
-    ? tacticalOwner(forecastKernel.rounds.find(r => r.number === round.number) ?? { number: round.number, strategyCard: null, backupCard: null, held: [], turns: [] }, tactical?.byCard, actor ?? planTable.viewer)
+    ? tacticalOwner(forecastKernel.rounds.find(r => r.number === round.number) ?? emptyRound(round.number), tactical?.byCard, actor ?? planTable.viewer)
     : (entry ?? cardEntry ?? adjustmentEntry)?.player ?? planTable.viewer;
 
   const onPick = (type: ActionType) => {
@@ -792,7 +793,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
                   openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} onShow={onShowEntry}
                   onStatusAdded={id => update(state => ({ ...state, openId: id }))} onAddAgenda={onAddAgenda}
                   onDone={done => { if (done.action.kind === 'tactical' && done.action.movement.some(f => hasUnits(f.units))) flight.start(done.id, shownFilter); }}
-                  strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={saved.table.expansions} playerCount={planTable.players.filter(p => p.seat < 100).length} round={round} />}
+                  strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={saved.table.expansions} playerCount={planTable.players.filter(p => p.seat < 100).length} round={round.number} picks={picksOf(round, planTable.viewer)} />}
                   addAction={(
                     <ActionMenu
                       onPick={onPick}

@@ -731,7 +731,7 @@ describe('the store holds the saved game', () => {
     const other = structuredClone(game());
     other.plans[0].rounds[0].strategyCard = 5;
     seedGame(other);
-    expect(rounds()[0].strategyCard).toBe(5);
+    expect(rounds()[0].picks[act().saved!.table.viewer].strategyCard).toBe(5);
     seedGame(null);
     expect(act().saved).toBeNull();
   });

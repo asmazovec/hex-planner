@@ -7,7 +7,7 @@ const turn = (id: string, action: Turn['action']): Turn => ({ id, player: 'p1', 
 const tactical = turn('t', { kind: 'tactical', system: '0,1', movement: [], invasion: [] });
 const card = turn('c', { kind: 'strategic', card: 1 });
 const adjustment = turn('x', { kind: 'correction', label: '', delta: {} });
-const round: Round = { number: 1, strategyCard: null, backupCard: null, held: [], turns: [tactical, card, adjustment] };
+const round: Round = { number: 1, picks: {}, turns: [tactical, card, adjustment] };
 const at = (panel: Panel): PickState => ({ ...START, panel });
 
 describe('the one slot of the panel', () => {

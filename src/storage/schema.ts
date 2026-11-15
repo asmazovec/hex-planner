@@ -78,7 +78,9 @@ const turn: z.ZodType<Turn> = z.lazy(() => z.object({
   gains: ids.optional(), spends: ids.optional(), choices: choices.optional(),
 }));
 const round: z.ZodType<Round> = z.object({
-  number: z.number().int(), strategyCard: z.number().nullable(), backupCard: z.number().nullable(), held: z.array(z.number().int()), turns: z.array(turn),
+  number: z.number().int(),
+  picks: byPlayer(z.object({ strategyCard: z.number().nullable(), backupCard: z.number().nullable(), held: z.array(z.number().int()) })),
+  turns: z.array(turn),
 });
 
 const startHoldings = z.object({
@@ -97,6 +99,7 @@ const table = z.object({
 const start = z.object({
   points: z.record(z.string(), z.number()),
   holdings: z.record(z.string(), startHoldings),
+  sheetUnits: z.array(z.string()),
   units: z.record(z.string(), z.record(z.string(), unitCounts)),
   ground: z.record(z.string(), z.record(z.string(), unitCounts)),
   control: z.record(z.string(), z.string()),

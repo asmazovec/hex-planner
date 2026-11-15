@@ -16,7 +16,7 @@ import { heldCards, splitStartUnits, type HomeNote } from '../../domain/strategy
 import { fractureSlots } from '../../domain/thundersEdge';
 import type { DataPack, ExpansionId, MapLayout, StartHoldings } from '../../domain/types';
 import { SAVED_FORMAT, type SavedGame, type StartEdits } from '../save';
-import type { Round } from '../round';
+import { emptyRound, type Round } from '../round';
 import type { Action, Turn } from '../actions';
 import type { Player, PlayerId, Slot, Table, TileRef } from '../types';
 import { withFractureTiles, withHeld } from './start';
@@ -122,7 +122,7 @@ function withoutPlayerInPlans(saved: SavedGame, leaving: Player): SavedGame {
   const player = leaving.id;
   const gone = (id: string): boolean => noteAddress(id) === player;
   return mapRounds(saved, round => ({
-    ...round,
+    ...round, picks: Object.fromEntries(Object.entries(round.picks).filter(([id]) => id !== player)),
     turns: mapTurns(round.turns, turn => {
       if (turn.player === player) return null;
       const made = withoutNotes(turn, gone, leaving);
@@ -291,7 +291,8 @@ function seatedAs(saved: SavedGame, list: Player[], start: StartEdits = saved.st
     plans: rename ? renamed(saved.plans, ids) : saved.plans,
   };
   if (count === real(table).length) return moved;
-  return mapRounds(moved, round => ({ ...round, held: heldCards({ strategyCard: round.strategyCard, backupCard: round.backupCard } as never, count) }));
+  // The cards a player holds follow the count of players (33.9).
+  return mapRounds(moved, round => ({ ...round, picks: Object.fromEntries(Object.entries(round.picks).map(([player, picks]) => [player, { ...picks, held: heldCards(picks, count) }])) }));
 }
 
 /** The players of the table, mine first. */
@@ -344,7 +345,7 @@ export function removePlayer(saved: SavedGame, index: number): SavedGame {
   const cleared: SavedGame = {
     ...saved,
     start: {
-      ...start, points,
+      ...start, points, sheetUnits: start.sheetUnits.filter(id => id !== leaving.id),
       // The notes of the player who leaves go with them, whoever held them (69.7).
       holdings: Object.fromEntries(Object.entries(held).map(([id, theirs]) => [id, withoutNotesOf(theirs, leaving.id)])),
       units: without(start.units), ground: without(start.ground),
@@ -483,7 +484,6 @@ export function createSaved(
   ];
   const control: Record<string, PlayerId> = {};
   for (const planetId of pack.tiles[faction?.homeTile ?? '']?.planetIds ?? []) control[planetId] = 'p1';
-  const round = { number: 1, strategyCard: null, backupCard: null };
   return {
     id: gameId, format: SAVED_FORMAT, schemaVersion: 1, dataVersion: pack.version,
     table: { id: gameId, name: '', expansions: [...input.expansions], layout: template?.layout ?? layout, map, players, viewer: 'p1' },
@@ -493,10 +493,12 @@ export function createSaved(
         p1: first,
         ...Object.fromEntries(players.slice(1).map(p => [p.id, { promissory: genericNotes(pack, p.id) } as StartHoldings])),
       },
-      units: {}, ground: {}, control, docks: structures.docks, pds: structures.pds,
+      // The sheet places the fleet of the player whose game it is; the others are written when the game begins (`startedGame`).
+      sheetUnits: ['p1'], units: {}, ground: {}, control, docks: structures.docks, pds: structures.pds,
       expedition: { slices: {}, thundersEdgeSystem: null }, fracture: { active: false, ingress: [], seat: null },
     },
-    plans: [{ id: planId, name: 'Plan 1', rounds: [{ ...round, held: heldCards(round as never, input.playerCount), turns: [] }] }],
+    // The plan keeps the strategy cards of the player whose plan it is.
+    plans: [{ id: planId, name: 'Plan 1', rounds: [emptyRound(1, ['p1'])] }],
     activePlanId: planId,
   };
 }
@@ -527,7 +529,7 @@ export function draftWithExpansions(draft: SavedGame, expansions: ExpansionId[],
   const ids = new Map(players.map(p => [p.id, idOfSeat(p.seat)]));
   const seated = players.map(p => ({ ...p, id: ids.get(p.id)! }));
   const start: StartEdits = {
-    ...blank.start,
+    ...blank.start, sheetUnits: [ids.get(players[0].id)!],
     points: Object.fromEntries(players.map(p => [ids.get(p.id)!, draft.start.points[p.id] ?? 0])),
     holdings: {
       [ids.get(players[0].id)!]: renamed(blank.start.holdings.p1, new Map([['p1', ids.get(players[0].id)!]])),
@@ -544,15 +546,15 @@ export function draftWithExpansions(draft: SavedGame, expansions: ExpansionId[],
 }
 
 /**
- * A game begins: every opponent stands at their seat with their faction's start units, and their home planets are theirs.
- * The board's `setup` places what the sheets give; the opponents' placements are written too, because the Setup mode of the
- * big hex edits them as they stand (a fleet taken off, a dock moved) and a placement that setup alone gave could not be taken off.
+ * A game begins: every player whose units the sheet does not place itself (`sheetUnits`) stands at their seat with their
+ * faction's start units, and their home planets are theirs. Their placements are written, because the Setup mode of the
+ * big hex edits them as they stand (a fleet taken off, a dock moved) and a placement a sheet alone gave could not be taken off.
  */
 export function startedGame(draft: SavedGame): SavedGame {
   const { table } = draft;
   const pack = loadPack(table.expansions);
   const slots = seatSlots(real(table).length, pack, table.layout);
-  const start = listOf(draft).slice(1).reduce<StartEdits>((next, { id, faction, seat }) => {
+  const start = real(table).filter(p => !draft.start.sheetUnits.includes(p.id)).sort((a, b) => listOf(draft).indexOf(a) - listOf(draft).indexOf(b)).reduce<StartEdits>((next, { id, faction, seat }) => {
     const def = pack.factions[faction];
     const slot = slots[seat - 1];
     if (!def || !slot) return next;

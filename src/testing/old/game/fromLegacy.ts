@@ -172,7 +172,8 @@ export function planOf(table: Table, plan: Plan, pack?: DataPack): Round[] {
         turns.push(turnOf(table, entry, pack, linked));
       }
     }
-    const made: Round = { number: round.number, strategyCard: round.strategyCard, backupCard: round.backupCard, held: heldCards(round, count), turns };
+    // The cards of an old round are mine: the viewer's.
+    const made: Round = { number: round.number, picks: { [table.viewer]: { strategyCard: round.strategyCard, backupCard: round.backupCard, held: heldCards(round, count) } }, turns };
     planned.set(round, { table, pack, round: made });
     return made;
   });

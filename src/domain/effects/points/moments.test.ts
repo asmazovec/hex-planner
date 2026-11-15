@@ -54,6 +54,15 @@ describe('onRoundStart, onStatusStart, onStatusEnd: once a round', () => {
     expect(state.tradeGoods).toBe(0);
   });
 
+  test('the start of a round is every player\'s own moment: a rival\'s component that speaks in its holder\'s action is asked for the rival', () => {
+    const rival = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
+    const pack = rulesPack();
+    withEffect(pack, TECH, { tier: 'passive', rule: TECH, holder: 'self', on: { onRoundStart: ctx => [gain.tradeGoods(ctx.holder, 1)] } });
+    const { state } = forecast(rulesGame({ rounds: [[adjust({})]], game: { opponents: [rival], start: { me: {}, opponents: { [rival.id]: { technologies: [TECH] } } } } }), pack);
+    expect(state.tradeGoods).toBe(0);
+    expect(state.rivals?.[rival.id].tradeGoods).toBe(1);
+  });
+
   test('a component not in force is not asked', () => {
     const { state } = run(native({ onRoundStart: ctx => [gain.tradeGoods(ctx.holder, 1)] }), [[adjust({})]], {});
     expect(state.tradeGoods).toBe(0);

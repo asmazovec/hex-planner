@@ -207,7 +207,8 @@ test('with 3 or 4 players the backup is the second card', async () => {
 function StrategyCardsLive({ playerCount = 6 }: { playerCount?: number }) {
   const live = useOldGame()!;
   const round = live.plans[0].rounds[0];
-  return <StrategyCards expansions={live.expansions} playerCount={playerCount} round={round} />;
+  // The cards of an old round are mine; the component takes them as the picks of the player whose plan it is.
+  return <StrategyCards expansions={live.expansions} playerCount={playerCount} round={round.number} picks={{ strategyCard: round.strategyCard, backupCard: round.backupCard, held: [] }} />;
 }
 
 test('the menu holds one item for a strategy card', async () => {

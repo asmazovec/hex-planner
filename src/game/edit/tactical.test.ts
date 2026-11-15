@@ -154,17 +154,17 @@ describe('new turns', () => {
   const kernelRound = planOf(table, g.plans[0], pack)[0];
   const body = (b: EntryBody, id: string, owner?: string) => ({ ...b, id, status: 'planned', phase: 'action', ...(b.type === 'adjustment' ? {} : { acts: [] }), ...(owner ? { owner } : {}) });
   test('a tactical action, free from a card', () => {
-    const turn = newTurn('tactical', { id: 'n', player: 'p1', viewer: 'p1', round: kernelRound }, { system: 'B' });
+    const turn = newTurn('tactical', { id: 'n', player: 'p1', round: kernelRound }, { system: 'B' });
     expect(entryOf(table, turn)).toEqual(body(tacticalBody('B'), 'n'));
-    const free = newTurn('tactical', { id: 'n', player: 'p1', viewer: 'p1', round: kernelRound }, { system: 'B', byCard: 'w' });
+    const free = newTurn('tactical', { id: 'n', player: 'p1', round: kernelRound }, { system: 'B', byCard: 'w' });
     expect(entryOf(table, free)).toEqual({ ...body(tacticalBody('B', 'w'), 'n'), fromCard: undefined });
   });
   test('the other kinds, mine and a rival', () => {
     const rival = table.players[1];
     const key = legacyKey(table, rival.id);
     for (const kind of ['strategic', 'component', 'pass', 'adjustment'] as const) {
-      expect(entryOf(table, newTurn(kind, { id: 'n', player: 'p1', viewer: 'p1', round: kernelRound })), kind).toEqual(body(newEntryBody(kind, round, 3), 'n'));
-      expect(entryOf(table, newTurn(kind, { id: 'n', player: rival.id, viewer: 'p1', round: kernelRound })), kind).toEqual(body(newEntryBody(kind, round, 3, key), 'n', key));
+      expect(entryOf(table, newTurn(kind, { id: 'n', player: 'p1', round: kernelRound })), kind).toEqual(body(newEntryBody(kind, round, 3), 'n'));
+      expect(entryOf(table, newTurn(kind, { id: 'n', player: rival.id, round: kernelRound })), kind).toEqual(body(newEntryBody(kind, round, 3, key), 'n', key));
     }
   });
   test('the planned card skips the cards already played; the owner of a free action is the owner of the card', () => {

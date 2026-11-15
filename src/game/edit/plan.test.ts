@@ -4,7 +4,7 @@ import type { Round } from '../round';
 import { copiedRounds, heldOf, withCardCycled, withRoundAdded, withTurnAdded, withTurnMoved, withTurnRemoved, withTurnReplaced, withTurnStatus, withoutRound } from './plan';
 
 const turn = (id: string, extra: Partial<Turn> = {}): Turn => ({ id, player: 'p1', status: 'planned', phase: 'action', action: { kind: 'pass' }, acts: [], used: [], ...extra });
-const round = (turns: Turn[] = [], extra: Partial<Round> = {}): Round => ({ number: 1, strategyCard: null, backupCard: null, held: [], turns, ...extra });
+const round = (turns: Turn[] = [], extra: Partial<Round> = {}): Round => ({ number: 1, picks: { p1: { strategyCard: null, backupCard: null, held: [] } }, turns, ...extra });
 const free = turn('free', { action: { kind: 'tactical', system: 'B', movement: [], invasion: [], free: true } });
 const card = (nested: Turn[] = [free]): Turn => turn('card', { action: { kind: 'strategic', card: 6, nested } });
 
@@ -52,9 +52,11 @@ describe('turns', () => {
 describe('cards and rounds', () => {
   test('backup, primary, removed; the cards held follow', () => {
     let r = round();
-    r = withCardCycled(r, 6, 4, 'p1'); expect(r).toMatchObject({ strategyCard: null, backupCard: 6, held: [6] });
-    r = withCardCycled(r, 6, 4, 'p1'); expect(r).toMatchObject({ strategyCard: 6, backupCard: null, held: [6] });
-    r = withCardCycled(r, 6, 4, 'p1'); expect(r).toMatchObject({ strategyCard: null, backupCard: null, held: [] });
+    r = withCardCycled(r, 6, 4, 'p1'); expect(r.picks.p1).toEqual({ strategyCard: null, backupCard: 6, held: [6] });
+    r = withCardCycled(r, 6, 4, 'p1'); expect(r.picks.p1).toEqual({ strategyCard: 6, backupCard: null, held: [6] });
+    r = withCardCycled(r, 6, 4, 'p1'); expect(r.picks.p1).toEqual({ strategyCard: null, backupCard: null, held: [] });
+    // Another player's cards are kept apart, by player.
+    r = withCardCycled(r, 3, 4, 'p2'); expect(r.picks).toEqual({ p1: { strategyCard: null, backupCard: null, held: [] }, p2: { strategyCard: null, backupCard: 3, held: [3] } });
     expect(heldOf(3, 5, 6)).toEqual([3]);
   });
 
@@ -64,7 +66,7 @@ describe('cards and rounds', () => {
   });
 
   test('rounds are added after the last and removed with the gap closed; one stays', () => {
-    const rounds = withRoundAdded(withRoundAdded([round()]));
+    const rounds = withRoundAdded(withRoundAdded([round()], ['p1']), ['p1']);
     expect(rounds.map(r => r.number)).toEqual([1, 2, 3]);
     expect(withoutRound(rounds, 2).map(r => r.number)).toEqual([1, 2]);
     expect(withoutRound([round()], 1)).toHaveLength(1);

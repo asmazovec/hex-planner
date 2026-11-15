@@ -50,6 +50,15 @@ describe('legendary:styx A Song Like Marrow', () => {
     expect(end.vp).toBe(2);
   });
 
+  // "When you lose this card, lose 1 victory point." holds for whoever held the planet, not only for me.
+  // Checks: I land on Styx, which an opponent controlled from the start: they lose it and one point, I gain one.
+  test('legendary:styx taken from an opponent takes one victory point from them', () => {
+    const end = endOf(table([invasion('styx')], { planetControl: { styx: 'enemy' }, planetOwner: { styx: RIVAL.id }, opponents: [{ ...RIVAL, vp: 3 }] }));
+    expect(end.control.styx).toBe('me');
+    expect(end.vp).toBe(1);
+    expect(end.opponentVp[RIVAL.id]).toBe(2);
+  });
+
   test.todo('legendary:styx the opponent who takes Styx gains the point: the opponents\' scores move only by their status entries');
 
   test('legendary:styx is no modify of the victory points', () => {

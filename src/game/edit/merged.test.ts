@@ -35,7 +35,7 @@ function tap(g: Game, change: MergedChange) {
   const table = tableOf(g);
   const made = changeOnBoard(table, boardOf(g, pack), pack, saved.plans[0].rounds, 1, change, newId)!;
   const expected = planOf(table, { rounds: [old] } as Parameters<typeof planOf>[1], pack)[0];
-  expect(made).toEqual({ ...expected, held: saved.plans[0].rounds[0].held });
+  expect(made).toEqual({ ...expected, picks: saved.plans[0].rounds[0].picks });
   return { made, same: made === saved.plans[0].rounds[0] };
 }
 const remove = (g: Game, unit: UnitId, planetId: string | null = null, kind: AdjustmentKind = 'losses') =>

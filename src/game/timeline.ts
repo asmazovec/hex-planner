@@ -71,7 +71,7 @@ export function timeline(table: Table, pack: DataPack, rounds: Round[], filter: 
   for (const round of rounds.slice(kept)) {
     const mark: Mark = { round, start: board, to: 0, statusDone: false };
     board = roundClear(table, board, pack, cardsDue).board;
-    let track = newTrack({ [table.viewer]: round.held });
+    let track = newTrack(Object.fromEntries(Object.entries(round.picks).map(([player, picks]) => [player, picks.held])));
     let roundBegun = false;
     let statusBegun = false;
     let statusDone = false;

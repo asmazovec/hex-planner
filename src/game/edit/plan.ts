@@ -7,7 +7,7 @@
  */
 import type { EntryStatus, Phase } from '../../domain/types';
 import type { Strategic, Turn } from '../actions';
-import { PHASES, type Round } from '../round';
+import { emptyRound, PHASES, picksOf, type Round } from '../round';
 import type { PlayerId } from '../types';
 import { withForTokenOfRound } from './strategic';
 
@@ -99,24 +99,25 @@ export function withTurnStatus(round: Round, id: string, status: EntryStatus): R
 /** How many cards a player holds at a table of this many: two up to four players. */
 const cardsHeld = (playerCount: number): number => (playerCount <= 4 ? 2 : 1);
 
-/** The cards the viewer holds in a round, by its chosen cards. */
+/** The cards a player holds in a round, by the cards chosen. */
 export const heldOf = (strategyCard: number | null, backupCard: number | null, playerCount: number): number[] =>
   (cardsHeld(playerCount) > 1 ? [strategyCard, backupCard] : [strategyCard]).filter((card): card is number => card !== null);
 
 /**
- * The round's cards change: backup, then primary, then removed. The cards held and the flag of the viewer's primaries
- * follow (83.3: a primary played for a token is one of a card the viewer does not hold).
+ * A player's cards of the round change: backup, then primary, then removed. The cards held and the flag of that
+ * player's primaries follow (83.3: a primary played for a token is one of a card the player does not hold).
  */
-export function withCardCycled(round: Round, initiative: number, playerCount: number, viewer: PlayerId): Round {
-  const [strategyCard, backupCard] = round.strategyCard === initiative ? [null, round.backupCard]
-    : round.backupCard === initiative ? [initiative, null]
-      : [round.strategyCard, initiative];
-  return withForTokenOfRound({ ...round, strategyCard, backupCard, held: heldOf(strategyCard, backupCard, playerCount) }, viewer);
+export function withCardCycled(round: Round, initiative: number, playerCount: number, player: PlayerId): Round {
+  const was = picksOf(round, player);
+  const [strategyCard, backupCard] = was.strategyCard === initiative ? [null, was.backupCard]
+    : was.backupCard === initiative ? [initiative, null]
+      : [was.strategyCard, initiative];
+  return withForTokenOfRound({ ...round, picks: { ...round.picks, [player]: { strategyCard, backupCard, held: heldOf(strategyCard, backupCard, playerCount) } } });
 }
 
-/** A round after the last one, with nothing in it. */
-export const withRoundAdded = (rounds: Round[]): Round[] =>
-  [...rounds, { number: Math.max(0, ...rounds.map(r => r.number)) + 1, strategyCard: null, backupCard: null, held: [], turns: [] }];
+/** A round after the last one, with nothing in it; it keeps the cards of `planned`. */
+export const withRoundAdded = (rounds: Round[], planned: readonly PlayerId[]): Round[] =>
+  [...rounds, emptyRound(Math.max(0, ...rounds.map(r => r.number)) + 1, planned)];
 
 /** A round goes and the later ones close the gap; at least one stays. */
 export function withoutRound(rounds: Round[], number: number): Round[] {

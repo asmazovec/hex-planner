@@ -12,7 +12,7 @@ import {
 import { autoPayOn } from '../../../game/planQueries';
 import { poolsOf, upgradesOf as upgradesHeld } from '../../../game/queries';
 import { mapSource } from '../../../game/space';
-import type { Round } from '../../../game/round';
+import { picksOf, type Round } from '../../../game/round';
 import { CARD } from '../../../domain/strategy';
 import type { CardEffects, DataPack, UpgradeId, Warning } from '../../../domain/types';
 import { EntryUpgrades } from '../blocks/EntryUpgrades';
@@ -79,7 +79,6 @@ export function StrategyEditor({
   const effects = effectsOf(turn);
   const entry = cardEntryOf(turn);
   const player = turn.player;
-  const mine = turn.player === table.viewer;
   const faction = table.players.find(p => p.id === player)?.faction ?? '';
   const te = table.expansions.includes('te');
   const cost = cardCostOn(table, board, pack, turn);
@@ -91,7 +90,7 @@ export function StrategyEditor({
     (list?.includes(id) ? list.filter(other => other !== id) : [...(list ?? []), id]);
   const pickCard = (initiative: number) => {
     if (initiative === turn.action.card) return;
-    const play = { card: initiative, ...playOfOn(round, initiative, startsAsPrimaryOn(round, table.viewer, initiative, turn), mine) };
+    const play = { card: initiative, ...playOfOn(round, turn.player, initiative, startsAsPrimaryOn(round, initiative, turn)) };
     onChange(withFreshChange(table, board, pack, turn, play, manualPayment));
   };
   const placer = placeWarnings(warnings, entry);
@@ -142,13 +141,13 @@ export function StrategyEditor({
   const cardWarnings = [...placer.at('card'), ...placer.at('action', w => !limitsSystem(w))];
   /** Whether that side of this card spends a strategy token: the domain decides, from the round's cards for my primary. */
   const costsOf = (asPrimary: boolean) => card !== undefined && strategyTokensOwedOn(
-    table, board, pack, withCard(turn, { card: card.initiative, ...playOfOn(round, card.initiative, asPrimary, mine) }) as typeof turn,
-    { held: mine ? round.held : [] },
+    table, board, pack, withCard(turn, { card: card.initiative, ...playOfOn(round, turn.player, card.initiative, asPrimary) }) as typeof turn,
+    { held: picksOf(round, turn.player).held },
   ) > 0;
   const ability = (asPrimary: boolean, text: string, costsToken: boolean) => (
     <button
       type="button" className={`card-ability card-ability-${asPrimary ? 'primary' : 'secondary'}`} aria-pressed={primary === asPrimary}
-      onClick={() => { if (card && primary !== asPrimary) onChange(withFreshChange(table, board, pack, turn, playOfOn(round, card.initiative, asPrimary, mine), manualPayment)); }}
+      onClick={() => { if (card && primary !== asPrimary) onChange(withFreshChange(table, board, pack, turn, playOfOn(round, turn.player, card.initiative, asPrimary), manualPayment)); }}
     >
       <b>{t(asPrimary ? 'plan.cards.primary' : 'plan.cards.secondary')}{costsToken && <span className="card-ability-cost">{t('plan.strategy.tokenCost')}</span>}</b>
       <span>{text}</span>

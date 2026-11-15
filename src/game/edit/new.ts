@@ -1,24 +1,25 @@
 /** The bodies of new turns by the kind of action, and whose they are: the screen only asks for one. */
 import type { Action, Payment, Turn } from '../actions';
-import type { Round } from '../round';
+import { picksOf, type Round } from '../round';
 import type { PlayerId, Slot } from '../types';
 
 export type NewAction = 'tactical' | 'strategic' | 'component' | 'pass' | 'adjustment';
 
-/** Where a new turn is added: its id, whose it is, the player whose eyes the plan is seen through, and the round it goes into. */
-export interface NewTurnAt { id: string; player: PlayerId; viewer: PlayerId; round: Round; phase?: Turn['phase'] }
+/** Where a new turn is added: its id, whose it is, and the round it goes into. */
+export interface NewTurnAt { id: string; player: PlayerId; round: Round; phase?: Turn['phase'] }
 
 /** A strategy card is a primary for a token when it is not one of the round's cards; with no card of the round chosen, the flag says. */
 const forTokenOf = (card: number | undefined, flag: boolean | undefined, held: number[]): boolean =>
   (held.length > 0 ? card !== undefined && !held.includes(card) : flag === true);
 
-/** The planned card a new strategic action starts with: the first of the viewer's cards not played yet in the round. */
-export function plannedCard(round: Round, viewer: PlayerId): number | undefined {
+/** The planned card a new strategic action of a player starts with: the first of their cards not played yet in the round; none for a player whose cards the round does not keep. */
+export function plannedCard(round: Round, player: PlayerId): number | undefined {
+  const { held } = picksOf(round, player);
   const played = round.turns
-    .filter(t => t.player === viewer && t.action.kind === 'strategic' && t.status !== 'cancelled'
-      && !forTokenOf(t.action.card, t.action.forToken, round.held))
+    .filter(t => t.player === player && t.action.kind === 'strategic' && t.status !== 'cancelled'
+      && !forTokenOf(t.action.card, t.action.forToken, held))
     .map(t => (t.action.kind === 'strategic' ? t.action.card : undefined));
-  return round.held.find(card => !played.includes(card));
+  return held.find(card => !played.includes(card));
 }
 
 const empty = (): Payment => ({ planets: [], tradeGoods: 0 });
@@ -36,17 +37,16 @@ export const tacticalOwner = (round: Round, byCard: string | undefined, actor: P
   (byCard ? round.turns.find(t => t.id === byCard)?.player : undefined) ?? actor;
 
 /**
- * A new turn of any kind. A strategic action of the viewer starts on the card they hold and have not played this round;
- * a rival's cards are not planned, so theirs starts on none.
+ * A new turn of any kind. A strategic action starts on the card its player holds and has not played this round; for a
+ * player whose cards the round does not keep it starts on none.
  */
 export function newTurn(kind: NewAction, at: NewTurnAt, options: { system?: Slot; byCard?: string } = {}): Turn {
-  const mine = at.player === at.viewer;
   const player = kind === 'tactical' ? tacticalOwner(at.round, options.byCard, at.player) : at.player;
   let action: Action;
   switch (kind) {
     case 'tactical': action = newTactical(options.system ?? '', options.byCard); break;
     case 'strategic': {
-      const card = mine ? plannedCard(at.round, at.viewer) : undefined;
+      const card = plannedCard(at.round, at.player);
       action = card === undefined ? { kind: 'strategic' } : { kind: 'strategic', card };
       break;
     }

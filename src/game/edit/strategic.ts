@@ -82,32 +82,34 @@ export const withTokens = (turn: Turn, tokens: CardEffects['tokens'], leadership
 // ---------------------------------------------------------------------------------------------------------------------
 // What the round decides about the cards.
 
-/** How a card is played: its primary is free on a card of mine and on a rival's, and costs a token otherwise. */
-export function playOfOn(round: Round, card: number, primary: boolean, mine: boolean): Pick<CardPatch, 'side' | 'forToken'> {
+/** How a player plays a card: its primary is free on a card they hold, and for a player whose cards the round does not keep; it costs a token otherwise. */
+export function playOfOn(round: Round, player: PlayerId, card: number, primary: boolean): Pick<CardPatch, 'side' | 'forToken'> {
   if (!primary) return { side: 'secondary', forToken: undefined };
-  return { side: 'primary', forToken: mine && !round.held.includes(card) ? true : undefined };
+  const picks = round.picks[player];
+  return { side: 'primary', forToken: picks !== undefined && !picks.held.includes(card) ? true : undefined };
 }
 
 const isMainPrimary = (turn: Turn, held: number[]): boolean =>
   isCardTurn(turn) && isPrimary(turn) && !primaryForTokenOf(turn, held) && turn.status !== 'cancelled';
 
-/** What a tapped card starts as: the primary of a card of mine not played yet this round, the secondary otherwise. A rival's cards are not planned: the primary. */
-export function startsAsPrimaryOn(round: Round, viewer: PlayerId, card: number, turn: Turn): boolean {
-  if (turn.player !== viewer) return true;
-  const played = round.turns.some(other => other.id !== turn.id && other.player === viewer && isMainPrimary(other, round.held) && (other.action as Strategic).card === card);
-  return round.held.includes(card) && !played;
+/** What a tapped card starts as in a turn: the primary of a card its player holds and has not played yet this round, the secondary otherwise. A player whose cards the round does not keep: the primary. */
+export function startsAsPrimaryOn(round: Round, card: number, turn: Turn): boolean {
+  const picks = round.picks[turn.player];
+  if (picks === undefined) return true;
+  const played = round.turns.some(other => other.id !== turn.id && other.player === turn.player && isMainPrimary(other, picks.held) && (other.action as Strategic).card === card);
+  return picks.held.includes(card) && !played;
 }
 
 /**
- * The round with the `forToken` of the viewer's primaries following its cards, so that a saved turn agrees with the
- * replay. With no card chosen the flags stay; turns that agree stay the same objects.
+ * The round with the `forToken` of each player's primaries following that player's cards, so that a saved turn agrees
+ * with the replay. For a player with no card chosen the flags stay; turns that agree stay the same objects.
  */
-export function withForTokenOfRound(round: Round, viewer: PlayerId): Round {
-  if (round.held.length === 0) return round;
+export function withForTokenOfRound(round: Round): Round {
   let changed = false;
   const turns = round.turns.map(turn => {
-    if (turn.action.kind !== 'strategic' || turn.player !== viewer) return turn;
-    const forToken = primaryForTokenOf(turn as CardTurn, round.held) || undefined;
+    const held = round.picks[turn.player]?.held ?? [];
+    if (turn.action.kind !== 'strategic' || held.length === 0) return turn;
+    const forToken = primaryForTokenOf(turn as CardTurn, held) || undefined;
     if (turn.action.forToken === forToken) return turn;
     changed = true;
     return withCard(turn, { forToken });

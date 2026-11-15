@@ -6,7 +6,7 @@
 import type { PlayerId } from '../types';
 
 export interface RoundTrack {
-  /** The cards a player holds this round, by initiative; only the viewer's are planned. */
+  /** The cards a player holds this round, by initiative, for the players whose cards the round keeps. */
   held: Record<PlayerId, number[]>;
   primaries: Record<PlayerId, number[]>;
   secondaries: Record<PlayerId, number[]>;

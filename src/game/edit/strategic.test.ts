@@ -62,7 +62,7 @@ describe.each(['sol', 'naalu', 'arborec', 'titans'])('the readers of a card turn
   const held = old.heldCards(t.g.plans[0].rounds[0], 3);
 
   test('the round holds the cards the old function counts', () => {
-    expect(t.round.held).toEqual(held);
+    expect(t.round.picks[t.table.viewer].held).toEqual(held);
   });
 
   test.each(INDEXES)('cost, tokens owed, free tokens, research, entry %i', i => {
@@ -131,20 +131,22 @@ describe.each(['sol', 'arborec'])('the edits of a card turn, %s', faction => {
     for (const i of [0, 1, 2, 3, 6]) {
       const { e, turn } = t.at(t.entries[i]);
       for (const card of [CARD.leadership, CARD.technology, CARD.warfare, CARD.trade]) {
-        expect(now.startsAsPrimaryOn(t.round, t.table.viewer, card, turn)).toBe(oldOld.startsAsPrimary(r, 3, card, e));
+        expect(now.startsAsPrimaryOn(t.round, card, turn)).toBe(oldOld.startsAsPrimary(r, 3, card, e));
         for (const primary of [true, false]) {
           for (const mine of [true, false]) {
             const was = oldOld.playOf(r, 3, card, primary, mine);
-            expect(now.playOfOn(t.round, card, primary, mine)).toEqual({ side: was.type === 'strategic' ? 'primary' : 'secondary', forToken: was.forToken });
+            // Mine is the viewer's play, whose cards the round keeps; the other is a player whose cards it does not.
+            const player = mine ? t.table.viewer : t.table.players.find(p => p.id !== t.table.viewer)!.id;
+            expect(now.playOfOn(t.round, player, card, primary)).toEqual({ side: was.type === 'strategic' ? 'primary' : 'secondary', forToken: was.forToken });
           }
         }
       }
     }
-    const synced = now.withForTokenOfRound(t.round, t.table.viewer);
+    const synced = now.withForTokenOfRound(t.round);
     const oldSynced = oldOld.withForTokenOfRound(r, 3);
     expect(synced.turns.map(turn => (turn.action.kind === 'strategic' ? turn.action.forToken : undefined)))
       .toEqual(oldSynced.entries.map(x => (x.type === 'strategic' ? x.forToken : undefined)));
-    expect(now.withForTokenOfRound(synced, t.table.viewer)).toBe(synced);
+    expect(now.withForTokenOfRound(synced)).toBe(synced);
   });
 });
 

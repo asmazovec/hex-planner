@@ -331,8 +331,9 @@ export const useGame = create<GameStore>((set, get) => {
     removeTurn: id => commit(s => editTurnRound(s, id, r => withTurnRemoved(r, id))),
     setStatus: (id, status) => commit(s => editTurnRound(s, id, r => withTurnStatus(r, id, status))),
     setStrategyCard: (roundNo, initiative) =>
+      // The plan keeps the strategy cards of the player whose plan it is: the viewer's.
       commit(s => editRound(s, roundNo, r => withCardCycled(r, initiative, seated(s), s.table.viewer))),
-    addRound: () => commit(s => editPlan(s, plan => ({ ...plan, rounds: withRoundAdded(plan.rounds) }))),
+    addRound: () => commit(s => editPlan(s, plan => ({ ...plan, rounds: withRoundAdded(plan.rounds, [s.table.viewer]) }))),
     deleteRound: roundNo => commit(s => editPlan(s, plan => {
       const rounds = withoutRound(plan.rounds, roundNo);
       return rounds === plan.rounds ? plan : { ...plan, rounds };

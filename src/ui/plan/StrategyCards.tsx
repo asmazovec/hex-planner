@@ -4,7 +4,7 @@ import { strategyCards } from '../../data/loadPack';
 import { textOf } from '../../domain/components';
 import { cardsHeld } from '../../domain/strategy';
 import type { ExpansionId } from '../../domain/types';
-import type { Round } from '../../game/round';
+import type { Picks } from '../../game/round';
 import { useGame } from '../../state/gameStore';
 import { usePack } from '../common/usePack';
 import { SectionTitle } from '../primitives/SectionTitle';
@@ -13,7 +13,9 @@ import { CardGrid } from './blocks/CardGrid';
 export interface StrategyCardsProps {
   expansions: ExpansionId[];
   playerCount: number;
-  round: Pick<Round, 'number' | 'strategyCard' | 'backupCard'>;
+  /** The number of the round, and the cards of the player whose plan it is in it. */
+  round: number;
+  picks: Picks;
 }
 
 /**
@@ -22,7 +24,7 @@ export interface StrategyCardsProps {
  * the main one, then clear it. A tap outside this block ends the look, so the count starts over from the first tap.
  * With 3 or 4 players two cards are held, so the backup is the second card.
  */
-export function StrategyCards({ expansions, playerCount, round }: StrategyCardsProps) {
+export function StrategyCards({ expansions, playerCount, round, picks }: StrategyCardsProps) {
   const { t } = useTranslation();
   const setStrategyCard = useGame(s => s.setStrategyCard);
   /** The card being looked at, which further taps change. */
@@ -45,18 +47,18 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
       setShown(initiative);
       return;
     }
-    setStrategyCard(round.number, initiative);
-    if (round.strategyCard === initiative) setShown(null);
+    setStrategyCard(round, initiative);
+    if (picks.strategyCard === initiative) setShown(null);
   };
   const named = (initiative: number | null) => {
     const card = cards.find(c => c.initiative === initiative);
     return card ? `${card.initiative} ${card.name}` : null;
   };
   const choice = [
-    round.strategyCard !== null && `${t('plan.cards.main')}: ${named(round.strategyCard)}`,
-    round.backupCard !== null && `${backupName}: ${named(round.backupCard)}`,
+    picks.strategyCard !== null && `${t('plan.cards.main')}: ${named(picks.strategyCard)}`,
+    picks.backupCard !== null && `${backupName}: ${named(picks.backupCard)}`,
   ].filter(Boolean).join(' · ');
-  const details = cards.find(c => c.initiative === (shown ?? round.strategyCard));
+  const details = cards.find(c => c.initiative === (shown ?? picks.strategyCard));
 
   return (
     <div className="plan-cards" ref={block}>
@@ -64,8 +66,8 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
       <CardGrid
         label={t('plan.phases.strategy')} cards={cards}
         cellOf={card => {
-          const main = card.initiative === round.strategyCard;
-          const backup = card.initiative === round.backupCard;
+          const main = card.initiative === picks.strategyCard;
+          const backup = card.initiative === picks.backupCard;
           return {
             className: `${main ? ' card-main' : ''}${backup ? ' card-backup' : ''}${card.initiative === shown ? ' card-shown' : ''}`,
             current: card.initiative === shown,

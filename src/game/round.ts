@@ -1,7 +1,8 @@
 /**
  * The structure of a round: its phases in order, and the moments the components are told of (the round starts, the status
  * phase starts and ends, a turn of the action phase starts), as events with causes. A moment is asked of the components of
- * every player, each for their own (the old replay asked only the viewer's for the round and status starts). The checks of
+ * every player, each for their own (a moment that is no one's turn, the start of a round or the end of the status phase,
+ * is asked of each player as their own; one that belongs to a turn as in that turn). The checks of
  * the round's flow (a turn out of its phase, after a pass, a pass before the primaries) are `resolve/flow.ts`, over the
  * turns of the round the track holds.
  */
@@ -18,8 +19,24 @@ import type { Board, PlayerId, Table } from './types';
 /** The phases of a round in the order they are played, whatever the order of the plan's list. */
 export const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
 
-/** A round of a plan: its strategy cards (the viewer's) and its turns in the order of the plan's list. */
-export interface Round { number: number; strategyCard: number | null; backupCard: number | null; /** The strategy cards the viewer holds this round. */ held: number[]; turns: Turn[] }
+/** The strategy cards a player has in a round: the first chosen, the second (a backup where the table gives one card each), and those of the two the player holds by the count of players (33.9). */
+export interface Picks { strategyCard: number | null; backupCard: number | null; held: number[] }
+
+/** No card chosen. */
+export const NO_PICKS: Picks = { strategyCard: null, backupCard: null, held: [] };
+
+/**
+ * A round of a plan: the strategy cards of the players whose cards the plan keeps, by player, and its turns in the
+ * order of the plan's list. A player with no cards kept here plays any primary as their own (their cards are not planned).
+ */
+export interface Round { number: number; picks: Record<PlayerId, Picks>; turns: Turn[] }
+
+/** A player's cards of a round; none chosen for a player whose cards the round does not keep. */
+export const picksOf = (round: Round, player: PlayerId): Picks => round.picks[player] ?? NO_PICKS;
+
+/** A round with nothing in it, keeping the cards of `planned` (those whose cards the plan follows). */
+export const emptyRound = (number: number, planned: readonly PlayerId[] = []): Round =>
+  ({ number, picks: Object.fromEntries(planned.map(player => [player, NO_PICKS])), turns: [] });
 
 export interface Moment { board: Board; events: GameEvent[]; violations: Warning[] }
 
@@ -27,7 +44,18 @@ const noMoment = (board: Board): Moment => ({ board, events: [], violations: [] 
 
 /** Asks the components of `players` for the hook, and applies what they returned. `turn` is the turn the moment belongs to, when there is one. */
 function ask(table: Table, board: Board, pack: DataPack, hook: HookKind, players: PlayerId[], turn?: Turn, entry?: TurnFacts): Moment {
-  return runHooks(table, board, pack, hook, players, {}, { actor: turn?.player ?? table.viewer, step: 'round', ...(turn ? { turn: turn.id } : {}), ...(entry ? { entry } : {}) });
+  if (turn) return runHooks(table, board, pack, hook, players, {}, { actor: turn.player, step: 'round', turn: turn.id, ...(entry ? { entry } : {}) });
+  // A moment that is no one's turn is every player's own: each is asked as in an action of theirs.
+  let at = board;
+  const events: GameEvent[] = [];
+  const violations: Warning[] = [];
+  for (const player of players) {
+    const asked = runHooks(table, at, pack, hook, [player], {}, { actor: player, step: 'round' });
+    at = asked.board;
+    events.push(...asked.events);
+    violations.push(...asked.violations);
+  }
+  return { board: at, events, violations };
 }
 
 const everyone = (table: Table): PlayerId[] => table.players.map(p => p.id);

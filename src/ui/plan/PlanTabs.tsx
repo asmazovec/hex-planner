@@ -1,3 +1,4 @@
+import { picksOf } from '../../game/round';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
@@ -84,7 +85,8 @@ export function PlanTabs({ saved, roundNo, onSelectPlan, onSelectRound, onAddRou
         {/* Before the tabs, not after them: a new tab would push it from under the finger. */}
         <button type="button" className="plan-copy" onClick={() => { onSelectPlan(); copyPlan(); }}>{t('plan.copy')}</button>
         {saved.plans.map(plan => {
-          const card = plan.rounds.find(r => r.number === roundNo)?.strategyCard;
+          const shown = plan.rounds.find(r => r.number === roundNo);
+          const card = shown ? picksOf(shown, saved.table.viewer).strategyCard : null;
           const selected = plan.id === saved.activePlanId;
           const name = planDisplayName(plan.name, t);
           const dragging = drag.draggingId === plan.id ? ' plan-tab-dragging' : '';

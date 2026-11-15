@@ -11,17 +11,22 @@ import type { PlanetId, PlayerId, Slot, Table, UnitCounts } from './types';
 export const SAVED_FORMAT = 'ti4-planner/4';
 
 /**
- * What stands on the board before the first round beyond the faction sheets, written by hand: the points, what the
- * players hold, the units and planets of the others, structures, the expedition and the Fracture. Applied after `setup(table)`.
+ * What stands on the board before the first round, written by hand: the points, what the players hold, whose units
+ * the sheets place and the units written for the rest, who controls what, structures, the expedition and the Fracture.
  */
 export interface StartEdits {
   /** Starting victory points, by player. */
   points: Record<PlayerId, number>;
   /** What each player holds before the plan: the technologies of the faction sheet and the rest set by hand. */
   holdings: Record<PlayerId, StartHoldings>;
-  /** The units of the other players in the space of a system, by slot, then player; ground forces only in a system without planets. */
+  /**
+   * The players whose starting units stand as their faction sheet places them. The units of everyone else are those
+   * written in `units` and `ground` (from their sheets when the game begins, then edited by hand).
+   */
+  sheetUnits: PlayerId[];
+  /** Units written for the space of a system, by slot, then player; ground forces only in a system without planets. */
   units: Record<Slot, Record<PlayerId, UnitCounts>>;
-  /** The ground forces of the other players on a planet, by planet, then player. */
+  /** Ground forces written for a planet, by planet, then player. */
   ground: Record<PlanetId, Record<PlayerId, UnitCounts>>;
   /** Who controls the planets someone has taken at the start. */
   control: Record<PlanetId, PlayerId>;

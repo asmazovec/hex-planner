@@ -57,7 +57,7 @@ const holdings: Required<StartHoldings> = {
   breakthrough: 'exhausted', scored: ['publicObjective:a'], secrets: ['secretObjective:a'], found: ['exploration:a'],
 };
 const start: Required<StartEdits> = {
-  points: { p1: 1, p2: 2 }, holdings: { p1: holdings, p2: holdings }, units: { '1,0': { p2: units } }, ground: { a: { p2: { infantry: 1 } } },
+  points: { p1: 1, p2: 2 }, holdings: { p1: holdings, p2: holdings }, sheetUnits: ['p1'], units: { '1,0': { p2: units } }, ground: { a: { p2: { infantry: 1 } } },
   control: { a: 'p2' }, docks: ['a'], pds: { a: 1 }, expedition: { slices: { slice: 'p2', free: null }, thundersEdgeSystem: '1,0' },
   fracture: { active: true, ingress: ['1,0'], seat: 2, tiles: { '9,9': 'fracture1' } },
 };
@@ -67,7 +67,7 @@ function full(): Required<SavedGame> {
   return {
     ...saved, name: 'name', start,
     table: { ...saved.table, players: saved.table.players.map(p => ({ ...p, setup: { technologies: ['technology:a'], structurePlanet: 'a' } })) },
-    plans: [{ id: 'p', name: 'plan', rounds: [{ number: 1, strategyCard: 3, backupCard: 4, held: [1, 2], turns }] }],
+    plans: [{ id: 'p', name: 'plan', rounds: [{ number: 1, picks: { p1: { strategyCard: 3, backupCard: 4, held: [1, 2] } }, turns }] }],
     activePlanId: 'p',
   };
 }

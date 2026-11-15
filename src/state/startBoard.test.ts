@@ -107,3 +107,11 @@ describe('hand placements', () => {
     same(addPlayer(seated('sol', 'hacan', false), pack));
   });
 });
+
+describe('the board of the start is the same whoever looks at the table', () => {
+  test('another viewer of the same saved game gives the same board', () => {
+    const saved = savedOf(seated('sol', 'hacan', true));
+    const [, other] = saved.table.players;
+    expect(startBoard({ ...saved, table: { ...saved.table, viewer: other.id } }, pack)).toEqual(startBoard(saved, pack));
+  });
+});

@@ -12,7 +12,7 @@ import { legacyKey, legacyPlayer, playerOfLegacy, toOld, toTable } from './old/g
 import { GHOST_SEAT } from './old/game/fromLegacy';
 import { planOf, tableOf } from './old/game/fromLegacy';
 import { SAVED_FORMAT, type SavedGame, type StartEdits } from '../game/save';
-import type { Round as KernelRound } from '../game/round';
+import { picksOf, type Round as KernelRound } from '../game/round';
 import type { Table, UnitCounts } from '../game/types';
 import type { Round } from './old/domain/types';
 import { parseSaved } from '../storage/schema';
@@ -60,7 +60,8 @@ export function savedOf(game: Game): SavedGame {
     control[planet] = who === 'me' ? table.viewer : key(game.planetOwner[planet] ?? game.opponents[0]?.id ?? 'enemy');
   }
   const start: StartEdits = {
-    points, holdings, units: byPlayer(game.enemyUnits), ground: byPlayer(game.enemyGround), control,
+    // My fleet is what my sheet gives; the units of the opponents are those the old game writes for them.
+    points, holdings, sheetUnits: [table.viewer], units: byPlayer(game.enemyUnits), ground: byPlayer(game.enemyGround), control,
     docks: [...game.docks], pds: { ...game.pds },
     expedition: {
       // The old game knows only that another player took a part, not who: it is written for the first of the others.
@@ -91,7 +92,8 @@ const roundViews = new WeakMap<object, { table: Table; entries: Round['entries']
 const oldRoundOf = (table: Table, round: KernelRound): Round => {
   let known = roundViews.get(round);
   if (!known || known.table !== table) roundViews.set(round, known = { table, entries: entriesOf(table, round) });
-  return { number: round.number, strategyCard: round.strategyCard, backupCard: round.backupCard, entries: known.entries };
+  const mine = picksOf(round, table.viewer);
+  return { number: round.number, strategyCard: mine.strategyCard, backupCard: mine.backupCard, entries: known.entries };
 };
 
 /** The old plan of a saved plan, kept for as long as the plan and the table stay the same; its rounds likewise. */
