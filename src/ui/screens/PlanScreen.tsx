@@ -6,7 +6,8 @@ import { EXPEDITION_SLICES } from '../../domain/payment';
 import { isOnMap, systemSlots } from '../../domain/replay';
 import { shownOf } from '../../game/shelf';
 import { warningsByTurn } from '../../game/rowWarnings';
-import { boardAt, statusIn, tacticalNumbers, timelineOf } from '../../state/projection';
+import { boardAt, optionsKept, pointOf, pointOfNewTactical, slotOfCandidate, statusIn, tacticalNumbers, timelineOf, type ChoicePoint } from '../../state/projection';
+import { reasonOf } from '../feedback/WarningText';
 import { mapSource } from '../../game/space';
 import { cardTargetsOn } from '../../game/planQueries';
 import { tacticalOwner } from '../../game/edit/new';
@@ -15,7 +16,7 @@ import { focusRect } from '../map/geometry';
 import { placeOffMap } from '../map/offMapHomes';
 import { hasUnits } from '../../domain/tactical';
 import { emptySources, isUntouched, sourcesOf, tacticalOf, viaOf, withRoute, withSystem as withActiveSystem, type At } from '../../game/edit/tactical';
-import { atOf, sourceSystemsOn, systemsOfTurn, tileSystemsOn } from '../../game/edit/tacticalRead';
+import { atOf, systemsOfTurn, tileSystemsOn } from '../../game/edit/tacticalRead';
 import { routeHintOn } from '../../game/flight';
 import { blockersOf } from '../../game/space';
 import { addTactical, addTurn, pruneEmptySources, writeSaved } from '../../state/turnBridge';
@@ -421,6 +422,24 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     : route.speed !== null ? t('plan.tactical.speedHint', { speed: route.speed, steps: route.steps, left: route.left })
     : [t('plan.tactical.noShipsAtStart'), route.steps > 0 ? t('plan.tactical.distance', { n: route.steps }) : null].filter(Boolean).join(' ');
 
+  // What the map is choosing for a tactical action, asked of the kernel once for each step: the options that lead to a
+  // warning are drawn dashed and say why, the clean ones are lit as before. Nothing is forbidden: every system takes a tap.
+  const actionPoint = picking ? pointOfNewTactical(forecastKernel, round.number, handOwner, tactical?.byCard) : entry ? pointOf(forecastKernel, entry) : undefined;
+  const mapChoice: ChoicePoint | null = picking || choosing === 'system' ? { at: 'system' }
+    : choosing === 'source' ? { at: 'source' }
+      : draft && route ? { at: 'route', path: draft.path } : null;
+  const mapOptions = actionPoint && mapChoice ? optionsKept(actionPoint, mapChoice) : [];
+  const warnedSlots: string[] = [];
+  const cleanSlots: string[] = [];
+  const mapNotes: Record<string, string> = {};
+  for (const option of mapOptions) {
+    const at = slotOfCandidate(option.candidate);
+    if (at === undefined) continue;
+    (option.adds.length > 0 ? warnedSlots : cleanSlots).push(at);
+    const why = actionPoint && reasonOf(option.adds, actionPoint.table, actionPoint.board, pack, t);
+    if (why) mapNotes[at] = why;
+  }
+
   /** What the big hex buys for a card goes into its turn through the kernel. */
   const cardTarget = (entryId: string, slot: string) => {
     const view = boards.view(entryId);
@@ -440,9 +459,11 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     shownSystems: shownEntry && shownEntry.action.kind !== 'tactical' ? systemsOf(shownEntry) : [],
     focused: tacticalsAt.find(item => item.id === focusId),
     path: draft?.path ?? [],
-    reach: route?.reach ?? [],
-    // Any system can be chosen; for a source those with ships are the ones lit.
-    options: !choosing || !entryView ? [] : choosing === 'system' ? tileSystemsOn(entryView.table, entryView.board, pack) : sourceSystemsOn(entryView.table, entryView.board, pack, entry?.player ?? shownPlayer),
+    // Where a route can still go without a warning; a source without ships has no move to count, so nothing is lit for it.
+    reach: mapChoice?.at === 'route' && route?.speed !== null ? cleanSlots : [],
+    // Any system can be chosen; for a source those with ships are the ones lit. A new action lights nothing: only what would warn is marked.
+    options: choosing ? cleanSlots : [],
+    warned: warnedSlots,
   });
   const { mapBoard, layer: flightLayer } = flight.scene(tacticals, shownBoard, arrows);
   const shownArea = shownEntry ? focusRect(systemsOf(shownEntry)) : null;
@@ -741,7 +762,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         </div>
         <div className="plan-map">
           <HexMap
-            table={shownTable} board={mapBoard} viewer={shownPlayer} pack={pack} highlights={highlights} arrows={arrows}
+            table={shownTable} board={mapBoard} viewer={shownPlayer} pack={pack} highlights={highlights} notes={mapNotes} arrows={arrows}
             arrowPreview={draft} focusRect={shownArea} resetSignal={viewResets} onTileTap={onTileTap}
             overlay={flightLayer} still={flight.still} quietAll={flight.quiet} animateOnly={flight.animated}
             onTilePointerDown={(slot, e) => { if (startsArrow(slot)) arrow.onTilePointerDown(slot, e, tapPath ?? undefined); }} startsArrow={startsArrow} panRef={mapPan}

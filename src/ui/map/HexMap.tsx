@@ -26,6 +26,8 @@ export interface HexMapProps {
   viewer?: PlayerId;
   pack: DataPack;
   highlights?: Record<string, Highlight>;
+  /** What a tile says of itself under the pointer, by slot: the warning a `warned` option would cause. */
+  notes?: Record<string, string>;
   arrows?: Arrow[];
   arrowPreview?: RouteDraftView | null;
   /** The area the camera shows; back to the whole map when it turns null. */
@@ -131,7 +133,7 @@ const parseKey = (key: string): { q: number; r: number } => {
 };
 
 export function HexMap({
-  table, board, viewer = table.viewer, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow, still = false, quietAll = false, animateOnly = null, clearOf = '.drawer-rail', panRef,
+  table, board, viewer = table.viewer, pack, highlights, notes, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow, still = false, quietAll = false, animateOnly = null, clearOf = '.drawer-rail', panRef,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -254,11 +256,11 @@ export function HexMap({
   const content = useMemo(() => slotKeys.map(key => (
     <TileView
       key={key} slotKey={key} pack={pack} table={table} board={board} viewer={viewer}
-      highlight={highlights?.[key]} ingress={source.fracture.ingress.includes(key)} seat={seats.get(key)}
+      highlight={highlights?.[key]} note={notes?.[key]} ingress={source.fracture.ingress.includes(key)} seat={seats.get(key)}
       onTap={onTileTap} onPointerDown={onTilePointerDown} quiet={quietAll || (animateOnly !== null && !animateOnly.has(key))}
       liftInto={animateOnly?.has(key) ? liftLayer : null}
     />
-  )), [slotKeys, pack, table, board, viewer, source, seats, highlights, onTileTap, onTilePointerDown, animateOnly, quietAll, liftLayer]);
+  )), [slotKeys, pack, table, board, viewer, source, seats, highlights, notes, onTileTap, onTilePointerDown, animateOnly, quietAll, liftLayer]);
 
   return (
     <div className="hexmap-frame">
@@ -299,7 +301,7 @@ export function HexMap({
               <g key={spot.tileId} className="fracture-fly" style={opening ? flyStyle(i) : undefined}>
               <TileView slotKey={slotKeyOf(fractureAt[i].q, fractureAt[i].r)} pack={pack} table={table} board={board} viewer={viewer}
                 fracture={{ tileId: spot.tileId, index: i, x: spot.x, y: spot.y }}
-                highlight={highlights?.[slotKeyOf(fractureAt[i].q, fractureAt[i].r)]} ingress={source.fracture.ingress.includes(slotKeyOf(fractureAt[i].q, fractureAt[i].r))}
+                highlight={highlights?.[slotKeyOf(fractureAt[i].q, fractureAt[i].r)]} note={notes?.[slotKeyOf(fractureAt[i].q, fractureAt[i].r)]} ingress={source.fracture.ingress.includes(slotKeyOf(fractureAt[i].q, fractureAt[i].r))}
                 onTap={onTileTap} onPointerDown={onTilePointerDown}
                 quiet={quietAll || (animateOnly !== null && !animateOnly.has(slotKeyOf(fractureAt[i].q, fractureAt[i].r)))}
               />

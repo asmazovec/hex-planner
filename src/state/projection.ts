@@ -21,10 +21,10 @@ import { checkSystemOf } from '../domain/replay/transport';
 import { newTurn } from '../game/edit/new';
 import { withTurnAdded } from '../game/edit/plan';
 import { emptyRound } from '../game/round';
-import { asker, causes, optionsAt, type Candidate, type ChoicePoint, type Option, type Point } from '../game/options';
+import { asker, causes, optionsAt, slotOfCandidate, type Candidate, type ChoicePoint, type Option, type Point } from '../game/options';
 
 export type { Candidate, ChoicePoint, Option, Point };
-export { asker, causes, optionsAt };
+export { asker, causes, optionsAt, slotOfCandidate };
 
 export type { Filter, Timeline };
 export { warningsByTurn, violationsOf };
@@ -143,6 +143,28 @@ export function pointOf(line: Timeline, turn: Turn, manual = false): Point | und
   }
   if (point) kept[slot] = point;
   return point;
+}
+
+const asked = new WeakMap<Point, Map<string, Option[]>>();
+
+/** The options of a choice point, asked once for a point: a screen draws many times between two edits, and a route under way asks once for each of its steps. */
+export function optionsKept(point: Point, where: ChoicePoint): Option[] {
+  let kept = asked.get(point);
+  if (!kept) asked.set(point, kept = new Map());
+  const key = JSON.stringify(where);
+  let found = kept.get(key);
+  if (!found) kept.set(key, found = optionsAt(point, where));
+  return found;
+}
+
+const askers = new WeakMap<Point, (candidate: Candidate) => Warning[]>();
+
+/** What a candidate would cause at a point, each candidate asked once: for the blocks of an editor, which ask as they draw. */
+export function causesKept(point: Point | undefined, candidate: Candidate): Warning[] {
+  if (!point) return [];
+  let ask = askers.get(point);
+  if (!ask) askers.set(point, ask = asker(point));
+  return ask(candidate);
 }
 
 const fresh = new WeakMap<Timeline, Map<string, Point>>();

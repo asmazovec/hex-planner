@@ -48,14 +48,17 @@ export interface HighlightInput {
   /** Where the route under way can still go, and the systems that fit the choice of a tactical action; lit only where nothing else is. */
   reach: Iterable<string>;
   options: string[];
+  /** The options of the choice the map is making that lead to a warning (the kernel says which): drawn dashed, never lit, and still chosen by a tap. */
+  warned?: Iterable<string>;
 }
 
 /**
  * The light of each tile, by an explicit order where several apply: what the map chooses among, then what the entry
  * being read speaks of, then the active system, the sources and the ways of the action in focus with the route under
- * way, and last where that route can still go and what else fits.
+ * way, and last the options of the choice: those that lead to a warning dashed, where the route can still go and what
+ * else fits lit.
  */
-export function mapHighlights(table: Table, board: Board, pack: DataPack, { choice, shownSystems, focused, path, reach, options }: HighlightInput): Record<string, Highlight> {
+export function mapHighlights(table: Table, board: Board, pack: DataPack, { choice, shownSystems, focused, path, reach, options, warned = [] }: HighlightInput): Record<string, Highlight> {
   const action = focused ? tacticalOf(focused.turn) : undefined;
   const sources = action?.system ? sourcesOf({ map: mapSource(table, board), pack }, action) : [];
   const layers: [Iterable<string>, Highlight][] = [
@@ -64,6 +67,7 @@ export function mapHighlights(table: Table, board: Board, pack: DataPack, { choi
     [action?.system ? [action.system] : [], 'active'],
     [sources, 'source'],
     [[...path, ...(action ? sources.flatMap(source => viaOf(action, source)) : [])], 'path'],
+    [warned, 'warned'],
     [reach, 'valid'],
     [options, 'valid'],
   ];

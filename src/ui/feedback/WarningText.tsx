@@ -27,6 +27,11 @@ const sameWarning = (a: WarningTextProps, b: WarningTextProps): boolean =>
 /** The text of one warning code; slot keys and ids in its params become the names the player knows. */
 export const WarningText = memo(function WarningText({ warning, table, board, pack }: WarningTextProps) {
   const { t } = useTranslation();
+  return <span className="warning-text">{warningLine(warning, table, board, pack, t)}</span>;
+}, sameWarning);
+
+/** The text of a warning as a plain line: what a list shows, and what an option that would cause it says in its title. */
+export function warningLine(warning: Warning, table: Table, board: Board, pack: DataPack, t: ReturnType<typeof useTranslation>['t']): string {
   const { code, params } = warning;
   const place = (id: string | number): string => pack.planets[id]?.name ?? systemTitle(mapSource(table, board), pack, String(id), t);
   const needed = Number(params.needed ?? 0);
@@ -44,8 +49,12 @@ export const WarningText = memo(function WarningText({ warning, table, board, pa
     symbols: params.symbols === undefined ? undefined : String(params.symbols).replace(/(propulsion|biotic|cybernetic|warfare) ×/g, (_, colour: string) => `${t(`map.tech.${colour}`)} ×`),
     slice: params.sliceId === undefined ? undefined : t(`plan.slice.${params.sliceId}`),
   });
-  return <span className="warning-text">{text}</span>;
-}, sameWarning);
+  return text;
+}
+
+/** What an option that leads to warnings says of itself: their texts in one line; nothing for a clean one. */
+export const reasonOf = (warnings: readonly Warning[], table: Table, board: Board, pack: DataPack, t: ReturnType<typeof useTranslation>['t']): string | undefined =>
+  (warnings.length === 0 ? undefined : [...new Set(warnings.map(w => warningLine(w, table, board, pack, t)))].join(' '));
 
 /** The names of the components that lift a warning; a promissory note says whose card it is. */
 export function waiverNames(warning: Warning, table: Table, pack: DataPack, t: ReturnType<typeof useTranslation>['t']): string {

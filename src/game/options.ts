@@ -53,7 +53,7 @@ export type Candidate =
   /** The active system of a tactical action. */
   | { kind: 'system'; system: Slot }
   /** A source and its way to the active system; `ships` fly it (the fastest ship of the source, when the kernel lists the candidates). */
-  | { kind: 'route'; source: Slot; via: Slot[]; ships?: UnitCounts }
+  | { kind: 'route'; source: Slot; via: Slot[]; ships?: UnitCounts; /** The system a route under way enters with this candidate. */ next?: Slot }
   /** One more unit, or a structure, taken into the flight of a source at a place: the source, a planet of it, a stop of its way. */
   | { kind: 'fly'; source: Slot; from: string; unit: UnitId | StructureKind }
   /** One more unit or structure landed on a planet; `from` a planet it is committed from. */
@@ -360,11 +360,14 @@ export function fastestShip(point: Point, source: Slot): UnitCounts {
 }
 
 /** A route of a path under way: its source, and the way after it up to the active system. */
-function routeOf(point: Point, path: Slot[]): Extract<Candidate, { kind: 'route' }> {
+function routeOf(point: Point, path: Slot[], ships: UnitCounts = fastestShip(point, path[0])): Extract<Candidate, { kind: 'route' }> {
   const active = tacticalOf(point.turn).system;
   const via = path.slice(1).filter(slot => slot !== active);
-  return { kind: 'route', source: path[0], via, ships: fastestShip(point, path[0]) };
+  return { kind: 'route', source: path[0], via, ships, next: path.at(-1)! };
 }
+
+/** The system a candidate of the map stands for: the active system it names, the source of a route, or the system a route under way enters next. */
+export const slotOfCandidate = (c: Candidate): Slot | undefined => (c.kind === 'system' ? c.system : c.kind === 'route' ? c.next ?? c.source : undefined);
 
 /** The candidates of a choice point, as the kernel can list them. */
 export function candidatesAt(point: Point, where: ChoicePoint): Candidate[] {
@@ -382,7 +385,8 @@ export function candidatesAt(point: Point, where: ChoicePoint): Candidate[] {
       const hint = routeHintOn(table, board, pack, player, where.path, action.system, () => blockersOf(table, board, player, pack));
       const next = new Set([...adjacentSlots(table, board, last, pack), ...hint.reach]);
       for (const slot of where.path) if (slot !== action.system) next.delete(slot);
-      return [...next].map(slot => routeOf(point, [...where.path, slot]));
+      const ships = fastestShip(point, where.path[0]);
+      return [...next].map(slot => routeOf(point, [...where.path, slot], ships));
     }
     case 'flight': {
       const { source } = where;
