@@ -149,9 +149,13 @@ export function StrategyEditor({
     table, board, pack, withCard(turn, { card: card.initiative, ...playOfOn(round, turn.player, card.initiative, asPrimary) }) as typeof turn,
     { held: picksOf(round, turn.player).held },
   ) > 0;
+  /** What the other side of the card, and another card, would cause: asked of the kernel, the choice is dashed and says why. */
+  const sideWarns = (asPrimary: boolean) => (primary === asPrimary ? undefined : why({ kind: 'side', primary: asPrimary }));
+  const cardWarns = (initiative: number) => (initiative === turn.action.card ? undefined : why({ kind: 'card', card: initiative }));
   const ability = (asPrimary: boolean, text: string, costsToken: boolean) => (
     <button
-      type="button" className={`card-ability card-ability-${asPrimary ? 'primary' : 'secondary'}`} aria-pressed={primary === asPrimary}
+      type="button" className={`card-ability card-ability-${asPrimary ? 'primary' : 'secondary'}${sideWarns(asPrimary) ? ' would-warn' : ''}`} aria-pressed={primary === asPrimary}
+      title={sideWarns(asPrimary)}
       onClick={() => { if (card && primary !== asPrimary) onChange(withFreshChange(table, board, pack, turn, playOfOn(round, turn.player, card.initiative, asPrimary), manualPayment)); }}
     >
       <b>{t(asPrimary ? 'plan.cards.primary' : 'plan.cards.secondary')}{costsToken && <span className="card-ability-cost">{t('plan.strategy.tokenCost')}</span>}</b>
@@ -182,7 +186,7 @@ export function StrategyEditor({
       <EditorPart title={card ? t(primary ? 'plan.strategy.partPrimary' : 'plan.strategy.partSecondary', { card: card.name }) : t('editor.setup')}>
         <CardGrid
           label={t('plan.strategy.cards')} cards={cards}
-          cellOf={c => ({ pressed: c.initiative === turn.action.card, onClick: () => pickCard(c.initiative) })}
+          cellOf={c => ({ pressed: c.initiative === turn.action.card, className: cardWarns(c.initiative) ? ' would-warn' : '', title: cardWarns(c.initiative), onClick: () => pickCard(c.initiative) })}
         />
         {/* The mode and the card decide these; a warning whose block is not on the screen stands here too, where it cannot be missed. */}
         {list([...cardWarnings, ...placer.rest()])}

@@ -368,6 +368,9 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 button.would-warn { border-style: dashed; border-color: color-mix(in srgb, var(--warning) 75%, transparent); }
 button.would-warn:not([aria-pressed='true']) { background: transparent; color: var(--text-dim); }
 button.would-warn:not([aria-pressed='true']) > b, button.would-warn:not([aria-pressed='true']) > span { opacity: 0.6; }
+/* A component whose choice leads to a warning: the same dashed, dimmed look for its card. */
+.component-card.would-warn { border-style: dashed; border-color: color-mix(in srgb, var(--warning) 75%, transparent); background: transparent; }
+.component-card.would-warn .component-head > b { opacity: 0.6; }
 /* An option that leads to a warning, everywhere: a dashed edge and a dimmed body, so it reads by its shape whatever the accent is. It still takes a tap. */
 .tile-warned .hex { stroke: var(--warning); stroke-width: 3; stroke-dasharray: 9 7; fill-opacity: 0.55; }
 .tile-active .hex { stroke: var(--gold); stroke-width: 3.5; fill: var(--gold-soft); }

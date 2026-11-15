@@ -238,7 +238,7 @@ test('on the plan screen an opponent\'s entry discards from what that opponent h
   expect(offered()).not.toContain('relic:shard');
 });
 
-test('a component action offers first what its owner holds ready; the rest says it is not held and can still be chosen', async () => {
+test('a component action offers first what its owner can play without a warning; the rest says what playing it would cause and can still be chosen', async () => {
   const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
   const onComponent = vi.fn();
   render(
@@ -255,7 +255,10 @@ test('a component action offers first what its owner holds ready; the rest says 
   expect(offered()).toEqual(['relic:thalnos', 'exploration:toe', 'relic:emphidia']);
   expect(within(picker()).getByTestId('component-relic:thalnos')).not.toHaveTextContent('not held');
   const other = within(picker()).getByTestId(`component-${offered().at(-1)}`);
-  expect(other).toHaveTextContent('not held');
+  // What the kernel says playing it would cause, in the look of every option that leads to a warning.
+  expect(other).toHaveTextContent('you do not hold this component');
+  expect(other).toHaveClass('would-warn');
+  expect(within(picker()).getByTestId('component-relic:thalnos')).not.toHaveClass('would-warn');
   const id = offered().at(-1);
   await userEvent.click(within(other).getByRole('button', { name: /^Choose / }));
   expect(onComponent).toHaveBeenCalledWith(id);

@@ -23,6 +23,8 @@ export interface ComponentCardProps {
   state?: CardState;
   /** Said under the name as it is: "in hand", "scored". */
   note?: string;
+  /** Choosing it leads to a warning (the note says which): the card is drawn dashed and dimmed, and can still be chosen. */
+  warned?: boolean;
   /** Whose card it is, whoever holds it: the player a promissory note belongs to, by name and colour. */
   owner?: { name: string; color: number };
   /** Where it is now, said on a line of its own: one's own note in hand, with another player (in their colour), out of the game. */
@@ -52,7 +54,7 @@ const TECH = 'technology:';
  * stays where it is. A technology says its type by a mark at its name. Whatever changes the component stands inside
  * the card, at the right edge of its head.
  */
-export function ComponentCard({ def, pack, held, state, note, owner, where, text, count, source, onRemove, onAdd, pickLabel, leader, children }: ComponentCardProps) {
+export function ComponentCard({ def, pack, held, state, note, warned, owner, where, text, count, source, onRemove, onAdd, pickLabel, leader, children }: ComponentCardProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const details = useId();
@@ -73,7 +75,7 @@ export function ComponentCard({ def, pack, held, state, note, owner, where, text
     : onAdd ? <button type="button" className="icon-button" aria-label={addLabel} title={addLabel} onClick={onAdd}><RowIcon name="add" /></button>
       : null;
   return (
-    <div className={`component-card${held ? ' on' : ''}${dim ? ' dim' : ''}`} data-testid={`component-${def.id}`}>
+    <div className={`component-card${held ? ' on' : ''}${dim ? ' dim' : ''}${warned ? ' would-warn' : ''}`} data-testid={`component-${def.id}`}>
       <div className="in-card">
         <button type="button" className="source-button component-head" aria-expanded={open} aria-controls={open ? details : undefined} onClick={() => setOpen(!open)}>
           <b>{def.name}</b>

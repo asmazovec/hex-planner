@@ -76,6 +76,9 @@ export function TurnEditor({ turn, point, pack, view, warnings, common, pickFirs
   const player = turn.player;
   const action = turn.action;
   const ready = useMemo(() => readyToPlayOn(view.table, view.board, pack, player), [view, pack, player]);
+  // What can be played now without a warning stands first in the choice: of what the player holds ready, what the kernel finds clean as this action's component. Asked only while the choice is open.
+  const playWarns = (id: string) => why({ kind: 'play', component: id });
+  const clean = useMemo(() => (picking ? new Set([...ready].filter(id => why({ kind: 'play', component: id }) === undefined)) : ready), [picking, ready, why]);
   const map = mapSource(view.table, view.board);
   const played = action.kind === 'component' && action.component ? componentById(pack, action.component) : undefined;
   const cost = playedCostOf(pack, turn);
@@ -103,7 +106,7 @@ export function TurnEditor({ turn, point, pack, view, warnings, common, pickFirs
             />
           </Section>
           {played && (
-            <ChoicesBlock id={played.id} turn={turn} view={view} pack={pack} onChange={chosen => onChange(withChoicesOf(turn, played.id, chosen))} />
+            <ChoicesBlock id={played.id} turn={turn} view={view} pack={pack} why={why} onChange={chosen => onChange(withChoicesOf(turn, played.id, chosen))} />
           )}
           {cost && (
             <PaymentBlock
@@ -142,7 +145,7 @@ export function TurnEditor({ turn, point, pack, view, warnings, common, pickFirs
       {common}
       {picking && (
         <ComponentPicker
-          kinds={PLAYED_KINDS} table={view.table} player={player} owned={ready} prefer="owned" onClose={() => setPicking(false)}
+          kinds={PLAYED_KINDS} table={view.table} player={player} owned={clean} prefer="owned" warns={playWarns} onClose={() => setPicking(false)}
           onPick={id => {
             const played = withPlayed(turn, id);
             const picked = effectOf(pack, id)?.cost;

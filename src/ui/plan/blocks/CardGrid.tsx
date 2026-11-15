@@ -6,6 +6,8 @@ export interface CardCellView {
   pressed?: boolean;
   current?: boolean;
   disabled?: boolean;
+  /** What the cell says of itself under the pointer: the warning its choice would cause. */
+  title?: string;
   /** Small lines under the name. */
   extra?: ReactNode;
   onClick: () => void;
@@ -16,11 +18,11 @@ export function CardGrid<C extends { initiative: number; name: string }>({ label
   return (
     <div className="card-grid" role="group" aria-label={label}>
       {cards.map(card => {
-        const { className = '', pressed, current, disabled, extra, onClick } = cellOf(card);
+        const { className = '', pressed, current, disabled, title, extra, onClick } = cellOf(card);
         return (
           <button
             key={card.initiative} type="button" className={`card-cell${className}`} aria-pressed={pressed} aria-current={current ? 'true' : undefined}
-            disabled={disabled} onClick={onClick}
+            disabled={disabled} title={title} onClick={onClick}
           >
             <b>{card.initiative}</b>{card.name}
             {extra}

@@ -17,6 +17,10 @@ import { playerStyle } from '../../primitives/player';
 import { Section } from '../../primitives/Section';
 import { Stepper } from '../../primitives/Stepper';
 import { ComponentSlot } from './ComponentSlot';
+import type { Why } from '../options';
+
+/** More candidates than this are not asked of the kernel one by one: a choice among every planet of the map would cost a frame. */
+const ASKED = 24;
 
 /** More candidates than this are not laid out as buttons: a component is found through the picker. */
 const MANY = 12;
@@ -28,6 +32,8 @@ export interface ChoicesBlockProps {
   /** The table and the board just before the entry. */
   view: KernelView;
   pack: DataPack;
+  /** What choosing a value would cause, as the kernel says: such a value is drawn dashed and says why. */
+  why?: Why;
   /** The choices as they stand after the press; empty when none is left. */
   onChange: (chosen: Record<string, string | number>) => void;
 }
@@ -37,7 +43,7 @@ export interface ChoicesBlockProps {
  * and in it one row for each thing asked, its candidates as buttons (a stepper for a number). A press on the chosen one
  * takes it back. Nothing is forbidden: the effect warns of a value it cannot use. Draws nothing for a component that asks nothing.
  */
-export function ChoicesBlock({ id, turn, view, pack, onChange }: ChoicesBlockProps) {
+export function ChoicesBlock({ id, turn, view, pack, why, onChange }: ChoicesBlockProps) {
   const { t, i18n } = useTranslation();
   const { table, board } = view;
   const map = mapSource(table, board);
@@ -125,14 +131,18 @@ export function ChoicesBlock({ id, turn, view, pack, onChange }: ChoicesBlockPro
         }
         return (
           <div key={spec.key} className="choice-wrap" role="group" aria-label={label}>
-            {options.map(value => (
-              <button
-                key={value} type="button" aria-pressed={chosen[spec.key] === value} style={playerStyle('--owner', colorOf(spec, value))}
-                onClick={() => set(spec.key, chosen[spec.key] === value ? undefined : value)}
-              >
-                {nameOf(spec, value)}
-              </button>
-            ))}
+            {options.map(value => {
+              const warns = options.length <= ASKED ? why?.({ kind: 'choice', component: id, key: spec.key, value }) : undefined;
+              return (
+                <button
+                  key={value} type="button" className={warns ? 'would-warn' : undefined} title={warns ? `${nameOf(spec, value)}: ${warns}` : undefined}
+                  aria-pressed={chosen[spec.key] === value} style={playerStyle('--owner', colorOf(spec, value))}
+                  onClick={() => set(spec.key, chosen[spec.key] === value ? undefined : value)}
+                >
+                  {nameOf(spec, value)}
+                </button>
+              );
+            })}
             {options.length === 0 && <span className="muted">{t('components.choice.none')}</span>}
           </div>
         );

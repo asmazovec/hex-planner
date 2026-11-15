@@ -23,6 +23,12 @@ export interface ComponentPickerProps {
    * already stands last and says so (something is taken). Either way everything can be chosen.
    */
   prefer?: 'owned' | 'new';
+  /**
+   * What choosing a component would cause, as the kernel says (`src/game/options.ts`): the text of the warning, nothing for
+   * a clean one. Asked for the cards on the screen only. Such a card is dashed and says the warning; with it `owned` is
+   * what can be chosen without a warning, which `prefer: 'owned'` puts first.
+   */
+  warns?: (id: string) => string | undefined;
   /** The table the choice is made at: its players' notes are the cards offered. */
   table: Table;
   /** Who chooses: before a query the components of their faction stand first. */
@@ -32,7 +38,7 @@ export interface ComponentPickerProps {
 }
 
 /** A window that finds one component: the search field of the drawer and its list, each card with a control that chooses it. */
-export function ComponentPicker({ kinds, ids, owned, prefer, table, player, onPick, onClose }: ComponentPickerProps) {
+export function ComponentPicker({ kinds, ids, owned, prefer, warns, table, player, onPick, onClose }: ComponentPickerProps) {
   const { t } = useTranslation();
   const pack = usePack(table.expansions);
   const [query, setQuery] = useState('');
@@ -53,6 +59,8 @@ export function ComponentPicker({ kinds, ids, owned, prefer, table, player, onPi
     return ordered([...offered.filter(c => c.faction !== undefined && faction !== undefined && ownedBy(c, faction)), ...offered.filter(c => c.faction === undefined), ...foreign]).slice(0, RESULT_LIMIT);
   }, [asked, find, pack, kinds, faction, among, owned, prefer, table]);
   const noteOf = (def: ComponentDef): string | undefined => {
+    const why = warns?.(def.id);
+    if (why) return why;
     if (!prefer || !owned) return undefined;
     if (prefer === 'new') return owned.has(def.id) ? t('components.alreadyHeld') : undefined;
     return owned.has(def.id) ? undefined : t('components.notHeld');
@@ -65,7 +73,7 @@ export function ComponentPicker({ kinds, ids, owned, prefer, table, player, onPi
       <div className="component-list">
         {shown.map(def => (
           <ComponentCard
-            key={def.id} def={def} pack={pack} held={owned?.has(def.id)} note={noteOf(def)} count={ids?.filter(id => id === def.id).length}
+            key={def.id} def={def} pack={pack} held={owned?.has(def.id)} note={noteOf(def)} warned={warns?.(def.id) !== undefined} count={ids?.filter(id => id === def.id).length}
             {...noteMark(table, pack, def.id, t)}
             pickLabel={t('components.choose', { name: def.name })} onAdd={() => onPick(def.id)}
           />

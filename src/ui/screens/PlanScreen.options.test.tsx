@@ -165,3 +165,52 @@ test('the payment: an exhausted planet and a trade good the player does not have
   expect(button('Add one trade good')).toHaveClass('would-warn');
   expect(button('Add one trade good')).toBeEnabled();
 });
+
+test('the choice of a component: what can be used without a warning stands first and plain, the rest is dashed and says the warning; it is still chosen and warned of', async () => {
+  tactical(TARGET);
+  render(<PlanScreen />);
+  await tap(/^Edit: Tactical action/);
+  await tap('+ Used');
+  const picker = screen.getByRole('dialog', { name: 'Choose a component' });
+  const card = (id: string) => picker.querySelector(`[data-testid="component-${id}"]`) as HTMLElement;
+  // The technology the Arborec start with is clean; one they do not hold is dashed and says so.
+  const search = within(picker).getByRole('searchbox');
+  await userEvent.type(search, 'Magen Defense');
+  await vi.waitFor(() => expect(card('technology:md')).not.toBeNull());
+  expect(card('technology:md')).not.toHaveClass('would-warn');
+  await userEvent.clear(search);
+  await userEvent.type(search, 'Defense');
+  await vi.waitFor(() => expect(picker.querySelectorAll('.component-card.would-warn').length).toBeGreaterThan(0));
+  const cards = () => [...picker.querySelectorAll('.component-card')];
+  const other = cards().find(c => c.classList.contains('would-warn')) as HTMLElement;
+  expect(other.textContent).toMatch(/not hold|not held|does not have/i);
+  // The clean one stands before every marked one.
+  const marks = cards().map(c => c.classList.contains('would-warn'));
+  expect(marks.indexOf(true)).toBeGreaterThan(cards().indexOf(card('technology:md')));
+  expect(marks.slice(marks.indexOf(true)).every(Boolean)).toBe(true);
+  await userEvent.click(within(other).getByRole('button', { name: /^Choose / }));
+  expect(warningsShown()).toContain('componentNotHeld');
+});
+
+test('a strategy card: a card and a side that lead to a warning are dashed in the editor and say why, and are still chosen', async () => {
+  // The first tap makes the card the backup, the second the main one.
+  useGame.getState().setStrategyCard(1, useGame.getState().saved!.table.viewer, 4);
+  useGame.getState().setStrategyCard(1, useGame.getState().saved!.table.viewer, 4);
+  edits.addEntry(1, { type: 'strategic', card: 4, effects: {} }, 'action');
+  edits.addEntry(1, { type: 'secondary', card: 5, effects: {} }, 'action');
+  render(<PlanScreen />);
+  await userEvent.click(screen.getAllByRole('button', { name: /^Edit: / })[1]);
+  const grid = screen.getByRole('group', { name: 'Card' });
+  // Construction is the player's card and its primary is played: tapped again it would be its own secondary.
+  const construction = within(grid).getByRole('button', { name: /Construction/ });
+  expect(construction).toHaveClass('would-warn');
+  expect(construction.title).not.toBe('');
+  expect(construction).toBeEnabled();
+  expect(within(grid).getByRole('button', { name: /Politics/ })).not.toHaveClass('would-warn');
+  await userEvent.click(construction);
+  const modes = screen.getByRole('group', { name: 'Card mode' });
+  // Its primary a second time in the round is warned of too.
+  expect(within(modes).getByRole('button', { name: /^Primary/ })).toHaveClass('would-warn');
+  await userEvent.click(within(modes).getByRole('button', { name: /^Primary/ }));
+  expect(warningsShown()).toContain('primaryRepeated');
+});

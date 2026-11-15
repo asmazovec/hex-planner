@@ -563,7 +563,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
               {/* What the entry gained and gave stands with what else it holds. */}
               <GainsBlock turn={turn} pack={pack} view={view} onChange={change} />
               {/* What the entry used beside its action: what it allows is marked among the entry's warnings. */}
-              <UsesBlock turn={turn} pack={pack} view={view} warnings={rowWarnings[entry.id] ?? []} onChange={next => change(withUsesRepriced(view.table, view.board, pack, turn, next, manualPayments.includes(entry.id)))} />
+              <UsesBlock turn={turn} point={pointOf(forecastKernel, turn, manualPayments.includes(entry.id))} pack={pack} view={view} warnings={rowWarnings[entry.id] ?? []} onChange={next => change(withUsesRepriced(view.table, view.board, pack, turn, next, manualPayments.includes(entry.id)))} />
             </>
           )}
         </TurnHost>
