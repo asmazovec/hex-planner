@@ -56,7 +56,7 @@ export function ControlPanel({ table, viewer = table.viewer, pack, tile, rotatio
       {facts.length > 0 && <p className="muted">{facts.join(' · ')}</p>}
       {tile && planets.length === 0 && <p className="muted">{t('map.sheet.noPlanets')}</p>}
       {planets.map((planet, index) => {
-        const { held, holder: owner, exhausted, values } = planetSeen(table, shown, pack, viewer, planet.id);
+        const { held, holder: owner, holderColor, exhausted, values } = planetSeen(table, shown, pack, viewer, planet.id);
         const holder = owner ?? null;
         return (
           <div
@@ -67,7 +67,7 @@ export function ControlPanel({ table, viewer = table.viewer, pack, tile, rotatio
           >
             <PlanetDetails
               planet={planet} pack={pack} relic={tile?.kind === 'fracture'} exhausted={exhausted}
-              held={held} holderColor={held === 'other' ? table.players.find(p => p.id === owner)?.color : undefined}
+              held={held} holderColor={holderColor}
               values={values}
             />
             <PlayerChoice

@@ -285,6 +285,18 @@ describe('setup', () => {
     expect(game().pds).toEqual({ [second]: 1 });
   });
 
+  test.each([['p1', 'var(--player-1)'], ['p3', 'var(--player-3)']])('a planet %s holds is ringed in that player\'s colour, on the hex and in the control panel, whoever sits at the tablet', (holder, colour) => {
+    for (const tablet of ['p1', 'p3']) {
+      store().setPlanetControl(quann(), holder);
+      useGame.setState({ saved: { ...store().saved!, table: { ...store().saved!.table, viewer: tablet } } });
+      open({ initialMode: 'control' });
+      const discs = [...document.querySelectorAll<SVGElement>('.stage .planet-disc, .stage-panel .planet-disc, [role="dialog"] .planet-disc')];
+      expect(discs.length).toBeGreaterThanOrEqual(2);
+      for (const disc of discs) expect(disc.style.stroke, `tablet ${tablet}`).toBe(colour);
+      cleanup();
+    }
+  });
+
   test('in control, the planet tapped on the hex is the one marked in the panel; a lone planet needs no mark', async () => {
     store().setTile(SLOT, TWO);
     const [first, second] = pack.tiles[TWO].planetIds;

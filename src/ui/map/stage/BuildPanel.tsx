@@ -47,7 +47,7 @@ export function BuildPanel({ table, viewer = table.viewer, pack, board, producti
       rows={rows.map(({ id, planet, items }) => ({
         id, items, layout: layoutFor(items.length), label: planet ? planet.name : t('draft.space'),
         place: planet
-          ? (() => { const { held, exhausted, values } = planetSeen(table, board, pack, viewer, planet.id); return <PlanetBadge planet={planet} held={held} exhausted={exhausted} values={values} compact />; })()
+          ? (() => { const { held, holderColor, exhausted, values } = planetSeen(table, board, pack, viewer, planet.id); return <PlanetBadge planet={planet} held={held} holderColor={holderColor} exhausted={exhausted} values={values} compact />; })()
           : <SpaceBadge label={t('draft.space')} />,
       }))}
     />

@@ -249,8 +249,7 @@ export function TileView({
     <>
       {planets.map((planet, i) => {
         const spot = layout.planets[i];
-        const { held, holder, exhausted, values } = planetSeen(table, board, pack, viewer, planet.id);
-        const holderColor = seated.find(o => o.id === holder)?.color;
+        const { held, holder, holderColor, exhausted, values } = planetSeen(table, board, pack, viewer, planet.id);
         const parts = [`${planet.name}: ${values.resources}/${values.influence}`];
         for (const tech of planet.tech ?? []) parts.push(t(`map.tech.${tech}`));
         if (planet.legendary) parts.push(t('map.legendary'));

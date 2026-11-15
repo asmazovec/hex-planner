@@ -132,8 +132,8 @@ export function UnitPicker({ pack, view, turn, source, warnings = [], onChange, 
   );
   const badge = (planet: PlanetDef | null) => {
     if (!planet) return <SpaceBadge label={t('draft.space')} />;
-    const { held, exhausted, values } = planetSeen(table, board, pack, player, planet.id);
-    return <PlanetBadge planet={planet} held={held} exhausted={exhausted} values={values} compact />;
+    const { held, holderColor, exhausted, values } = planetSeen(table, board, pack, player, planet.id);
+    return <PlanetBadge planet={planet} held={held} holderColor={holderColor} exhausted={exhausted} values={values} compact />;
   };
 
   const line = (slot: string, role: 'start' | 'transit') => {

@@ -71,7 +71,7 @@ export function LandingBlock({ view, pack, player, planets, units, arrived, lost
   })));
 
   const rows: UnitDraftRow[] = planets.map(planet => {
-    const { held, exhausted, values } = planetSeen(table, board, pack, player, planet.id);
+    const { held, holderColor, exhausted, values } = planetSeen(table, board, pack, player, planet.id);
     const facts = [
       t(exhausted ? 'map.sheet.exhausted' : 'map.sheet.ready'),
       ...(held ? [t(`map.control.${held}`)] : []),
@@ -89,7 +89,7 @@ export function LandingBlock({ view, pack, player, planets, units, arrived, lost
     return {
       id: planet.id,
       label: t('plan.tactical.landingOn', { planet: planet.name }),
-      place: <PlanetBadge planet={planet} held={held} exhausted={exhausted} values={values} facts={facts} compact />,
+      place: <PlanetBadge planet={planet} held={held} holderColor={holderColor} exhausted={exhausted} values={values} facts={facts} compact />,
       items: [
         ...units.map(unit => ({
           kind: unit, picked: landedOn(planet.id, unit),

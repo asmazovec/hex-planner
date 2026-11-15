@@ -565,6 +565,17 @@ test('a planet disc is tinted by its trait, a two-trait planet is split down the
   expect(screen.getByLabelText(/^Ordinian:/).querySelector('.planet-trait')).toBeNull();
 });
 
+test.each([
+  ['another player who is red', (g: Game, s: GameState, id: string) => { g.opponents[1].color = 3; s.control[id] = 'enemy'; g.planetOwner[id] = g.opponents[1].id; }],
+  ['the one at the tablet, who is red', (g: Game, s: GameState, id: string) => { g.color = 3; g.opponents[1].color = 1; s.control[id] = 'me'; }],
+  ['the one at the tablet, of the first colour', (_g: Game, s: GameState, id: string) => { s.control[id] = 'me'; }],
+] as const)('a planet is ringed in the colour of the player who holds it: %s', (name, hold) => {
+  const id = pack.tiles['25'].planetIds[0];
+  setup('25', (g, s) => hold(g, s, id));
+  const disc = screen.getByLabelText(new RegExp(`^${pack.planets[id].name}:`)).querySelector('.planet-disc') as SVGElement;
+  expect(disc.style.stroke).toBe(name.includes('red') ? 'var(--player-3)' : 'var(--player-1)');
+});
+
 test('control stays on the rim and an exhausted planet keeps its look with the tint on it', () => {
   renderFull('66', s => { s.control.hopesend = 'me'; s.exhausted.push('hopesend'); });
   const group = screen.getByLabelText(/^Hope's End:/);
